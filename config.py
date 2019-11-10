@@ -71,4 +71,4 @@ class Config(object):
         if not self.homeserver_url:
             raise ConfigError("matrix.homeserver_url is a required field")
 
-        self.command_prefix = config.get("command_prefix", "!c") + " "
+        self.command_prefix = config.get("command_prefix", "!c")
