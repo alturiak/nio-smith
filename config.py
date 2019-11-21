@@ -47,6 +47,8 @@ class Config(object):
         database_dict = config.get("database", {})
         self.database_filepath = database_dict.get("filepath")
 
+
+
         # Matrix bot account setup
         matrix = config.get("matrix", {})
 
@@ -55,6 +57,10 @@ class Config(object):
             raise ConfigError("matrix.user_id is a required field")
         elif not re.match("@.*:.*", self.user_id):
             raise ConfigError("matrix.user_id must be in the form @name:domain")
+
+        self.user_password = matrix.get("user_password")
+        if not self.user_password:
+            raise ConfigError("matrix.user_password is a required field")
 
         self.access_token = matrix.get("access_token")
         if not self.access_token:
@@ -66,9 +72,12 @@ class Config(object):
                 "Config option matrix.device_id is not provided, which means "
                 "that end-to-end encryption won't work correctly"
             )
+        self.device_name = matrix.get("device_name")
 
         self.homeserver_url = matrix.get("homeserver_url")
         if not self.homeserver_url:
             raise ConfigError("matrix.homeserver_url is a required field")
+        # e2e store path
+        self.e2estorepath = matrix.get("e2estorepath")
 
         self.command_prefix = config.get("command_prefix", "!c")

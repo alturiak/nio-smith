@@ -8,6 +8,7 @@ from nio import (
     RoomMessageText,
     InviteEvent,
     SyncError,
+    LocalProtocolError,
 )
 from callbacks import Callbacks
 from config import Config
@@ -35,25 +36,29 @@ async def main():
         config.homeserver_url,
         config.user_id,
         device_id=config.device_id,
+        store_path=config.e2estorepath,
         config=client_config,
     )
-
-    # Assign an access token to the bot instead of logging in and creating a new device
-    client.access_token = config.access_token
 
     # Set up event callbacks
     callbacks = Callbacks(client, store, config)
     client.add_event_callback(callbacks.message, (RoomMessageText,))
     client.add_event_callback(callbacks.invite, (InviteEvent,))
 
+    await client.login(password=config.user_password, device_name=config.device_name)
+    try:
+        await client.keys_upload()
+    except LocalProtocolError:
+        pass
+
     # Create a new sync token, attempting to load one from the database if it has one already
     sync_token = SyncToken(store)
 
     # Sync loop
+    # TODO: change to client.sync_forever() when fixed upstream
     while True:
         # Sync with the server
-        sync_response = await client.sync(timeout=30000, full_state=True,
-                                          since=sync_token.token)
+        sync_response = await client.sync(timeout=30000, full_state=True, since=sync_token.token)
 
         # Check if the sync had an error
         if type(sync_response) == SyncError:
