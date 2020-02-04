@@ -13,12 +13,21 @@ from nio import (
 from callbacks import Callbacks
 from config import Config
 from storage import Storage
-from sync_token import SyncToken
+import sabnzbdapi
 
 logger = logging.getLogger(__name__)
+client = ""
+
+
+async def run_plugins(response):
+
+    await sabnzbdapi.post_history_since_last_update(client)
 
 
 async def main():
+    # this really needs to be replaced, probably using https://docs.python.org/3.8/library/functools.html#functools.partial
+    global client
+
     # Read config file
     config = Config("config.yaml")
 
@@ -29,6 +38,7 @@ async def main():
     client_config = AsyncClientConfig(
         max_limit_exceeded=0,
         max_timeouts=0,
+        store_sync_tokens=True
     )
 
     # Initialize the matrix client
@@ -44,6 +54,7 @@ async def main():
     callbacks = Callbacks(client, store, config)
     client.add_event_callback(callbacks.message, (RoomMessageText,))
     client.add_event_callback(callbacks.invite, (InviteEvent,))
+    client.add_response_callback(run_plugins)
 
     await client.login(password=config.user_password, device_name=config.device_name)
     try:
@@ -51,23 +62,6 @@ async def main():
     except LocalProtocolError:
         pass
 
-    # Create a new sync token, attempting to load one from the database if it has one already
-    sync_token = SyncToken(store)
-
-    # Sync loop
-    # TODO: change to client.sync_forever() when fixed upstream
-    while True:
-        # Sync with the server
-        sync_response = await client.sync(timeout=30000, full_state=True, since=sync_token.token)
-
-        # Check if the sync had an error
-        if type(sync_response) == SyncError:
-            logger.warning("Error in client sync: %s", sync_response.message)
-            continue
-
-        # Save the latest sync token to the database
-        token = sync_response.next_batch
-        if token:
-            sync_token.update(token)
+    await client.sync_forever(timeout=30000, full_state=True)
 
 asyncio.get_event_loop().run_until_complete(main())

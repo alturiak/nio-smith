@@ -20,3 +20,6 @@ config.yaml
 
 # Log files
 *.log
+
+# other stuff
+sabnzbdapi.py

@@ -1,4 +1,5 @@
 from chat_functions import send_text_to_room
+import sabnzbdapi
 
 
 class Command(object):
@@ -34,6 +35,8 @@ class Command(object):
             await self._show_help()
         elif self.command.startswith("meter"):
             await self._meter()
+        elif self.command.startswith("last"):
+            await self._last()
 #        else:
 #            await self._unknown_command()
 
@@ -89,8 +92,23 @@ class Command(object):
             chosen = "Syntax: !meter <target> <condition>"
         # await send_text_to_room(self.client, self.room.room_id, chosen)
         await send_text_to_room(self.client, self.room.room_id, chosen, notice=False)
+        print("Plugin meter called on " + self.room.room_id)
+
+    async def _last(self):
+
+        if self.room.room_id == await sabnzbdapi.get_room_id():
+
+            count = 5
+            try:
+                countarg = int(self.args[0])
+                if (countarg > 0) and (countarg < 10):
+                    count = countarg
+            except (ValueError, IndexError):
+                count = 5
+            await sabnzbdapi.post_last_history_items(self.client, count)
 
     async def _unknown_command(self):
+
         await send_text_to_room(
             self.client,
             self.room.room_id,
