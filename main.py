@@ -7,13 +7,12 @@ from nio import (
     AsyncClientConfig,
     RoomMessageText,
     InviteEvent,
-    SyncError,
     LocalProtocolError,
 )
 from callbacks import Callbacks
 from config import Config
 from storage import Storage
-import sabnzbdapi
+import plugins.sabnzbdapi
 
 logger = logging.getLogger(__name__)
 client = ""
@@ -21,7 +20,7 @@ client = ""
 
 async def run_plugins(response):
 
-    await sabnzbdapi.post_history_since_last_update(client)
+    await plugins.sabnzbdapi.post_history_since_last_update(client)
 
 
 async def main():
