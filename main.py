@@ -20,11 +20,12 @@ client = ""
 
 async def run_plugins(response):
 
-    await plugins.sabnzbdapi.post_history_since_last_update(client)
+    await plugins.sabnzbdapi.watchjobs(client)
 
 
 async def main():
-    # this really needs to be replaced, probably using https://docs.python.org/3.8/library/functools.html#functools.partial
+    # TODO: this really needs to be replaced
+    # probably using https://docs.python.org/3.8/library/functools.html#functools.partial
     global client
 
     # Read config file

@@ -1,4 +1,6 @@
 # import plugins
+# TODO: this should at some point feature dynamic imports
+# https://www.bnmetrics.com/blog/dynamic-import-in-python3
 import plugins.echo
 import plugins.help
 import plugins.meter
@@ -34,6 +36,8 @@ class Command(object):
 
     async def process(self):
         """Process the command"""
+
+        # TODO: would it be helpful to specify available commands per room?
         if self.command.startswith("echo"):
             await plugins.echo.echo(self)
         elif self.command.startswith("help"):

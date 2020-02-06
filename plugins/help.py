@@ -1,4 +1,4 @@
-from chat_functions import send_text_to_room
+from plugins.send_typing import send_typing
 
 
 async def printhelp(command):
@@ -20,4 +20,4 @@ async def printhelp(command):
                 )
     else:
         text = "Unknown help topic!"
-    await send_text_to_room(command.client, command.room.room_id, text, notice=False)
+    await send_typing(command.client, command.room.room_id, text, notice=False)

@@ -1,4 +1,4 @@
-from chat_functions import send_text_to_room
+from plugins.send_typing import send_typing
 import random
 
 
@@ -27,5 +27,5 @@ async def meter(command):
             chosen = random.choice(meters)
         except ValueError:
             chosen = "Syntax: !meter <target> <condition>"
-        await send_text_to_room(command.client, command.room.room_id, chosen, notice=False)
-        print("Plugin meter called on " + command.room.room_id)
+
+        await send_typing(command.client, command.room.room_id, chosen)

@@ -1,4 +1,4 @@
-from chat_functions import send_text_to_room
+from plugins.send_typing import send_typing
 import random
 import os.path
 
@@ -8,4 +8,4 @@ async def spruch(command):
         sprueche = spruchdb.readlines()
 
     message = random.choice(sprueche)
-    await send_text_to_room(command.client, command.room.room_id, message, notice=False, markdown_convert=True)
+    await send_typing(command.client, command.room.room_id, message)
