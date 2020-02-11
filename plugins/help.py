@@ -1,5 +1,5 @@
 from chat_functions import send_typing
-import plugins.sabnzbdapi as sabnzbdapi
+import plugins.sabnzbdapi
 
 
 async def printhelp(command):
@@ -13,7 +13,7 @@ async def printhelp(command):
         "`roll` - the dive giveth and the dive taketh away  \n"
         "`spruch` - famous quotes from even more famous people  \n"
         )
-    if command.room.room_id == await sabnzbdapi.get_room_id():
+    if command.room.room_id == plugins.sabnzbdapi.room_id:
         text = text + (
             "`last [n]` - get last n history items  \n"
             "`resume <nzo_id>` - resume paused download  \n"

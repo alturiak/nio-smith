@@ -39,7 +39,7 @@ class Command(object):
     async def process(self):
         """Process the command"""
 
-        # TODO: would it be helpful to specify available commands per room?
+        """general commands"""
         if self.command.startswith("echo"):
             await plugins.echo.echo(self)
         elif self.command.startswith("help"):
@@ -54,11 +54,14 @@ class Command(object):
             await plugins.roll.roll(self)
         elif self.command.startswith("spruch"):
             await plugins.spruch.spruch(self)
-        elif self.command.startswith("last"):
-            await plugins.sabnzbdapi.last(self)
-        elif self.command.startswith("resume"):
-            await plugins.sabnzbdapi.resume(self)
-        elif self.command.startswith("delete"):
-            await plugins.sabnzbdapi.delete(self)
-        elif self.command.startswith("purge"):
-            await plugins.sabnzbdapi.purge(self)
+        else:
+            """room-specific commands"""
+            if self.room.room_id == plugins.sabnzbdapi.room_id:
+                if self.command.startswith("last"):
+                    await plugins.sabnzbdapi.last(self)
+                elif self.command.startswith("resume"):
+                    await plugins.sabnzbdapi.resume(self)
+                elif self.command.startswith("delete"):
+                    await plugins.sabnzbdapi.delete(self)
+                elif self.command.startswith("purge"):
+                    await plugins.sabnzbdapi.purge(self)
