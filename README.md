@@ -1,17 +1,7 @@
-# Nio Template
-
-A template for creating bots with
-[matrix-nio](https://github.com/poljar/matrix-nio). The documentation for
-matrix-nio can be found
-[here](https://matrix-nio.readthedocs.io/en/latest/nio.html).
-
-## Projects using nio-template
-
-* [anoadragon453/msc-chatbot](https://github.com/anoadragon453/msc-chatbot) - A matrix bot for matrix spec proposals
-* [anoadragon453/matrix-episode-bot](https://github.com/anoadragon453/matrix-episode-bot) - A matrix bot to post episode links
-
-Want your project listed here? [Edit this
-doc!](https://github.com/anoadragon453/nio-template/edit/master/README.md)
+# Nio Smith
+A matrix bot based on [nio-template](https://github.com/anoadragon453/nio-template), a template for creating bots with
+[matrix-nio](https://github.com/poljar/matrix-nio).
+The documentation for matrix-nio can be found [here](https://matrix-nio.readthedocs.io/en/latest/nio.html).
 
 ## Project structure
 
@@ -22,17 +12,7 @@ used to retrieve and send events to a matrix homeserver). It also registering
 some callbacks on the AsyncClient to tell it to call some functions when
 certain events are received (such as an invite to a room, or a new message in a
 room the bot is in).
-
-It also starts the sync loop. Matrix clients "sync" with a homeserver, by
-asking constantly asking for new events. Each time they do, the client gets a
-sync token (stored in the `next_batch` field of the sync response). If the
-client provides this token the next time it syncs (using the `since` parameter
-on the `AsyncClient.sync` method), the homeserver will only return new event
-*since* those specified by the given token.
-
-This token is saved in the database created by `storage.py` so even if the bot
-quits unexpectantly, it will continue syncing where it left off next time it
-is started.
+It also performs login and sync indefinitely.
 
 ### `config.py`
 
@@ -51,19 +31,6 @@ to put or retrieve data from it. Table definitions should be specified in
 `_initial_setup`, and any necessary migrations should be put in
 `_run_migrations`. There's currently no defined method for how migrations
 should work though.
-
-The `sync_token` table should be left in tact so that the bot can save its
-progress when syncing events from the homeserver.
-
-### `sync_token.py`
-
-A simple class that can load and save a sync token to/from the database.
-
-A `SyncToken` is an instance of a sync token, which is simply a string
-retrieved from a matrix homeserver when querying the `/sync` endpoint (which
-clients use to retrieve new events). It is given to the next call of the
-`/sync` endpoint in order to specify the starting point in the event timeline
-you would like to receive messages from.
 
 ### `callbacks.py`
 

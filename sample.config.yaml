@@ -9,12 +9,18 @@ command_prefix: "!c"
 matrix:
   # The Matrix User ID of the bot account
   user_id: "@bot:example.com"
+  # The password to the Matrix User ID
+  user_password: "THIS_IS_NOT_A_SECURE_PASSWORD"
   # The access token of the bot account
   access_token: ""
   # The device ID given on login
   device_id: ABCDEFGHIJ
+  # The device name given on login
+  device_name: bot
   # The URL of the homeserver to connect to
   homeserver_url: https://example.com
+  # The directory to store the database in
+  e2estorepath: "e2estore"
 
 database:
   # The path to the database
