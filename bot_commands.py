@@ -5,8 +5,10 @@ import plugins.echo
 import plugins.help
 import plugins.meter
 import plugins.oracle
-import plugins.sabnzbdapi
 import plugins.spruch
+import plugins.roll
+import plugins.pick
+import plugins.sabnzbdapi
 
 
 class Command(object):
@@ -46,7 +48,17 @@ class Command(object):
             await plugins.meter.meter(self)
         elif self.command.startswith("oracle"):
             await plugins.oracle.oracle(self)
+        elif self.command.startswith("pick"):
+            await plugins.pick.pick(self)
+        elif self.command.startswith("roll"):
+            await plugins.roll.roll(self)
         elif self.command.startswith("spruch"):
             await plugins.spruch.spruch(self)
         elif self.command.startswith("last"):
             await plugins.sabnzbdapi.last(self)
+        elif self.command.startswith("resume"):
+            await plugins.sabnzbdapi.resume(self)
+        elif self.command.startswith("delete"):
+            await plugins.sabnzbdapi.delete(self)
+        elif self.command.startswith("purge"):
+            await plugins.sabnzbdapi.purge(self)

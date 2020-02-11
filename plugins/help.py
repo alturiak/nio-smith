@@ -1,23 +1,24 @@
 from plugins.send_typing import send_typing
+import plugins.sabnzbdapi as sabnzbdapi
 
 
 async def printhelp(command):
     """Show the help text"""
-    if not command.args:
-        text = "Es gibt nichts zu sehen!"
-        await send_text_to_room(command.client, command.room.room_id, text)
-        return
+    text = (
+        "#### Available commands:  \n"
+        "`echo` - make someone agree with you for once  \n"
+        "`meter` - accurately measure someones somethingness  \n"
+        "`oracle` - predict the inevitable future  \n"
+        "`pick` - aids you in those really immportant life decisions  \n"
+        "`roll` - the dive giveth and the dive taketh away  \n"
+        "`spruch` - famous quotes from even more famous people  \n"
+        )
+    if command.room.room_id == await sabnzbdapi.get_room_id():
+        text = text + (
+            "`last [n]` - get last n history items  \n"
+            "`resume <nzo_id>` - resume paused download  \n"
+            "`delete <nzo_id>` - remove download from queue  \n"
+            "`purge` - clear entire queue  \n"
+        )
 
-    topic = command.args[0]
-    if topic == "rules":
-        text = "Clantag weg!"
-    elif topic == "commands":
-        text = ("#### Available commands:  \n"
-                "`meter` - accurately measure someones somethingness  \n"
-                "`quote` - not implemented yet  \n"
-                "`spruch` - famous quotes from even more famous people  \n"
-                "`oracle` - predict the inevitable future  "
-                )
-    else:
-        text = "Unknown help topic!"
-    await send_typing(command.client, command.room.room_id, text, notice=False)
+    await send_typing(command.client, command.room.room_id, text)

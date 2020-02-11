@@ -2,16 +2,20 @@
 
 import logging
 import asyncio
+from time import sleep
+
 from nio import (
     AsyncClient,
     AsyncClientConfig,
     RoomMessageText,
     InviteEvent,
-    LocalProtocolError,
-)
+    LocalProtocolError)
 from callbacks import Callbacks
 from config import Config
 from storage import Storage
+from aiohttp.client_exceptions import (
+    ServerDisconnectedError,
+    ClientConnectionError)
 import plugins.sabnzbdapi
 
 logger = logging.getLogger(__name__)
@@ -41,6 +45,7 @@ async def main():
         store_sync_tokens=True
     )
 
+
     # Initialize the matrix client
     client = AsyncClient(
         config.homeserver_url,
@@ -56,12 +61,21 @@ async def main():
     client.add_event_callback(callbacks.invite, (InviteEvent,))
     client.add_response_callback(run_plugins)
 
-    await client.login(password=config.user_password, device_name=config.device_name)
-    try:
-        await client.keys_upload()
-    except LocalProtocolError:
-        pass
+    while True:
+        try:
+            loginresponse = await client.login(password=config.user_password, device_name=config.device_name)
+            print(loginresponse)
+            try:
+                await client.keys_upload()
+            except LocalProtocolError:
+                pass
 
-    await client.sync_forever(timeout=30000, full_state=True)
+            await client.sync_forever(timeout=30000, full_state=True)
+
+        except (ClientConnectionError, ServerDisconnectedError):
+            print("Disconnected from Server, reconnecting in 3s...")
+            await client.close()
+            sleep(3)
+
 
 asyncio.get_event_loop().run_until_complete(main())

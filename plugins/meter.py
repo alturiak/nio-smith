@@ -1,11 +1,13 @@
 from plugins.send_typing import send_typing
 import random
 
+blacklist = ["!hIWWJKHWQMUcrVPRqW:pack.rocks", "!MhEYjKIkPbppBXWEdQ:pack.rocks"]
+
 
 async def meter(command):
 
     # do not enable for rooms with irc-bridge
-    if command.room.room_id not in ["!hIWWJKHWQMUcrVPRqW:pack.rocks", "!MhEYjKIkPbppBXWEdQ:pack.rocks"]:
+    if command.room.room_id not in blacklist:
         try:
             nick = command.args[0]
             meter_string = command.args[1]
