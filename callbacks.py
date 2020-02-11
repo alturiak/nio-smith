@@ -1,6 +1,3 @@
-from chat_functions import (
-    send_text_to_room,
-)
 from bot_commands import Command
 from nio import (
     JoinError,
@@ -69,15 +66,15 @@ class Callbacks(object):
         """Callback for when an invite is received. Join the room specified in the invite"""
         logger.debug(f"Got invite to {room.room_id} from {event.sender}.")
 
-        # Attempt to join 3 times before giving up
-        for attempt in range(3):
-            result = await self.client.join(room.room_id)
-            if type(result) == JoinError:
-                logger.error(
-                    f"Error joining room {room.room_id} (attempt %d): %s",
-                    attempt, result.message,
-                )
-            else:
-                logger.info(f"Joined {room.room_id}")
-                break
-
+        if event.sender in self.config.botmasters:
+            # Attempt to join 3 times before giving up
+            for attempt in range(3):
+                result = await self.client.join(room.room_id)
+                if type(result) == JoinError:
+                    logger.error(
+                        f"Error joining room {room.room_id} (attempt %d): %s",
+                        attempt, result.message,
+                    )
+                else:
+                    logger.info(f"Joined {room.room_id}")
+                    break

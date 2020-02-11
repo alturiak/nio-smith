@@ -21,6 +21,8 @@ matrix:
   homeserver_url: https://example.com
   # The directory to store the database in
   e2estorepath: "e2estore"
+  # Define matrix-accounts eligible for certain actions
+  botmasters: "[@botmaster:matrix.server,@anotherbotmaster:matrix.server]"
 
 database:
   # The path to the database

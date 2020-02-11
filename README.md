@@ -3,6 +3,8 @@ A matrix bot based on [nio-template](https://github.com/anoadragon453/nio-templa
 [matrix-nio](https://github.com/poljar/matrix-nio).
 The documentation for matrix-nio can be found [here](https://matrix-nio.readthedocs.io/en/latest/nio.html).
 
+Some stuff has been tailored for very specific use-cases, please do not attempt to use this bot as-is, it will not run out of the box!
+
 ## Project structure
 
 ### `main.py`
@@ -12,7 +14,7 @@ used to retrieve and send events to a matrix homeserver). It also registering
 some callbacks on the AsyncClient to tell it to call some functions when
 certain events are received (such as an invite to a room, or a new message in a
 room the bot is in).
-It also performs login and sync indefinitely.
+It also performs login and syncs indefinitely.
 
 ### `config.py`
 
@@ -88,8 +90,3 @@ The sample configuration file. People running your bot should be advised to
 copy this file to `config.yaml`, then edit it according to their needs. Be sure
 never to check the edited `config.yaml` into source control since it'll likely
 contain sensitive details like an access token!
-
-## Questions?
-
-Any questions? Ask in
-[#nio-template:amorgan.xyz](https://matrix.to/#/!vmWBOsOkoOtVHMzZgN:amorgan.xyz?via=amorgan.xyz)!

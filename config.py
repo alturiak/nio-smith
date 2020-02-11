@@ -47,8 +47,6 @@ class Config(object):
         database_dict = config.get("database", {})
         self.database_filepath = database_dict.get("filepath")
 
-
-
         # Matrix bot account setup
         matrix = config.get("matrix", {})
 
@@ -79,5 +77,7 @@ class Config(object):
             raise ConfigError("matrix.homeserver_url is a required field")
         # e2e store path
         self.e2estorepath = matrix.get("e2estorepath")
+
+        self.botmasters = matrix.get("botmasters")
 
         self.command_prefix = config.get("command_prefix", "!c")
