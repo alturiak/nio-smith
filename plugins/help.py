@@ -9,7 +9,7 @@ async def printhelp(command):
         "`echo` - make someone agree with you for once  \n"
         "`meter` - accurately measure someones somethingness  \n"
         "`oracle` - predict the inevitable future  \n"
-        "`pick` - aids you in those really immportant life decisions  \n"
+        "`pick` - aids you in those really important life decisions  \n"
         "`roll` - the dive giveth and the dive taketh away  \n"
         "`spruch` - famous quotes from even more famous people  \n"
         )
