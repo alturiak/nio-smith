@@ -1,4 +1,4 @@
-from plugins.send_typing import send_typing
+from chat_functions import send_typing
 import plugins.sabnzbdapi as sabnzbdapi
 
 

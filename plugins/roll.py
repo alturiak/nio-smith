@@ -4,7 +4,7 @@ __version__ = "1.1"
 __author__ = "Dingo"
 
 import random
-from plugins.send_typing import send_typing
+from chat_functions import send_typing
 
 
 async def roll(command):

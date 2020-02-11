@@ -5,7 +5,7 @@ __author__ = "Dingo"
 
 import re
 import random
-from plugins.send_typing import send_typing
+from chat_functions import send_typing
 
 
 async def pick(command):

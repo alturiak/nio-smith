@@ -1,4 +1,4 @@
-from plugins.send_typing import send_typing
+from chat_functions import send_typing
 import random
 
 blacklist = ["!hIWWJKHWQMUcrVPRqW:pack.rocks", "!MhEYjKIkPbppBXWEdQ:pack.rocks"]
