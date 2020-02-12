@@ -9,7 +9,7 @@ from nio import (
     AsyncClientConfig,
     RoomMessageText,
     InviteEvent,
-    LocalProtocolError)
+    LocalProtocolError, LoginResponse, LoginError)
 from callbacks import Callbacks
 from config import Config
 from storage import Storage
@@ -64,7 +64,9 @@ async def main():
     while True:
         try:
             loginresponse = await client.login(password=config.user_password, device_name=config.device_name)
-            print(loginresponse)
+            if type(loginresponse) == LoginError:
+                print(loginresponse)
+                return False
             try:
                 await client.keys_upload()
             except LocalProtocolError:
@@ -73,9 +75,9 @@ async def main():
             await client.sync_forever(timeout=30000, full_state=True)
 
         except (ClientConnectionError, ServerDisconnectedError):
-            print("Disconnected from Server, reconnecting in 3s...")
+            print("Disconnected from Server, reconnecting in 15s...")
             await client.close()
-            sleep(3)
+            sleep(15)
 
 
 asyncio.get_event_loop().run_until_complete(main())
