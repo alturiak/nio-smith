@@ -9,7 +9,8 @@ import plugins.spruch
 import plugins.roll
 import plugins.pick
 import plugins.sabnzbdapi
-
+from fuzzywuzzy import fuzz
+import operator
 
 class Command(object):
     def __init__(self, client, store, config, command, room, event):
@@ -65,4 +66,10 @@ class Command(object):
         try:
             await commands[commandstart](self)
         except KeyError:
-            pass
+            ratios = {}
+            for key in commands.keys():
+                ratios[key] = fuzz.ratio(commandstart, key)
+            try:
+                await commands[max(ratios.items(), key=operator.itemgetter(1))[0]](self)
+            except KeyError:
+                pass
