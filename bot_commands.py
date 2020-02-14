@@ -37,32 +37,32 @@ class Command(object):
         self.args = self.command.split()[1:]
 
     async def process(self):
-        """Process the command"""
 
-        """general commands"""
+        commands_general = {
+            "echo": plugins.echo.echo,
+            "help": plugins.help.printhelp,
+            "meter": plugins.meter.meter,
+            "oracle": plugins.oracle.oracle,
+            "pick": plugins.pick.pick,
+            "roll": plugins.roll.roll,
+            "spruch": plugins.spruch.spruch
+        }
+
+        commands_rooms = {
+            plugins.sabnzbdapi.room_id: {
+                "last": plugins.sabnzbdapi.last,
+                "resume": plugins.sabnzbdapi.resume,
+                "delete": plugins.sabnzbdapi.delete,
+                "purge": plugins.sabnzbdapi.purge,
+            }
+        }
+
         commandstart = self.command.split()[0].lower()
-        if commandstart == "echo":
-            await plugins.echo.echo(self)
-        elif commandstart == "help":
-            await plugins.help.printhelp(self)
-        elif commandstart == "meter":
-            await plugins.meter.meter(self)
-        elif commandstart == "oracle":
-            await plugins.oracle.oracle(self)
-        elif commandstart == "pick":
-            await plugins.pick.pick(self)
-        elif commandstart == "roll":
-            await plugins.roll.roll(self)
-        elif commandstart == "spruch":
-            await plugins.spruch.spruch(self)
-        else:
-            """room-specific commands"""
-            if self.room.room_id == plugins.sabnzbdapi.room_id:
-                if commandstart == "last":
-                    await plugins.sabnzbdapi.last(self)
-                elif commandstart == "resume":
-                    await plugins.sabnzbdapi.resume(self)
-                elif commandstart == "delete":
-                    await plugins.sabnzbdapi.delete(self)
-                elif commandstart == "purge":
-                    await plugins.sabnzbdapi.purge(self)
+        commands = commands_general
+        if self.room.room_id in commands_rooms:
+            commands = {**commands, **commands_rooms[self.room.room_id]}
+
+        try:
+            await commands[commandstart](self)
+        except KeyError:
+            pass
