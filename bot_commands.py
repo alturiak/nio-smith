@@ -40,28 +40,29 @@ class Command(object):
         """Process the command"""
 
         """general commands"""
-        if self.command.startswith("echo"):
+        commandstart = self.command.split()[0].lower()
+        if commandstart == "echo":
             await plugins.echo.echo(self)
-        elif self.command.startswith("help"):
+        elif commandstart == "help":
             await plugins.help.printhelp(self)
-        elif self.command.startswith("meter"):
+        elif commandstart == "meter":
             await plugins.meter.meter(self)
-        elif self.command.startswith("oracle"):
+        elif commandstart == "oracle":
             await plugins.oracle.oracle(self)
-        elif self.command.startswith("pick"):
+        elif commandstart == "pick":
             await plugins.pick.pick(self)
-        elif self.command.startswith("roll"):
+        elif commandstart == "roll":
             await plugins.roll.roll(self)
-        elif self.command.startswith("spruch"):
+        elif commandstart == "spruch":
             await plugins.spruch.spruch(self)
         else:
             """room-specific commands"""
             if self.room.room_id == plugins.sabnzbdapi.room_id:
-                if self.command.startswith("last"):
+                if commandstart == "last":
                     await plugins.sabnzbdapi.last(self)
-                elif self.command.startswith("resume"):
+                elif commandstart == "resume":
                     await plugins.sabnzbdapi.resume(self)
-                elif self.command.startswith("delete"):
+                elif commandstart == "delete":
                     await plugins.sabnzbdapi.delete(self)
-                elif self.command.startswith("purge"):
+                elif commandstart == "purge":
                     await plugins.sabnzbdapi.purge(self)
