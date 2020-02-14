@@ -1,4 +1,4 @@
 fuzzywuzzy
-matrix-nio>=0.6
+matrix-nio>=0.7.1
 Markdown>=3.1.1
 PyYAML>=5.1.2
