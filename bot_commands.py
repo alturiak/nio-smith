@@ -12,6 +12,7 @@ import plugins.sabnzbdapi
 from fuzzywuzzy import fuzz
 import operator
 
+
 class Command(object):
     def __init__(self, client, store, config, command, room, event):
         """A command made by a user
@@ -68,8 +69,10 @@ class Command(object):
         except KeyError:
             ratios = {}
             for key in commands.keys():
-                ratios[key] = fuzz.ratio(commandstart, key)
+                if fuzz.ratio(commandstart, key) > 60:
+                    ratios[key] = fuzz.ratio(commandstart, key)
             try:
-                await commands[max(ratios.items(), key=operator.itemgetter(1))[0]](self)
+                if ratios:
+                    await commands[max(ratios.items(), key=operator.itemgetter(1))[0]](self)
             except KeyError:
                 pass
