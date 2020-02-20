@@ -28,6 +28,6 @@ async def meter(command):
             )
             chosen = random.choice(meters)
         except (ValueError, IndexError):
-            chosen = "Syntax: !meter <target> <condition>"
+            chosen = "Syntax: `!meter <target> <condition>`"
 
         await send_typing(command.client, command.room.room_id, chosen)
