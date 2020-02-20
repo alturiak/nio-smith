@@ -27,7 +27,7 @@ async def meter(command):
                 dash_meter + "-o-Meter <font color=\"#A9A9A9\">&#x2588;</font><font color=\"#7FFF00\">&#x2588;&#x2588;&#x2588;&#x2588;</font><font color=\"#FFFF00\">&#x2588;&#x2588;&#x2588;</font><font color=\"#FF0000\">&#x2588;&#x2588;&#x2588;</font><font color=\"#A9A9A9\">&#x2588;</font> <font color=\"red\">10</font>/10 " + nick + " is the " + meter + "est of all! " + nick + " scores a <font color=\"red\">perfect</font> 10 on the " + dash_meter + "-o-meter!! I bow to " + nick + "'s " + meter + "ness....",
             )
             chosen = random.choice(meters)
-        except ValueError:
+        except (ValueError, IndexError):
             chosen = "Syntax: !meter <target> <condition>"
 
         await send_typing(command.client, command.room.room_id, chosen)

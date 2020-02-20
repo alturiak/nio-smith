@@ -65,6 +65,7 @@ class Command(object):
             commands = {**commands, **commands_rooms[self.room.room_id]}
 
         try:
+            # is this a secure thing to do in python?
             await commands[commandstart](self)
         except KeyError:
             ratios = {}
