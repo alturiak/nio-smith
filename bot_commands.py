@@ -9,6 +9,7 @@ import plugins.spruch
 import plugins.roll
 import plugins.pick
 import plugins.sabnzbdapi
+import plugins.translate
 from fuzzywuzzy import fuzz
 import operator
 
@@ -47,7 +48,9 @@ class Command(object):
             "oracle": plugins.oracle.oracle,
             "pick": plugins.pick.pick,
             "roll": plugins.roll.roll,
-            "spruch": plugins.spruch.spruch
+            "sach": plugins.translate.switch,
+            "spruch": plugins.spruch.spruch,
+            "translate": plugins.translate.switch,
         }
 
         commands_rooms = {

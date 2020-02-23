@@ -10,8 +10,9 @@ async def printhelp(command):
         "`meter` - accurately measure someones somethingness  \n"
         "`oracle` - predict the inevitable future  \n"
         "`pick` - aids you in those really important life decisions  \n"
-        "`roll` - the dive giveth and the dive taketh away  \n"
+        "`roll` - the dice giveth and the dice taketh away  \n"
         "`spruch` - famous quotes from even more famous people  \n"
+        "`translate [bi] source_lang... dest_lang` - translate text from one or more source_lang to dest_lang  \n"
         )
     if command.room.room_id == plugins.sabnzbdapi.room_id:
         text = text + (
