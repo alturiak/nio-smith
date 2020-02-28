@@ -47,7 +47,7 @@ async def switch(command):
                 source_langs = command.args[:-1]
                 dest_lang = command.args[-1]
         except IndexError:
-            await send_text_to_room(command.client, command.room.room_id, "Syntax: `!translate [bi] source_lang... dest_lang`")
+            await send_text_to_room(command.client, command.room.room_id, "Syntax: `!translate [[bi] source_lang... dest_lang]`")
             return False
 
     if command.room.room_id in enabled_rooms_list:
@@ -61,10 +61,10 @@ async def switch(command):
                 pickle.dump(roomsdb, (open(roomsfile, "wb")))
 
                 if bidirectional:
-                    message = "Bidirectional translations (" + source_langs[0] + "<=>" + dest_lang + ") enabled - **ATTENTION**: *ALL* messages in this room will be sent to Google"
+                    message = "Bidirectional translations (" + source_langs[0] + "<=>" + dest_lang + ") enabled - **ATTENTION**: *ALL* future messages in this room will be sent to Google"
                 else:
                     source_langs_str = str(source_langs)
-                    message = "Unidirectional translations (" + source_langs_str + "=>" + dest_lang + ") enabled - **ATTENTION**: *ALL* messages in this room will be sent to Google"
+                    message = "Unidirectional translations (" + source_langs_str + "=>" + dest_lang + ") enabled - **ATTENTION**: *ALL* future messages in this room will be sent to Google"
                 await send_text_to_room(command.client, command.room.room_id, message, notice=False)
 
 
