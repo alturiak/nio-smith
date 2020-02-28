@@ -9,6 +9,7 @@ import plugins.spruch
 import plugins.roll
 import plugins.pick
 import plugins.sabnzbdapi
+import plugins.sonarrapi
 import plugins.translate
 from fuzzywuzzy import fuzz
 import operator
@@ -59,6 +60,9 @@ class Command(object):
                 "resume": plugins.sabnzbdapi.resume,
                 "delete": plugins.sabnzbdapi.delete,
                 "purge": plugins.sabnzbdapi.purge,
+            },
+            plugins.sonarrapi.room_id: {
+                "series": plugins.sonarrapi.series,
             }
         }
 

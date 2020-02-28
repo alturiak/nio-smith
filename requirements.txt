@@ -1,3 +1,4 @@
+humanize
 googletrans
 requests
 fuzzywuzzy
