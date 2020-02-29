@@ -2,6 +2,6 @@ humanize
 googletrans
 requests
 fuzzywuzzy
-matrix-nio>=0.7.1
+matrix-nio>=0.9.0
 Markdown>=3.1.1
 PyYAML>=5.1.2
