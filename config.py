@@ -3,6 +3,7 @@ import re
 import os
 import yaml
 import sys
+from typing import List, Any
 from errors import ConfigError
 
 logger = logging.getLogger()
@@ -19,65 +20,78 @@ class Config(object):
 
         # Load in the config file at the given filepath
         with open(filepath) as file_stream:
-            config = yaml.full_load(file_stream.read())
+            self.config = yaml.safe_load(file_stream.read())
 
         # Logging setup
         formatter = logging.Formatter('%(asctime)s | %(name)s [%(levelname)s] %(message)s')
 
-        log_dict = config.get("logging", {})
-        log_level = log_dict.get("level", "INFO")
+        log_level = self._get_cfg(["logging", "level"], default="INFO")
         logger.setLevel(log_level)
 
-        file_logging = log_dict.get("file_logging", {})
-        file_logging_enabled = file_logging.get("enabled", False)
-        file_logging_filepath = file_logging.get("filepath", "bot.log")
+        file_logging_enabled = self._get_cfg(["logging", "file_logging", "enabled"], default=False)
+        file_logging_filepath = self._get_cfg(["logging", "file_logging", "filepath"], default="bot.log")
         if file_logging_enabled:
             handler = logging.FileHandler(file_logging_filepath)
             handler.setFormatter(formatter)
             logger.addHandler(handler)
 
-        console_logging = log_dict.get("console_logging", {})
-        console_logging_enabled = console_logging.get("enabled", True)
+        console_logging_enabled = self._get_cfg(["logging", "console_logging", "enabled"], default=True)
         if console_logging_enabled:
             handler = logging.StreamHandler(sys.stdout)
             handler.setFormatter(formatter)
             logger.addHandler(handler)
 
-        # Database setup
-        database_dict = config.get("database", {})
-        self.database_filepath = database_dict.get("filepath")
+        # Storage setup
+        self.database_filepath = self._get_cfg(["storage", "database_filepath"], required=True)
+        self.store_filepath = self._get_cfg(["storage", "store_filepath"], required=True)
+
+        # Create the store folder if it doesn't exist
+        if not os.path.isdir(self.store_filepath):
+            if not os.path.exists(self.store_filepath):
+                os.mkdir(self.store_filepath)
+            else:
+                raise ConfigError(f"storage.store_filepath '{self.store_filepath}' is not a directory")
 
         # Matrix bot account setup
-        matrix = config.get("matrix", {})
-
-        self.user_id = matrix.get("user_id")
-        if not self.user_id:
-            raise ConfigError("matrix.user_id is a required field")
-        elif not re.match("@.*:.*", self.user_id):
+        self.user_id = self._get_cfg(["matrix", "user_id"], required=True)
+        if not re.match("@.*:.*", self.user_id):
             raise ConfigError("matrix.user_id must be in the form @name:domain")
 
-        self.user_password = matrix.get("user_password")
-        if not self.user_password:
-            raise ConfigError("matrix.user_password is a required field")
+        self.user_password = self._get_cfg(["matrix", "user_password"], required=True)
+        self.device_id = self._get_cfg(["matrix", "device_id"], required=True)
+        self.device_name = self._get_cfg(["matrix", "device_name"], default="nio-template")
+        self.homeserver_url = self._get_cfg(["matrix", "homeserver_url"], required=True)
+        self.enable_encryption = self._get_cfg(["matrix", "enable_encryption"], default=False)
+        self.botmasters = self._get_cfg(["matrix", "botmasters"], required=True)
 
-        self.access_token = matrix.get("access_token")
-        if not self.access_token:
-            raise ConfigError("matrix.access_token is a required field")
+        self.command_prefix = self._get_cfg(["command_prefix"], default="!c ")
 
-        self.device_id = matrix.get("device_id")
-        if not self.device_id:
-            logger.warning(
-                "Config option matrix.device_id is not provided, which means "
-                "that end-to-end encryption won't work correctly"
-            )
-        self.device_name = matrix.get("device_name")
+    def _get_cfg(
+            self,
+            path: List[str],
+            default: Any = None,
+            required: bool = True,
+    ) -> Any:
+        """Get a config option from a path and option name, specifying whether it is
+        required.
 
-        self.homeserver_url = matrix.get("homeserver_url")
-        if not self.homeserver_url:
-            raise ConfigError("matrix.homeserver_url is a required field")
-        # e2e store path
-        self.e2estorepath = matrix.get("e2estorepath")
+        Raises:
+            ConfigError: If required is specified and the object is not found
+                (and there is no default value provided), this error will be raised
+        """
+        # Sift through the the config until we reach our option
+        config = self.config
+        for name in path:
+            config = config.get(name)
 
-        self.botmasters = matrix.get("botmasters")
+            # If at any point we don't get our expected option...
+            if config is None:
+                # Raise an error if it was required
+                if required or not default:
+                    raise ConfigError(f"Config option {'.'.join(path)} is required")
 
-        self.command_prefix = config.get("command_prefix", "!c")
+                # or return the default value
+                return default
+
+        # We found the option. Return it
+        return config

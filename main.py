@@ -45,13 +45,12 @@ async def main():
         store_sync_tokens=True
     )
 
-
     # Initialize the matrix client
     client = AsyncClient(
         config.homeserver_url,
         config.user_id,
         device_id=config.device_id,
-        store_path=config.e2estorepath,
+        store_path=config.store_filepath,
         config=client_config,
     )
 
