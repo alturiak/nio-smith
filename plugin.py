@@ -78,12 +78,12 @@ class Plugin:
         Extract called methods from commands
 
         :return:
-        list[dict]: {command: method}
+        dict: {command: method}
         """
 
-        commandmethods: list[dict] = []
+        commandmethods: Dict = {}
         for command in self.commands:
-            commandmethods.append({command[0]: command[1]})
+            commandmethods[command[0]] = command[1]
 
         return commandmethods
 

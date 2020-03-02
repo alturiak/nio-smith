@@ -1,6 +1,6 @@
 from chat_functions import send_text_to_room
 import logging
-import plugins.translate
+# we might need a pluginloader here
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +34,9 @@ class Message(object):
         """Process and possibly respond to the message"""
         if self.message_content.lower() == "hello world":
             await self._hello_world()
-        elif self.room.room_id in await plugins.translate.get_enabled_rooms():
-            await plugins.translate.translate(self.client, self.room.room_id, self.message_content)
+        # this needs to be replaced by pluginloader and message hooks
+        # elif self.room.room_id in await plugins.translate.get_enabled_rooms():
+        #    await plugins.translate.translate(self.client, self.room.room_id, self.message_content)
 
     async def _hello_world(self):
         """Say hello"""

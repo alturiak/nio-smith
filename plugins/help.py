@@ -2,6 +2,15 @@ from chat_functions import send_typing
 import plugins.sabnzbdapi
 import plugins.sonarrapi
 
+# we might need this later
+# self.pl = PluginLoader()
+# self.commands = Dict[str, List[Dict]]
+
+# assemble all valid commands and their respective methods
+# for plugin in self.pl.get_plugins():
+#    for plugin_command in plugin.get_commands():
+#        self.commands[plugin.category].append(plugin_command)
+
 
 async def printhelp(command):
     """Show the help text"""

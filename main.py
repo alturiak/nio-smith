@@ -16,15 +16,15 @@ from storage import Storage
 from aiohttp.client_exceptions import (
     ServerDisconnectedError,
     ClientConnectionError)
-import plugins.sabnzbdapi
 
 logger = logging.getLogger(__name__)
 client = ""
 
 
 async def run_plugins(response):
-
-    await plugins.sabnzbdapi.watchjobs(client)
+    pass
+    # we might need pluginloader hooks here
+    # await plugins.sabnzbdapi.watchjobs(client)
 
 
 async def main():

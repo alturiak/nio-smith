@@ -6,27 +6,22 @@ from typing import List
 from plugin import Plugin
 # import all plugins
 from plugins import *
-import sys
+from sys import modules
 from re import match
 
 
 class PluginLoader:
 
     def __init__(self):
-        self.plugin_list: List[Plugin] = []
-        for key in sys.modules.keys():
+        # get all loaded plugins from sys.modules and make them available as plugin_list
+        self.__plugin_list: List[Plugin] = []
+        for key in modules.keys():
             if match("^plugins\.\w*", key):
-                plugin = sys.modules[key]
-                self.plugin_list.append(plugin.plugin.get_plugin())
+                # this needs to catch exceptions
+                found_plugin = modules[key].plugin.get_plugin()
+                if isinstance(found_plugin, Plugin):
+                    self.__plugin_list.append(found_plugin)
 
     def get_plugins(self) -> List[Plugin]:
 
-        return self.plugin_list
-
-
-pl = PluginLoader()
-for plugin in pl.get_plugins():
-    print(plugin.get_commands())
-
-for plugin in pl.get_plugins():
-    print(plugin.get_help_text())
+        return self.__plugin_list
