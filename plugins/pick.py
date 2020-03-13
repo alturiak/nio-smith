@@ -10,7 +10,7 @@ from chat_functions import send_typing
 
 async def pick(command):
 
-    message = "".join(command.args)
+    message = " ".join(command.args)
     message = message.replace(" and say:", ":")
     try:
         pickstring, saystring = re.split(r": ", message, 1)
@@ -59,20 +59,20 @@ async def pick(command):
             "%s sounds interesting! No, that other word. Tedious!",
             "Good man. Nixon's pro-war and pro-%s.",
             "Doug & Carrie, Doug & Carrie, Doug & Carrie, Doug & Carrie! %s! %s! %s! %s!",
-            "%u, %s is make-believe, like elves, gremlins, and eskimos.",
+    #        "%u, %s is make-believe, like elves, gremlins, and eskimos.",
             "Weaseling out of %s is important to learn. It's what separates us from the animals ... except the weasel.",
             "Is %s too violent for children? Most people would say, 'No, of course not. Don't be ridiculous.' But one woman says, 'Yes.' %u.",
             "The dark side clouds everything. Impossible to see the future is... But I'm sure %s is in it!",
             "I spent 90% of my money on women and %s. The rest I wasted.",
             "As God once put it: let there be %s!",
-            "%u, today is your day, %s is waiting, so get on your way.",
+    #        "%u, today is your day, %s is waiting, so get on your way.",
             "I've got four words for you: I! LOVE! THIS! %S! YEEEEEEEEEEEAAAS!!!",
             "Remember, a Jedi's strength flows from the Force. But beware. Anger, fear, %s. The dark side they are.",
             "Choose %s! Respect my authoritah!!",
             "%s: it's a privilege, not a right.",
             "Fear leads to Anger. Anger leads to Hate. Hate leads to %s.",
             "Drugs are for losers, and %s is for losers with big weird eyebrows.",
-            "I heard %s makes you stupid. | <%u> No, I'm... doesn't!",
+    #        "I heard %s makes you stupid. | <%u> No, I'm... doesn't!",
             "%s. Hell, it's about time!",
         )
     else:
