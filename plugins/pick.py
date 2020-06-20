@@ -11,7 +11,7 @@ from chat_functions import send_typing
 
 async def pick(command):
 
-    message = "".join(command.args)
+    message = " ".join(command.args)
     message = message.replace(" and say:", ":")
     try:
         pickstring, saystring = re.split(r": ", message, 1)
