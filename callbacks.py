@@ -45,14 +45,10 @@ class Callbacks(object):
             f"{room.user_name(event.sender)}: {msg}"
         )
 
-        logger.warning(f"Full message: {msg}")
         # process each line as separate message
         messages = msg.split("\n\n")
 
-        logger.warning(f"Len of messages: {len(messages)}")
-        logger.warning(f"Split messages: {messages}")
         for splitmessage in messages:
-            logger.warning(f"Split message: {splitmessage}")
             # Process as message if in a public room without command prefix
             has_command_prefix = splitmessage.startswith(self.command_prefix)
             if not has_command_prefix and not room.is_group:
