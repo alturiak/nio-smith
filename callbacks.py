@@ -45,23 +45,31 @@ class Callbacks(object):
             f"{room.user_name(event.sender)}: {msg}"
         )
 
-        # Process as message if in a public room without command prefix
-        has_command_prefix = msg.startswith(self.command_prefix)
-        if not has_command_prefix and not room.is_group:
-            # General message listener
-            message = Message(self.client, self.store, self.config, msg, room, event)
-            await message.process()
-            return
+        logger.warning(f"Full message: {msg}")
+        # process each line as separate message
+        messages = msg.split("\n\n")
 
-        # Otherwise if this is in a 1-1 with the bot or features a command prefix,
-        # treat it as a command
-        if has_command_prefix:
-            # Remove the command prefix
-            msg = msg[len(self.command_prefix):]
+        logger.warning(f"Len of messages: {len(messages)}")
+        logger.warning(f"Split messages: {messages}")
+        for splitmessage in messages:
+            logger.warning(f"Split message: {splitmessage}")
+            # Process as message if in a public room without command prefix
+            has_command_prefix = splitmessage.startswith(self.command_prefix)
+            if not has_command_prefix and not room.is_group:
+                # General message listener
+                message = Message(self.client, self.store, self.config, splitmessage, room, event)
+                await message.process()
+                continue
 
-        if msg:
-            command = Command(self.client, self.store, self.config, msg, room, event)
-            await command.process()
+            # Otherwise if this is in a 1-1 with the bot or features a command prefix,
+            # treat it as a command
+            if has_command_prefix:
+                # Remove the command prefix
+                splitmessage = splitmessage[len(self.command_prefix):]
+
+            if splitmessage:
+                command = Command(self.client, self.store, self.config, splitmessage, room, event)
+                await command.process()
 
     async def invite(self, room, event):
         """Callback for when an invite is received. Join the room specified in the invite"""
