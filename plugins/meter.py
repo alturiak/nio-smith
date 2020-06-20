@@ -11,9 +11,8 @@ async def meter(command):
     if command.room.room_id not in blacklist:
         try:
             nick = command.args[0]
-            meter_string = command.args[1]
-            meter = " ".join(meter_string.split())
-            dash_meter = "-".join(meter_string.split())
+            meter = " ".join(command.args[1:])
+            dash_meter = meter.replace(" ", "-")
             meters = (
                 dash_meter + "-o-Meter <font color=\"#A9A9A9\">&#x2588;</font><font color=\"#006400\">&#x2588;&#x2588;&#x2588;&#x2588;</font><font color=\"#604000\">&#x2588;&#x2588;&#x2588;</font><font color=\"#8B0000\">&#x2588;&#x2588;&#x2588;</font><font color=\"#A9A9A9\">&#x2588;</font> <font color=\"#A9A9A9\">0</font>/10 " + nick + " is <font color=\"red\">never</font> " + meter,
                 dash_meter + "-o-Meter <font color=\"#A9A9A9\">&#x2588;</font><font color=\"#7FFF00\">&#x2588;</font><font color=\"#006400\">&#x2588;&#x2588;&#x2588;</font><font color=\"#604000\">&#x2588;&#x2588;&#x2588;</font><font color=\"#8B0000\">&#x2588;&#x2588;&#x2588;</font><font color=\"#A9A9A9\">&#x2588;</font> <font color=\"#7FFF00\">1</font>/10 " + nick + " is just <font color=\"red\">barely</font> " + meter,
