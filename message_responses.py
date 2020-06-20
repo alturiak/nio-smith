@@ -1,6 +1,6 @@
 from chat_functions import send_text_to_room
 import logging
-# we might need a pluginloader here
+from pluginloader import PluginLoader
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +29,7 @@ class Message(object):
         self.message_content = message_content
         self.room = room
         self.event = event
+        self.pl = PluginLoader
 
     async def process(self):
         """Process and possibly respond to the message"""

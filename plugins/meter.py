@@ -1,4 +1,5 @@
 from chat_functions import send_typing
+from plugin import Plugin
 import random
 
 blacklist = ["!hIWWJKHWQMUcrVPRqW:pack.rocks", "!MhEYjKIkPbppBXWEdQ:pack.rocks"]
@@ -31,3 +32,15 @@ async def meter(command):
             chosen = "Syntax: `!meter <target> <condition>`"
 
         await send_typing(command.client, command.room.room_id, chosen)
+
+plugin = Plugin("meter", "General", "Plugin to provide a simple, randomized !meter")
+plugin.add_command("meter", meter, "accurately measure someones somethingness")
+
+plugin = Plugin("meter", "General", "Plugin to provide a simple, randomized !meter")
+plugin.add_command("meter", meter, "accurately measure someones somethingness")
+
+plugin = Plugin("meter", "General", "Plugin to provide a simple, randomized !meter")
+plugin.add_command("meter", meter, "accurately measure someones somethingness")
+
+plugin = Plugin("meter", "General", "Plugin to provide a simple, randomized !meter")
+plugin.add_command("meter", meter, "accurately measure someones somethingness")

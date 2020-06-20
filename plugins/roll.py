@@ -3,6 +3,7 @@ __description__ = "Roll one or more dice. The trigger is 'roll'."
 __version__ = "1.1"
 __author__ = "Dingo"
 
+from plugin import Plugin
 import random
 from chat_functions import send_typing
 
@@ -68,3 +69,15 @@ async def roll(command):
         result_list = ""
 
     await send_typing(command.client, command.room.room_id, "**Result:** " + str(sum(roll_list) + modifier) + result_list)
+
+plugin = Plugin("roll", "General", "Plugin to provide a simple, randomized !roll of dice")
+plugin.add_command("roll", roll, "the dice giveth and the dice taketh away")
+
+plugin = Plugin("roll", "General", "Plugin to provide a simple, randomized !roll of dice")
+plugin.add_command("roll", roll, "the dice giveth and the dice taketh away")
+
+plugin = Plugin("roll", "General", "Plugin to provide a simple, randomized !roll of dice")
+plugin.add_command("roll", roll, "the dice giveth and the dice taketh away")
+
+plugin = Plugin("roll", "General", "Plugin to provide a simple, randomized !roll of dice")
+plugin.add_command("roll", roll, "the dice giveth and the dice taketh away")

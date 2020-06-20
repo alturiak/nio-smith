@@ -1,3 +1,4 @@
+from plugin import Plugin
 from chat_functions import send_typing
 import random
 
@@ -45,3 +46,19 @@ async def oracle(command):
     )
     message = "**Antwort:** " + random.choice(oracles)
     await send_typing(command.client, command.room.room_id, message)
+
+
+plugin = Plugin("oracle", "General", "Plugin to provide a simple, randomized !oracle")
+plugin.add_command("oracle", oracle, "predict the inevitable future")
+
+
+plugin = Plugin("oracle", "General", "Plugin to provide a simple, randomized !oracle")
+plugin.add_command("oracle", oracle, "predict the inevitable future")
+
+
+plugin = Plugin("oracle", "General", "Plugin to provide a simple, randomized !oracle")
+plugin.add_command("oracle", oracle, "predict the inevitable future")
+
+
+plugin = Plugin("oracle", "General", "Plugin to provide a simple, randomized !oracle")
+plugin.add_command("oracle", oracle, "predict the inevitable future")

@@ -1,19 +1,20 @@
+from plugin import Plugin
+from pluginloader import PluginLoader
 from chat_functions import send_typing
-import plugins.sabnzbdapi
-import plugins.sonarrapi
 
 # we might need this later
-# self.pl = PluginLoader()
-# self.commands = Dict[str, List[Dict]]
-
-# assemble all valid commands and their respective methods
-# for plugin in self.pl.get_plugins():
-#    for plugin_command in plugin.get_commands():
-#        self.commands[plugin.category].append(plugin_command)
 
 
 async def printhelp(command):
     """Show the help text"""
+    # self.pl = PluginLoader()
+    # self.commands = Dict[str, List[Dict]]
+
+    # assemble all valid commands and their respective methods
+    # for plugin in self.pl.get_plugins():
+    #    for plugin_command in plugin.get_commands():
+    #        self.commands[plugin.category].append(plugin_command)
+
     text = (
         "#### Available commands:  \n"
         "**general**  \n"
@@ -42,3 +43,15 @@ async def printhelp(command):
         )
 
     await send_typing(command.client, command.room.room_id, text)
+
+plugin = Plugin("help", "General", "Provide helpful help")
+plugin.add_command("help", printhelp, "Display list of all available commands")
+
+plugin = Plugin("help", "General", "Provide helpful help")
+plugin.add_command("help", printhelp, "Display list of all available commands")
+
+plugin = Plugin("help", "General", "Provide helpful help")
+plugin.add_command("help", printhelp, "Display list of all available commands")
+
+plugin = Plugin("help", "General", "Provide helpful help")
+plugin.add_command("help", printhelp, "Display list of all available commands")
