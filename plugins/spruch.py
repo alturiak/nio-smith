@@ -13,12 +13,3 @@ async def spruch(command):
 
 plugin = Plugin("spruch", "General", "Plugin to provide a simple, randomized !spruch")
 plugin.add_command("spruch", spruch, "famous quotes from even more famous people")
-
-plugin = Plugin("spruch", "General", "Plugin to provide a simple, randomized !spruch")
-plugin.add_command("spruch", spruch, "famous quotes from even more famous people")
-
-plugin = Plugin("spruch", "General", "Plugin to provide a simple, randomized !spruch")
-plugin.add_command("spruch", spruch, "famous quotes from even more famous people")
-
-plugin = Plugin("spruch", "General", "Plugin to provide a simple, randomized !spruch")
-plugin.add_command("spruch", spruch, "famous quotes from even more famous people")

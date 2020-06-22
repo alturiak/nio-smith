@@ -6,7 +6,7 @@ import pickle
 import googletrans
 from nio import Client
 
-from bot_commands import Command
+# from bot_commands import Command
 from chat_functions import send_text_to_room
 
 allowed_rooms: list = ["!hIWWJKHWQMUcrVPRqW:pack.rocks", "!iAxDarGKqYCIKvNSgu:pack.rocks"]
@@ -26,7 +26,7 @@ roomsdb = {
 """
 
 
-async def switch(command: Command):
+async def switch(command):
     """Switch translation for room-messages on or off
 
     Args:
@@ -100,27 +100,13 @@ async def translate(client: Client, room_id: str, message: str):
             await send_text_to_room(client, room_id, translated)
 
 
-async def get_enabled_rooms() -> list:
+def get_enabled_rooms() -> list:
 
     try:
         return pickle.load(open(roomsfile, "rb")).keys()
     except FileNotFoundError:
         return []
 
-plugin = Plugin("translate", "General", "Provide near-realtime translations of all room-messages via Google Translate")
-plugin.add_command("translate", switch, "`translate [[bi] source_lang... dest_lang]` - translate text from one or "
-                                        "more source_lang to dest_lang")
-plugin.add_hook("message", translate, get_enabled_rooms())
-
-plugin = Plugin("translate", "General", "Provide near-realtime translations of all room-messages via Google Translate")
-plugin.add_command("translate", switch, "`translate [[bi] source_lang... dest_lang]` - translate text from one or "
-                                        "more source_lang to dest_lang")
-plugin.add_hook("message", translate, get_enabled_rooms())
-
-plugin = Plugin("translate", "General", "Provide near-realtime translations of all room-messages via Google Translate")
-plugin.add_command("translate", switch, "`translate [[bi] source_lang... dest_lang]` - translate text from one or "
-                                        "more source_lang to dest_lang")
-plugin.add_hook("message", translate, get_enabled_rooms())
 
 plugin = Plugin("translate", "General", "Provide near-realtime translations of all room-messages via Google Translate")
 plugin.add_command("translate", switch, "`translate [[bi] source_lang... dest_lang]` - translate text from one or "

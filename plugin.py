@@ -1,10 +1,13 @@
 import os.path
 from modulefinder import Module
-from typing import List, Any, Dict, Coroutine
+from typing import List, Any, Dict, Callable
 import nio
 import yaml
-
+from plugincommand import PluginCommand
+from pluginhook import PluginHook
 from errors import ConfigError
+import logging
+logger = logging.getLogger(__name__)
 
 
 def _get_cfg(
@@ -41,7 +44,7 @@ def _get_cfg(
 
 class Plugin:
 
-    def __init__(self, name, category, description):
+    def __init__(self, name: str, category: str, description: str):
         """
         commands (list[tuple]): list of commands in the form of (trigger: str, method: str, helptext: str)
 
@@ -49,12 +52,10 @@ class Plugin:
         self.category: str = category
         self.name: str = name
         self.description: str = description
-        # Hooks
-        # Dict of Rooms, each value being a Dict of events and coroutines being called by the event.
-        # self.hooks: { nio.rooms.MatrixRoom: { event_type: [ Coroutine, ... ] } }
-        self.commands: Dict[nio.rooms.MatrixRoom, Dict[str, List[Coroutine]]] = {}
-        self.hooks: Dict[nio.rooms.MatrixRoom, Dict[str, List[Coroutine]]] = {}
-        self.help_texts: Dict[nio.rooms.MatrixRoom, Dict[str, str]] = {}
+        self.commands: Dict[str, PluginCommand] = {}
+        self.help_texts: Dict[str, str] = {}
+        self.hooks: Dict[str, List[PluginHook]] = {}
+
         self.configitems: List[str] = []
         self.configuration: Dict[str, str] = {}
 
@@ -76,33 +77,15 @@ class Plugin:
 
         return commandhelp
 
-    def add_command(self, command, method, helptext, room_list=[]):
+    def add_command(self, command: str, method: Callable, help_text: str, room_id: List[str] = None):
 
-        if room_list:
-            for room in room_list:
-                try:
-                    self.commands[room][command].append(method)
-                except KeyError:
-                    if room in self.commands.keys():
-                        print("Added command " + command + " for room " + room)
-                        self.commands[room][command] = [method]
-                    else:
-                        print("Set commands for room " + room + " to " + command)
-                        self.commands[room] = {}
-                        self.commands[room][command] = [method]
-                # self.help_texts[room][command] = helptext
+        plugin_command = PluginCommand(command, method, help_text, room_id)
+        if command not in self.commands.keys():
+            self.commands[command] = plugin_command
+            self.help_texts[command] = help_text
+            logger.debug(f"Added command {command} to rooms {room_id}")
         else:
-            any_room = nio.rooms.MatrixRoom("any", "undef")
-            if any_room in self.commands.keys():
-                print("Added global command " + command)
-                self.commands[any_room][command].append(method)
-            else:
-                print("Set global commands to " + command)
-                self.commands[any_room] = {}
-                self.commands[any_room][command] = [method]
-            if any_room in self.help_texts.keys():
-                print("Added global helptext " + command + ", " + helptext)
-                self.help_texts[any_room][command] = helptext
+            logger.error(f"Error adding command {command} - command already exists")
 
     def get_commands(self):
         """
@@ -112,29 +95,18 @@ class Plugin:
         dict: {command: method}
         """
 
-        # commandmethods: Dict = {}
-        # for command in self.commands:
-        #    commandmethods[command[0]] = command[1]
-        #
-        # return commandmethods
-
         return self.commands
 
-    def add_hook(self, event_type, method, room_list=[]):
+    def add_hook(self, event_type: str, method: str, room_id: List[str] = None):
 
-        if room_list:
-            for room in room_list:
-                self.hooks[room][event_type].append(method)
+        plugin_hook = PluginHook(event_type, method, room_id)
+        if event_type not in self.hooks.keys():
+            self.hooks[event_type] = [plugin_hook]
+            logger.debug(f"Added hook for {event_type} to rooms {room_id}")
         else:
-            self.hooks[nio.rooms.MatrixRoom("any", "undef")][event_type].append(method)
+            self.hooks[event_type].append(plugin_hook)
 
     def get_hooks(self):
-
-        # try:
-        #    command = self.hooks[room_id][event_type]
-        #    return command
-        # except ValueError:
-        #    return None
 
         return self.hooks
 

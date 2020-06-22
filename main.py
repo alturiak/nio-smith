@@ -17,6 +17,8 @@ from aiohttp.client_exceptions import (
     ServerDisconnectedError,
     ClientConnectionError)
 
+from pluginloader import PluginLoader
+
 logger = logging.getLogger(__name__)
 client = ""
 
@@ -55,8 +57,11 @@ async def main():
         config=client_config,
     )
 
+    # instantiate the pluginLoader
+    plugin_loader = PluginLoader()
+
     # Set up event callbacks
-    callbacks = Callbacks(client, store, config)
+    callbacks = Callbacks(client, store, config, plugin_loader)
     client.add_event_callback(callbacks.message, (RoomMessageText,))
     client.add_event_callback(callbacks.invite, (InviteEvent,))
     client.add_response_callback(run_plugins)

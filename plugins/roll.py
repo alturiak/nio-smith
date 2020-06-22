@@ -72,12 +72,3 @@ async def roll(command):
 
 plugin = Plugin("roll", "General", "Plugin to provide a simple, randomized !roll of dice")
 plugin.add_command("roll", roll, "the dice giveth and the dice taketh away")
-
-plugin = Plugin("roll", "General", "Plugin to provide a simple, randomized !roll of dice")
-plugin.add_command("roll", roll, "the dice giveth and the dice taketh away")
-
-plugin = Plugin("roll", "General", "Plugin to provide a simple, randomized !roll of dice")
-plugin.add_command("roll", roll, "the dice giveth and the dice taketh away")
-
-plugin = Plugin("roll", "General", "Plugin to provide a simple, randomized !roll of dice")
-plugin.add_command("roll", roll, "the dice giveth and the dice taketh away")

@@ -2,7 +2,7 @@ from pluginloader import PluginLoader
 
 
 class Command(object):
-    def __init__(self, client, store, config, command, room, event):
+    def __init__(self, client, store, config, command, room, event, plugin_loader: PluginLoader):
         """A command made by a user
 
         Args:
@@ -25,8 +25,8 @@ class Command(object):
         self.room = room
         self.event = event
         self.args = self.command.split()[1:]
-        self.pl = PluginLoader()
+        self.plugin_loader: PluginLoader = plugin_loader
 
     async def process(self):
 
-        self.pl.run_command(self)
+        await self.plugin_loader.run_command(self)

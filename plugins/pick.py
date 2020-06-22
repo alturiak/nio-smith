@@ -120,11 +120,3 @@ async def pick(command):
 plugin = Plugin("pick", "General", "Plugin to provide a simple, randomized !pick")
 plugin.add_command("pick", pick, "aids you in those really important life decisions")
 
-plugin = Plugin("pick", "General", "Plugin to provide a simple, randomized !pick")
-plugin.add_command("pick", pick, "aids you in those really important life decisions")
-
-plugin = Plugin("pick", "General", "Plugin to provide a simple, randomized !pick")
-plugin.add_command("pick", pick, "aids you in those really important life decisions")
-
-plugin = Plugin("pick", "General", "Plugin to provide a simple, randomized !pick")
-plugin.add_command("pick", pick, "aids you in those really important life decisions")

@@ -1,5 +1,5 @@
 from plugin import Plugin
-from pluginloader import PluginLoader
+# from pluginloader import PluginLoader
 from chat_functions import send_typing
 
 # we might need this later
@@ -43,15 +43,6 @@ async def printhelp(command):
         )
 
     await send_typing(command.client, command.room.room_id, text)
-
-plugin = Plugin("help", "General", "Provide helpful help")
-plugin.add_command("help", printhelp, "Display list of all available commands")
-
-plugin = Plugin("help", "General", "Provide helpful help")
-plugin.add_command("help", printhelp, "Display list of all available commands")
-
-plugin = Plugin("help", "General", "Provide helpful help")
-plugin.add_command("help", printhelp, "Display list of all available commands")
 
 plugin = Plugin("help", "General", "Provide helpful help")
 plugin.add_command("help", printhelp, "Display list of all available commands")

@@ -50,15 +50,3 @@ async def oracle(command):
 
 plugin = Plugin("oracle", "General", "Plugin to provide a simple, randomized !oracle")
 plugin.add_command("oracle", oracle, "predict the inevitable future")
-
-
-plugin = Plugin("oracle", "General", "Plugin to provide a simple, randomized !oracle")
-plugin.add_command("oracle", oracle, "predict the inevitable future")
-
-
-plugin = Plugin("oracle", "General", "Plugin to provide a simple, randomized !oracle")
-plugin.add_command("oracle", oracle, "predict the inevitable future")
-
-
-plugin = Plugin("oracle", "General", "Plugin to provide a simple, randomized !oracle")
-plugin.add_command("oracle", oracle, "predict the inevitable future")

@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class Callbacks(object):
 
-    def __init__(self, client, store, config):
+    def __init__(self, client, store, config, plugin_loader):
         """
         Args:
             client (nio.AsyncClient): nio client used to interact with matrix
@@ -23,6 +23,7 @@ class Callbacks(object):
         self.store = store
         self.config = config
         self.command_prefix = config.command_prefix
+        self.plugin_loader = plugin_loader
 
     async def message(self, room, event):
         """Callback for when a message event is received
@@ -48,12 +49,12 @@ class Callbacks(object):
         # process each line as separate message
         messages = msg.split("\n\n")
 
-        for splitmessage in messages:
+        for split_message in messages:
             # Process as message if in a public room without command prefix
-            has_command_prefix = splitmessage.startswith(self.command_prefix)
+            has_command_prefix = split_message.startswith(self.command_prefix)
             if not has_command_prefix and not room.is_group:
                 # General message listener
-                message = Message(self.client, self.store, self.config, splitmessage, room, event)
+                message = Message(self.client, self.store, self.config, split_message, room, event)
                 await message.process()
                 continue
 
@@ -61,10 +62,12 @@ class Callbacks(object):
             # treat it as a command
             if has_command_prefix:
                 # Remove the command prefix
-                splitmessage = splitmessage[len(self.command_prefix):]
+                split_message = split_message[len(self.command_prefix):]
 
-            if splitmessage:
-                command = Command(self.client, self.store, self.config, splitmessage, room, event)
+            if split_message:
+                # remove leading spaces
+                split_message = split_message.lstrip()
+                command = Command(self.client, self.store, self.config, split_message, room, event, self.plugin_loader)
                 await command.process()
 
     async def invite(self, room, event):
