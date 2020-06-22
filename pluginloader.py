@@ -68,7 +68,7 @@ class PluginLoader:
         command_start = command.command.split()[0].lower()
 
         if command_start in self.commands.keys():
-            if self.commands[command_start].room_id is None or self.commands[command_start].room_id == command.room:
+            if self.commands[command_start].room_id is None or command.room.room_id in self.commands[command_start].room_id:
                 await self.commands[command_start].method(command)
 
         # Command not found, try fuzzy matching
@@ -83,8 +83,7 @@ class PluginLoader:
             ratios: List[Dict[str, int]] = sorted(ratios.items(), key=operator.itemgetter(1), reverse=True)
             for candidate in ratios:
                 candidate_command = candidate[0]
-                if self.commands[candidate_command].room_id is None or self.commands[candidate_command].room_id == \
-                        command.room:
+                if self.commands[candidate_command].room_id is None or command.room.room_id in self.commands[candidate_command].room_id:
                     await self.commands[candidate_command].method(command)
 
     def run_hooks(self, event_type, event):
