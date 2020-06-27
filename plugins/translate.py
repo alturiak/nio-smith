@@ -82,23 +82,27 @@ async def switch(command):
 
 async def translate(client: AsyncClient, room_id: str, message: str):
 
-    roomsdb = pickle.load(open(roomsfile, "rb"))
+    try:
+        roomsdb = pickle.load(open(roomsfile, "rb"))
+    except FileNotFoundError:
+        roomsdb = {}
     trans = googletrans.Translator()
     message_source_lang = trans.detect(message).lang
 
-    if roomsdb[room_id]["bidirectional"]:
-        languages = [roomsdb[room_id]["source_langs"][0], roomsdb[room_id["dest_lang"]]]
-        if message_source_lang in languages:
-            # there has to be a simpler way, but my brain is tired
-            dest_lang = set(languages).difference([message_source_lang])
-            if len(dest_lang) == 1:
-                dest_lang = dest_lang.pop()
-                translated = trans.translate(message, dest=dest_lang).text
+    if room_id in roomsdb.keys():
+        if roomsdb[room_id]["bidirectional"]:
+            languages = [roomsdb[room_id]["source_langs"][0], roomsdb[room_id["dest_lang"]]]
+            if message_source_lang in languages:
+                # there has to be a simpler way, but my brain is tired
+                dest_lang = set(languages).difference([message_source_lang])
+                if len(dest_lang) == 1:
+                    dest_lang = dest_lang.pop()
+                    translated = trans.translate(message, dest=dest_lang).text
+                    await send_text_to_room(client, room_id, translated)
+        else:
+            if message_source_lang != roomsdb[room_id]["dest_lang"] and (roomsdb[room_id]["source_langs"] == ['any'] or message_source_lang in roomsdb[room_id]["source_langs"]):
+                translated = trans.translate(message, dest=roomsdb[room_id]["dest_lang"]).text
                 await send_text_to_room(client, room_id, translated)
-    else:
-        if message_source_lang != roomsdb[room_id]["dest_lang"] and (roomsdb[room_id]["source_langs"] == ['any'] or message_source_lang in roomsdb[room_id]["source_langs"]):
-            translated = trans.translate(message, dest=roomsdb[room_id]["dest_lang"]).text
-            await send_text_to_room(client, room_id, translated)
 
 
 def get_enabled_rooms() -> list:
