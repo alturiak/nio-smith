@@ -34,6 +34,7 @@ async def run_plugins(response):
 
 
 async def main():
+
     # TODO: this really needs to be replaced
     # probably using https://docs.python.org/3.8/library/functools.html#functools.partial
     global client

@@ -96,7 +96,7 @@ class Plugin:
 
         return self.commands
 
-    def add_hook(self, event_type: str, method: str, room_id: List[str] = None):
+    def add_hook(self, event_type: str, method: Callable, room_id: List[str] = None):
 
         plugin_hook = PluginHook(event_type, method, room_id)
         if event_type not in self.hooks.keys():

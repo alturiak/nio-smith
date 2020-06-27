@@ -46,7 +46,7 @@ class Callbacks(object):
             f"{room.user_name(event.sender)}: {msg}"
         )
 
-        # process each line as separate message
+        # process each line as separate message to check for commands
         messages = msg.split("\n\n")
 
         for split_message in messages:
@@ -54,7 +54,7 @@ class Callbacks(object):
             has_command_prefix = split_message.startswith(self.command_prefix)
             if not has_command_prefix and not room.is_group:
                 # General message listener
-                message = Message(self.client, self.store, self.config, split_message, room, event)
+                message = Message(self.client, self.store, self.config, split_message, room, event, self.plugin_loader)
                 await message.process()
                 continue
 

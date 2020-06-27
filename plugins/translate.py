@@ -2,15 +2,16 @@
 from plugin import Plugin
 import os.path
 import pickle
+from typing import List
 
 import googletrans
-from nio import Client
+from nio import AsyncClient
 
 # from bot_commands import Command
 from chat_functions import send_text_to_room
 
-allowed_rooms: list = ["!hIWWJKHWQMUcrVPRqW:pack.rocks", "!iAxDarGKqYCIKvNSgu:pack.rocks", "!iAxDarGKqYCIKvNSgu:pack.rocks"]
-default_source: list = ['any']
+allowed_rooms: List = ["!hIWWJKHWQMUcrVPRqW:pack.rocks", "!iAxDarGKqYCIKvNSgu:pack.rocks"]
+default_source: List = ['any']
 default_dest: str = 'en'
 default_bidirectional: bool = False
 roomsfile: str = os.path.join(os.path.dirname(__file__), os.path.basename(__file__)[:-3] + ".pickle")
@@ -79,7 +80,7 @@ async def switch(command):
                 await send_text_to_room(command.client, command.room.room_id, message, notice=False)
 
 
-async def translate(client: Client, room_id: str, message: str):
+async def translate(client: AsyncClient, room_id: str, message: str):
 
     roomsdb = pickle.load(open(roomsfile, "rb"))
     trans = googletrans.Translator()
@@ -111,5 +112,5 @@ def get_enabled_rooms() -> list:
 plugin = Plugin("translate", "General", "**broken** Provide near-realtime translations of all room-messages via Google "
                                         "Translate")
 plugin.add_command("translate", switch, "**broken** `translate [[bi] source_lang... dest_lang]` - translate text from "
-                                        "one or more source_lang to dest_lang", get_enabled_rooms())
-plugin.add_hook("m.room.message", translate, get_enabled_rooms())
+                                        "one or more source_lang to dest_lang", allowed_rooms)
+plugin.add_hook("m.room.message", translate, allowed_rooms)

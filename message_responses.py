@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 class Message(object):
 
-    def __init__(self, client, store, config, message_content, room, event):
+    def __init__(self, client, store, config, message_content, room, event, plugin_loader):
         """Initialize a new Message
 
         Args:
@@ -29,18 +29,8 @@ class Message(object):
         self.message_content = message_content
         self.room = room
         self.event = event
-        self.pl = PluginLoader
+        self.plugin_loader: PluginLoader = plugin_loader
 
     async def process(self):
-        """Process and possibly respond to the message"""
-        if self.message_content.lower() == "hello world":
-            await self._hello_world()
-        # this needs to be replaced by pluginloader and message hooks
-        # elif self.room.room_id in await plugins.translate.get_enabled_rooms():
-        #    await plugins.translate.translate(self.client, self.room.room_id, self.message_content)
 
-    async def _hello_world(self):
-        """Say hello"""
-        text = "Hello, world!"
-        await send_text_to_room(self.client, self.room.room_id, text)
-
+        await self.plugin_loader.run_hooks(self.client, "m.room.message", self.room, self.message_content)

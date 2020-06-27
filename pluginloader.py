@@ -23,7 +23,6 @@ class PluginLoader:
     def __init__(self):
         # get all loaded plugins from sys.modules and make them available as plugin_list
         self.__plugin_list: List[Plugin] = []
-        # Commands: Dict of room-ids, each containing a list of dicts with command and coroutine
         self.commands: Dict[str, PluginCommand] = {}
         self.help_texts: Dict[str, str] = {}
         self.hooks: Dict[str, List[PluginHook]] = {}
@@ -91,18 +90,11 @@ class PluginLoader:
                 if self.commands[candidate_command].room_id is None or command.room.room_id in self.commands[candidate_command].room_id:
                     await self.commands[candidate_command].method(command)
 
-    def run_hooks(self, event_type, event):
+    async def run_hooks(self, client, event_type: str, room, event):
 
-        # run room-specific hooks
-        try:
-            for hook in self.hooks[event.room][event_type]:
-                hook(self)
-        except KeyError:
-            pass
+        if event_type in self.hooks.keys():
+            event_hooks: List[PluginHook] = self.hooks[event_type]
 
-        # run global hooks
-        try:
-            for hook in self.hooks["global"][event_type]:
-                hook(self)
-        except KeyError:
-            pass
+            for event_hook in event_hooks:
+                if room.room_id is None or room.room_id in event_hook.room_id:
+                    await event_hook.method(client, room.room_id, event)
