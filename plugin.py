@@ -3,8 +3,6 @@ from modulefinder import Module
 from typing import List, Any, Dict, Callable
 import nio
 import yaml
-from plugincommand import PluginCommand
-from pluginhook import PluginHook
 from errors import ConfigError
 import logging
 logger = logging.getLogger(__name__)
@@ -115,3 +113,20 @@ class Plugin:
         configuration: dict = {}
         for value in self.configitems:
             configuration[value] = _get_cfg(configfile, [value], required=True)
+
+
+class PluginCommand:
+
+    def __init__(self, command: str, method: Callable, help_text: str, room_id: List[str]):
+        self.command: str = command
+        self.method: Callable = method
+        self.help_text: str = help_text
+        self.room_id: List[str] = room_id
+
+
+class PluginHook:
+
+    def __init__(self, event_type: str, method: Callable, room_id: List[str]):
+        self.event_type: str = event_type
+        self.method: Callable = method
+        self.room_id: List[str] = room_id

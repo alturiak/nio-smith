@@ -8,14 +8,12 @@ from typing import List, Dict, Callable
 import nio
 from fuzzywuzzy import fuzz
 
-from plugin import Plugin
+from plugin import Plugin, PluginCommand, PluginHook
 # import all plugins
 from plugins import *
 from sys import modules
 from re import match
 import logging
-from plugincommand import PluginCommand
-from pluginhook import PluginHook
 import operator
 logger = logging.getLogger(__name__)
 

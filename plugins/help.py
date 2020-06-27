@@ -1,7 +1,6 @@
-from plugin import Plugin
+from plugin import Plugin, PluginCommand
 from chat_functions import send_text_to_room
 from typing import List
-from plugincommand import PluginCommand
 
 
 async def printhelp(command):
