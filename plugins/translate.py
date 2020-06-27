@@ -1,16 +1,20 @@
 # -*- coding: utf8 -*-
+from plugin import Plugin
 import os.path
 import pickle
+from typing import List
 
 import googletrans
+from nio import AsyncClient
+
+# from bot_commands import Command
 from chat_functions import send_text_to_room
 
-allowed_rooms = ["!hIWWJKHWQMUcrVPRqW:pack.rocks", "!iAxDarGKqYCIKvNSgu:pack.rocks"]
-default_source = ['any']
-default_dest = 'en'
-default_bidirectional = False
-roomsfile = os.path.join(os.path.dirname(__file__), "translate.pickle")
-
+allowed_rooms: List = ["!hIWWJKHWQMUcrVPRqW:pack.rocks", "!iAxDarGKqYCIKvNSgu:pack.rocks"]
+default_source: List = ['any']
+default_dest: str = 'en'
+default_bidirectional: bool = False
+roomsfile: str = os.path.join(os.path.dirname(__file__), os.path.basename(__file__)[:-3] + ".pickle")
 
 """
 roomsdb = {
@@ -24,18 +28,24 @@ roomsdb = {
 
 
 async def switch(command):
+    """Switch translation for room-messages on or off
+
+    Args:
+        command (bot_commands.Command): Command used to trigger this method
+
+    """
 
     try:
-        roomsdb = pickle.load(open(roomsfile, "rb"))
-        enabled_rooms_list = roomsdb.keys()
+        roomsdb: dict = pickle.load(open(roomsfile, "rb"))
+        enabled_rooms_list: list = roomsdb.keys()
     except FileNotFoundError:
-        roomsdb = {}
-        enabled_rooms_list = []
+        roomsdb: dict = {}
+        enabled_rooms_list: list = []
 
     if len(command.args) == 0:
-        source_langs = default_source
-        dest_lang = default_dest
-        bidirectional = default_bidirectional
+        source_langs: list = default_source
+        dest_lang: str = default_dest
+        bidirectional: bool = default_bidirectional
     else:
         try:
             if command.args[0] == 'bi':
@@ -61,14 +71,16 @@ async def switch(command):
                 pickle.dump(roomsdb, (open(roomsfile, "wb")))
 
                 if bidirectional:
-                    message = "Bidirectional translations (" + source_langs[0] + "<=>" + dest_lang + ") enabled - **ATTENTION**: *ALL* future messages in this room will be sent to Google"
+                    message = "Bidirectional translations (" + source_langs[0] + "<=>" + dest_lang + ") enabled - " \
+                                                                                                     "**ATTENTION**: *ALL* future messages in this room will be sent to Google"
                 else:
                     source_langs_str = str(source_langs)
-                    message = "Unidirectional translations (" + source_langs_str + "=>" + dest_lang + ") enabled - **ATTENTION**: *ALL* future messages in this room will be sent to Google"
+                    message = "Unidirectional translations (" + source_langs_str + "=>" + dest_lang + ") enabled - " \
+                                                                                                      "**ATTENTION**: *ALL* future messages in this room will be sent to Google"
                 await send_text_to_room(command.client, command.room.room_id, message, notice=False)
 
 
-async def translate(client, room_id, message):
+async def translate(client: AsyncClient, room_id: str, message: str):
 
     roomsdb = pickle.load(open(roomsfile, "rb"))
     trans = googletrans.Translator()
@@ -89,9 +101,16 @@ async def translate(client, room_id, message):
             await send_text_to_room(client, room_id, translated)
 
 
-async def get_enabled_rooms():
+def get_enabled_rooms() -> list:
 
     try:
         return pickle.load(open(roomsfile, "rb")).keys()
     except FileNotFoundError:
         return []
+
+
+plugin = Plugin("translate", "General", "**broken** Provide near-realtime translations of all room-messages via Google "
+                                        "Translate")
+plugin.add_command("translate", switch, "**broken** `translate [[bi] source_lang... dest_lang]` - translate text from "
+                                        "one or more source_lang to dest_lang", allowed_rooms)
+plugin.add_hook("m.room.message", translate, allowed_rooms)

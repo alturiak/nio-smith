@@ -16,21 +16,29 @@ from storage import Storage
 from aiohttp.client_exceptions import (
     ServerDisconnectedError,
     ClientConnectionError)
-import plugins.sabnzbdapi
+
+from pluginloader import PluginLoader
 
 logger = logging.getLogger(__name__)
-client = ""
+client: AsyncClient
+plugin_loader: PluginLoader
 
 
 async def run_plugins(response):
 
-    await plugins.sabnzbdapi.watchjobs(client)
+    global plugin_loader
+    global client
+
+    for timer in plugin_loader.get_timers():
+        await timer(client)
 
 
 async def main():
+
     # TODO: this really needs to be replaced
     # probably using https://docs.python.org/3.8/library/functools.html#functools.partial
     global client
+    global plugin_loader
 
     # Read config file
     config = Config("config.yaml")
@@ -55,8 +63,11 @@ async def main():
         config=client_config,
     )
 
+    # instantiate the pluginLoader
+    plugin_loader = PluginLoader()
+
     # Set up event callbacks
-    callbacks = Callbacks(client, store, config)
+    callbacks = Callbacks(client, store, config, plugin_loader)
     client.add_event_callback(callbacks.message, (RoomMessageText,))
     client.add_event_callback(callbacks.invite, (InviteEvent,))
     client.add_response_callback(run_plugins)

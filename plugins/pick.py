@@ -3,6 +3,7 @@ __description__ = "Pick a random item from a given list of items. The trigger is
 __version__ = "1.0"
 __author__ = "Dingo"
 
+from plugin import Plugin
 import re
 import random
 from chat_functions import send_typing
@@ -115,3 +116,7 @@ async def pick(command):
         return None
 
     await send_typing(command.client, command.room.room_id, msg)
+
+plugin = Plugin("pick", "General", "Plugin to provide a simple, randomized !pick")
+plugin.add_command("pick", pick, "aids you in those really important life decisions")
+

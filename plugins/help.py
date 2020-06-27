@@ -1,35 +1,46 @@
-from chat_functions import send_typing
-import plugins.sabnzbdapi
-import plugins.sonarrapi
+from plugin import Plugin, PluginCommand
+from chat_functions import send_text_to_room
+from typing import List
 
 
-async def printhelp(command):
+async def print_help(command):
     """Show the help text"""
-    text = (
-        "#### Available commands:  \n"
-        "**general**  \n"
-        "`echo` - make someone agree with you for once  \n"
-        "`meter` - accurately measure someones somethingness  \n"
-        "`oracle` - predict the inevitable future  \n"
-        "`pick` - aids you in those really important life decisions  \n"
-        "`roll` - the dice giveth and the dice taketh away  \n"
-        "`spruch` - famous quotes from even more famous people  \n"
-        "`translate [[bi] source_lang... dest_lang]` - translate text from one or more source_lang to dest_lang  \n"
-        )
-    if command.room.room_id == plugins.sabnzbdapi.room_id:
-        text = text + (
-            "  \n"
-            "**sabnzbd**  \n"
-            "`last [n]` - get last n history items  \n"
-            "`resume <nzo_id>` - resume paused download  \n"
-            "`delete <nzo_id>` - remove download from queue  \n"
-            "`purge` - clear entire queue  \n"
-        )
-    if command.room.room_id == plugins.sonarrapi.room_id:
-        text = text + (
-            "  \n"
-            "**sonarr**  \n"
-            "`series` - display currently tracked series  \n"
-        )
 
-    await send_typing(command.client, command.room.room_id, text)
+    text: str = ""
+    loaded_plugin: Plugin
+    loaded_plugins_names: List[str] = []
+    text_plugin_list: str = ""
+
+    for loaded_plugin in command.plugin_loader.get_plugins():
+        loaded_plugins_names.append(loaded_plugin.name)
+        text_plugin_list = text_plugin_list + "`" + loaded_plugin.name + "`" + " " + loaded_plugin.description + "  \n"
+
+    if len(command.args) == 0:
+        # Print loaded plugins
+        loaded_plugins: List[Plugin] = []
+        for loaded_plugin in command.plugin_loader.get_plugins():
+            loaded_plugins.append(loaded_plugin)
+
+        text = "**Available Plugins**  \n" + "use `help <pluginname>` to get detailed help  \n" + text_plugin_list
+
+    elif len(command.args) == 1:
+        try:
+            loaded_plugin_pos: int = loaded_plugins_names.index(command.args[0])
+            loaded_command_name: str
+            loaded_command: PluginCommand
+            for loaded_command_name, loaded_command in command.plugin_loader.get_plugins()[
+                loaded_plugin_pos].get_commands().items():
+                text = text + "`" + loaded_command_name + "`" + "    " + loaded_command.help_text + "  \n"
+
+            text = "**Plugin " + loaded_plugins_names[loaded_plugin_pos] + "**  \n" + text
+
+        except ValueError:
+            text = "Plugin not found, try `help`"
+
+    else:
+        text = "try `help` ;-)"
+    await send_text_to_room(command.client, command.room.room_id, text)
+
+
+plugin = Plugin("help", "General", "Provide helpful help")
+plugin.add_command("help", print_help, "Display list of all available commands")
