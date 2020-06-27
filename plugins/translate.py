@@ -9,7 +9,7 @@ from nio import Client
 # from bot_commands import Command
 from chat_functions import send_text_to_room
 
-allowed_rooms: list = ["!hIWWJKHWQMUcrVPRqW:pack.rocks", "!iAxDarGKqYCIKvNSgu:pack.rocks"]
+allowed_rooms: list = ["!hIWWJKHWQMUcrVPRqW:pack.rocks", "!iAxDarGKqYCIKvNSgu:pack.rocks", "!iAxDarGKqYCIKvNSgu:pack.rocks"]
 default_source: list = ['any']
 default_dest: str = 'en'
 default_bidirectional: bool = False
@@ -108,7 +108,8 @@ def get_enabled_rooms() -> list:
         return []
 
 
-plugin = Plugin("translate", "General", "Provide near-realtime translations of all room-messages via Google Translate")
-plugin.add_command("translate", switch, "`translate [[bi] source_lang... dest_lang]` - translate text from one or "
-                                        "more source_lang to dest_lang", get_enabled_rooms())
+plugin = Plugin("translate", "General", "**broken** Provide near-realtime translations of all room-messages via Google "
+                                        "Translate")
+plugin.add_command("translate", switch, "**broken** `translate [[bi] source_lang... dest_lang]` - translate text from "
+                                        "one or more source_lang to dest_lang", get_enabled_rooms())
 plugin.add_hook("m.room.message", translate, get_enabled_rooms())
