@@ -22,6 +22,7 @@ class Plugin:
         self.help_texts: Dict[str, str] = {}
         self.hooks: Dict[str, List[PluginHook]] = {}
         self.timers: List[Callable] = []
+        self.rooms: List[str] = []
 
         self.config_items: Dict[str, Any] = {}
         self.configuration: Dict[str, Any] = {}
@@ -50,6 +51,11 @@ class Plugin:
         if command not in self.commands.keys():
             self.commands[command] = plugin_command
             self.help_texts[command] = help_text
+            # Add rooms from command to the rooms the plugin is valid for
+            if room_id:
+                for room in room_id:
+                    if room not in self.rooms:
+                        self.rooms.append(room)
             logger.debug(f"Added command {command} to rooms {room_id}")
         else:
             logger.error(f"Error adding command {command} - command already exists")

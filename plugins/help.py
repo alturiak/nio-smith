@@ -11,20 +11,20 @@ async def print_help(command):
     loaded_plugins_names: List[str] = []
     text_plugin_list: str = ""
 
-    for loaded_plugin in command.plugin_loader.get_plugins():
-        loaded_plugins_names.append(loaded_plugin.name)
-        text_plugin_list = text_plugin_list + "`" + loaded_plugin.name + "`" + " " + loaded_plugin.description + "  \n"
-
     if len(command.args) == 0:
         # Print loaded plugins
         loaded_plugins: List[Plugin] = []
         for loaded_plugin in command.plugin_loader.get_plugins():
-            loaded_plugins.append(loaded_plugin)
+            if loaded_plugin.rooms is None or command.room.room_id in loaded_plugin.rooms:
+                text_plugin_list = text_plugin_list + "`" + loaded_plugin.name + "`" + " " + loaded_plugin.description + "  \n"
+                loaded_plugins.append(loaded_plugin)
 
         text = "**Available Plugins**  \n" + "use `help <pluginname>` to get detailed help  \n" + text_plugin_list
 
     elif len(command.args) == 1:
         try:
+            for loaded_plugin in command.plugin_loader.get_plugins():
+                loaded_plugins_names.append(loaded_plugin.name)
             loaded_plugin_pos: int = loaded_plugins_names.index(command.args[0])
             loaded_command_name: str
             loaded_command: PluginCommand
