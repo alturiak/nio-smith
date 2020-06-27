@@ -3,7 +3,7 @@ from chat_functions import send_text_to_room
 from typing import List
 
 
-async def printhelp(command):
+async def print_help(command):
     """Show the help text"""
 
     text: str = ""
@@ -43,4 +43,4 @@ async def printhelp(command):
 
 
 plugin = Plugin("help", "General", "Provide helpful help")
-plugin.add_command("help", printhelp, "Display list of all available commands")
+plugin.add_command("help", print_help, "Display list of all available commands")
