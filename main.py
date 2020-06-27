@@ -20,19 +20,24 @@ from aiohttp.client_exceptions import (
 from pluginloader import PluginLoader
 
 logger = logging.getLogger(__name__)
-client = ""
+client: AsyncClient
+plugin_loader: PluginLoader
 
 
 async def run_plugins(response):
-    pass
-    # we might need pluginloader hooks here
-    # await plugins.sabnzbdapi.watchjobs(client)
+
+    global plugin_loader
+    global client
+
+    for timer in plugin_loader.get_timers():
+        await timer(client)
 
 
 async def main():
     # TODO: this really needs to be replaced
     # probably using https://docs.python.org/3.8/library/functools.html#functools.partial
     global client
+    global plugin_loader
 
     # Read config file
     config = Config("config.yaml")

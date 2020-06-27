@@ -53,6 +53,7 @@ class Plugin:
         self.commands: Dict[str, PluginCommand] = {}
         self.help_texts: Dict[str, str] = {}
         self.hooks: Dict[str, List[PluginHook]] = {}
+        self.timers: List[Callable] = []
 
         self.configitems: List[str] = []
         self.configuration: Dict[str, str] = {}
@@ -107,6 +108,14 @@ class Plugin:
     def get_hooks(self):
 
         return self.hooks
+
+    def add_timer(self, method: Callable):
+
+        self.timers.append(method)
+
+    def get_timers(self) -> List[Callable]:
+
+        return self.timers
 
     def read_config(self) -> dict:
         configfile = os.path.join(os.path.dirname(__file__), os.path.basename(__file__)[:-3] + ".yaml")

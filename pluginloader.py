@@ -27,6 +27,8 @@ class PluginLoader:
         self.commands: Dict[str, PluginCommand] = {}
         self.help_texts: Dict[str, str] = {}
         self.hooks: Dict[str, List[PluginHook]] = {}
+        self.timers: List[Callable] = []
+
         for key in modules.keys():
             if match("^plugins\.\w*", key):
                 # TODO: this needs to catch exceptions
@@ -41,6 +43,7 @@ class PluginLoader:
 
             self.commands.update(plugin.get_commands())
             self.hooks.update(plugin.get_hooks())
+            self.timers.extend(plugin.get_timers())
 
         logger.debug("Active Commands:")
         logger.debug(self.commands)
@@ -58,6 +61,10 @@ class PluginLoader:
     def get_commands(self) -> Dict[str, PluginCommand]:
 
         return self.commands
+
+    def get_timers(self) -> List[Callable]:
+
+        return self.timers
 
     async def run_command(self, command):
 
