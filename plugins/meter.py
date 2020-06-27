@@ -1,4 +1,4 @@
-from chat_functions import send_typing
+from chat_functions import send_typing, send_text_to_room
 from typing import Dict, List
 from plugin import Plugin
 import random
@@ -65,7 +65,7 @@ def build_gauge(level: int) -> str:
 
 
 async def meter(command):
-    text: str
+
     try:
         nick = command.args[0]
         condition = " ".join(command.args[1:])
@@ -73,14 +73,14 @@ async def meter(command):
             raise IndexError
         else:
             level: int = random.randint(0, 10)
-            text = condition.replace(" ", "-") + "-o-Meter " + build_gauge(level) + " <font color=\"" + \
+            text: str = condition.replace(" ", "-") + "-o-Meter " + build_gauge(level) + " <font color=\"" + \
                 get_level_color(level) + "\">" + str(level) + "</font>/10 " + nick + " is " + \
                 get_comment(level, nick, condition)
+            await send_typing(command.client, command.room.room_id, text)
 
     except (ValueError, IndexError):
-        text = "Syntax: `!meter <target> <condition>`"
 
-    await send_typing(command.client, command.room.room_id, text)
+        await send_text_to_room(command.client, command.room.room_id, "Usage: `meter <target> <condition>`")
 
 
 plugin = Plugin("meter", "General", "Plugin to provide a simple, randomized !meter")
