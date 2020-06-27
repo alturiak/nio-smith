@@ -28,7 +28,7 @@ def get_comment(level: int, nick: str, condition: str) -> str:
 
     comments: Dict[int, str] = {
         0: "<font color=\"red\">never</font> " + condition,
-        1: "just < font color =\"red\">barely</font> " + condition,
+        1: "just <font color =\"red\">barely</font> " + condition,
         2: "<font color =\"red\">kinda</font> " + condition,
         3: "a <font color=\"red\">bit</font> " + condition,
         4: "<font color=\"red\">sorta</font> " + condition,
