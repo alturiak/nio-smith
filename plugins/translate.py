@@ -101,7 +101,7 @@ async def translate(client: AsyncClient, room_id: str, message: str):
             await send_text_to_room(client, room_id, translated)
 
 
-def get_enabled_rooms() -> list:
+def get_enabled_rooms() -> List:
 
     try:
         return pickle.load(open(roomsfile, "rb")).keys()
@@ -109,8 +109,7 @@ def get_enabled_rooms() -> list:
         return []
 
 
-plugin = Plugin("translate", "General", "**broken** Provide near-realtime translations of all room-messages via Google "
-                                        "Translate")
-plugin.add_command("translate", switch, "**broken** `translate [[bi] source_lang... dest_lang]` - translate text from "
+plugin = Plugin("translate", "General", "Provide near-realtime translations of all room-messages via Google Translate")
+plugin.add_command("translate", switch, "`translate [[bi] source_lang... dest_lang]` - translate text from "
                                         "one or more source_lang to dest_lang", allowed_rooms)
 plugin.add_hook("m.room.message", translate, allowed_rooms)

@@ -8,38 +8,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def _get_cfg(
-        filepath: str,
-        path: List[str],
-        default: Any = None,
-        required: bool = True,
-) -> Any:
-    """Get a config option from a path and option name, specifying whether it is
-    required.
-
-    Raises:
-        ConfigError: If required is specified and the object is not found
-            (and there is no default value provided), this error will be raised
-    """
-    # Sift through the the config until we reach our option
-    with open(filepath) as file_stream:
-        config = yaml.safe_load(file_stream.read())
-    for name in path:
-        config = config.get(name)
-
-        # If at any point we don't get our expected option...
-        if config is None:
-            # Raise an error if it was required
-            if required or not default:
-                raise ConfigError(f"Config option {'.'.join(path)} is required")
-
-            # or return the default value
-            return default
-
-    # We found the option. Return it
-    return config
-
-
 class Plugin:
 
     def __init__(self, name: str, category: str, description: str):
@@ -55,8 +23,8 @@ class Plugin:
         self.hooks: Dict[str, List[PluginHook]] = {}
         self.timers: List[Callable] = []
 
-        self.configitems: List[str] = []
-        self.configuration: Dict[str, str] = {}
+        self.config_items: Dict[str, Any] = {}
+        self.configuration: Dict[str, Any] = {}
 
     def get_plugin(self):
         return self
@@ -117,12 +85,43 @@ class Plugin:
 
         return self.timers
 
-    def read_config(self) -> dict:
+    def add_config_items(self, config_items: Dict[str, Any]):
+        """Add config items (and their default value) to get from a configuration file"""
+
+        self.config_items = config_items
+
+    def _get_cfg(self, filepath: str, path: List[str], default: Any = None, required: bool = True) -> Any:
+        """Get a config option from a path and option name, specifying whether it is
+        required.
+
+        Raises:
+            ConfigError: If required is specified and the object is not found
+                (and there is no default value provided), this error will be raised
+        """
+        # Sift through the the config until we reach our option
+        with open(filepath) as file_stream:
+            config = yaml.safe_load(file_stream.read())
+        for name in path:
+            config = config.get(name)
+
+            # If at any point we don't get our expected option...
+            if config is None:
+                # Raise an error if it was required
+                if required or not default:
+                    raise ConfigError(f"Config option {'.'.join(path)} is required")
+
+                # or return the default value
+                return default
+
+        # We found the option. Return it
+        return config
+
+    def read_config(self):
         configfile = os.path.join(os.path.dirname(__file__), os.path.basename(__file__)[:-3] + ".yaml")
         configuration: dict = {}
-        for value in self.configitems:
-            configuration[value] = _get_cfg(configfile, [value], required=True)
-
+        for value in self.config_items:
+            configuration[value] = self._get_cfg(configfile, [value], required=True)
+            
 
 class PluginCommand:
 
