@@ -1,7 +1,5 @@
 import os.path
-from modulefinder import Module
 from typing import List, Any, Dict, Callable
-import nio
 import yaml
 from errors import ConfigError
 import logging
@@ -27,8 +25,12 @@ class Plugin:
         self.config_items: Dict[str, Any] = {}
         self.configuration: Dict[str, Any] = {}
 
-    def get_plugin(self):
-        return self
+    def is_valid_for_room(self, room_id: str) -> bool:
+
+        if self.rooms == [] or room_id in self.rooms:
+            return True
+        else:
+            return False
 
     def get_help_text(self):
         # TODO: change to use of self.help_texts
