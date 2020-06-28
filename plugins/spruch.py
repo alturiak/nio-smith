@@ -3,12 +3,8 @@ from chat_functions import send_typing
 import random
 import os.path
 
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from bot_commands import Command
 
-
-async def spruch(command: Command):
+async def spruch(command):
     with open(os.path.join(os.path.dirname(__file__), "spruchdb.txt")) as spruchdb:
         sprueche = spruchdb.readlines()
 

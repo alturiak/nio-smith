@@ -2,12 +2,8 @@ from plugin import Plugin
 from chat_functions import send_typing
 import random
 
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from bot_commands import Command
 
-
-async def oracle(command: Command):
+async def oracle(command):
     oracles = (
         "Das ist gut m\xf6glich.",
         "Ist das wirklich Ihr Ernst?",

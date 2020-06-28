@@ -1,10 +1,7 @@
 from chat_functions import send_typing, send_text_to_room
+from typing import Dict, List
 from plugin import Plugin
 import random
-
-from typing import Dict, List, TYPE_CHECKING
-if TYPE_CHECKING:
-    from bot_commands import Command
 
 
 def get_level_color(level: int, inactive: bool = False) -> str:
@@ -67,7 +64,7 @@ def build_gauge(level: int) -> str:
     return gauge
 
 
-async def meter(command: Command):
+async def meter(command):
 
     try:
         nick = command.args[0]

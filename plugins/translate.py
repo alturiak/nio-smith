@@ -2,14 +2,13 @@
 from plugin import Plugin
 import os.path
 import pickle
+from typing import List
+
 import googletrans
+from nio import AsyncClient
 
+# from bot_commands import Command
 from chat_functions import send_text_to_room
-
-from typing import List, TYPE_CHECKING
-if TYPE_CHECKING:
-    from bot_commands import Command
-    from nio import AsyncClient
 
 allowed_rooms: List = ["!hIWWJKHWQMUcrVPRqW:pack.rocks", "!iAxDarGKqYCIKvNSgu:pack.rocks"]
 default_source: List = ['any']
@@ -28,7 +27,7 @@ roomsdb = {
 """
 
 
-async def switch(command: Command):
+async def switch(command):
     """Switch translation for room-messages on or off
 
     Args:
