@@ -2,13 +2,14 @@
 from plugin import Plugin
 import os.path
 import pickle
-from typing import List
-
 import googletrans
 from nio import AsyncClient
-
-# from bot_commands import Command
 from chat_functions import send_text_to_room
+
+from typing import List
+
+import logging
+logger = logging.getLogger(__name__)
 
 allowed_rooms: List = ["!hIWWJKHWQMUcrVPRqW:pack.rocks", "!iAxDarGKqYCIKvNSgu:pack.rocks"]
 default_source: List = ['any']
@@ -86,10 +87,11 @@ async def translate(client: AsyncClient, room_id: str, message: str):
         roomsdb = pickle.load(open(roomsfile, "rb"))
     except FileNotFoundError:
         roomsdb = {}
-    trans = googletrans.Translator()
-    message_source_lang = trans.detect(message).lang
 
-    if room_id in roomsdb.keys():
+    if room_id in allowed_rooms and room_id in roomsdb.keys():
+        trans = googletrans.Translator()
+        logger.debug(f"Detecting language for message: {message}")
+        message_source_lang = trans.detect(message).lang
         if roomsdb[room_id]["bidirectional"]:
             languages = [roomsdb[room_id]["source_langs"][0], roomsdb[room_id["dest_lang"]]]
             if message_source_lang in languages:
@@ -103,14 +105,6 @@ async def translate(client: AsyncClient, room_id: str, message: str):
             if message_source_lang != roomsdb[room_id]["dest_lang"] and (roomsdb[room_id]["source_langs"] == ['any'] or message_source_lang in roomsdb[room_id]["source_langs"]):
                 translated = trans.translate(message, dest=roomsdb[room_id]["dest_lang"]).text
                 await send_text_to_room(client, room_id, translated)
-
-
-def get_enabled_rooms() -> List:
-
-    try:
-        return pickle.load(open(roomsfile, "rb")).keys()
-    except FileNotFoundError:
-        return []
 
 
 plugin = Plugin("translate", "General", "Provide near-realtime translations of all room-messages via Google Translate")
