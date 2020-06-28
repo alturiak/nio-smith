@@ -83,16 +83,18 @@ class PluginLoader:
                     ratios[key] = fuzz.ratio(command_start, key)
 
             # Sort matching commands by match percentage and get the highest match
-            if ratios:
+            if ratios != {}:
                 run_command = sorted(ratios.items(), key=operator.itemgetter(1), reverse=True)[0][0]
 
-        if run_command and self.commands[run_command].room_id is None or command.room.room_id in self.commands[run_command].room_id:
+        # check if we did actually find a matching command
+        if run_command != "":
+            if self.commands[run_command].room_id is None or command.room.room_id in self.commands[run_command].room_id:
 
-            # Make sure, exceptions raised by plugins do not kill the bot
-            try:
-                await self.commands[run_command].method(command)
-            except Exception as err:
-                logger.critical(f"Plugin failed to catch exception caused by {command_start}: {err}")
+                # Make sure, exceptions raised by plugins do not kill the bot
+                try:
+                    await self.commands[run_command].method(command)
+                except Exception as err:
+                    logger.critical(f"Plugin failed to catch exception caused by {command_start}: {err}")
 
     async def run_hooks(self, client, event_type: str, room, event):
 
