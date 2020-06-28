@@ -5,6 +5,21 @@ from re import match
 from typing import List, Tuple, Dict
 
 
+def build_sorted_text_output(headline: str, content: List[Tuple[str, str]]) -> str:
+
+    """
+    Takes a headline and a list of items and their respective descriptions,
+    sorts it and returns a nicely readable output
+    """
+
+    content.sort()
+    output: str = f"{headline}  \n\n"
+    for (item, description) in content:
+        output = f"{output}`{item}`: {description}  \n"
+
+    return output
+
+
 async def print_help(command):
     """Show the help text"""
 
@@ -22,13 +37,8 @@ async def print_help(command):
             if not loaded_plugin.rooms or current_room_id in loaded_plugin.rooms:
                 plugin_texts.append((loaded_plugin.name, loaded_plugin.description))
 
-        # sort by plugin-name
-        plugin_texts.sort()
-
-        # build text output
-        help_text = f"**Available Plugins in this room**  \nuse `help <pluginname>` to get detailed help  \n\n"
-        for (plugin_name, plugin_description) in plugin_texts:
-            help_text = f"{help_text}`{plugin_name}`: {plugin_description}  \n"
+        headline: str = f"**Available Plugins in this room**  \nuse `help <pluginname>` to get detailed help"
+        help_text = build_sorted_text_output(headline, plugin_texts)
 
     elif len(command.args) == 1 and match("[A-z]*", command.args[0]):
 
@@ -54,24 +64,22 @@ async def print_help(command):
                     for (plugin_command_name, plugin_command) in requested_plugin.get_commands().items():
                         command_texts.append((plugin_command_name, plugin_command.help_text))
 
-                    # sort by command-name
-                    command_texts.sort()
-
-                    # build text output
-                    help_text = f"**Plugin {requested_plugin_name}**  \n\n"
-                    for (command_name, command_help_text) in command_texts:
-                        help_text = f"{help_text}`{command_name}`: {command_help_text}  \n"
+                    headline: str = f"**Plugin {requested_plugin_name}**"
+                    help_text = build_sorted_text_output(headline, command_texts)
 
                 else:
+                    # Plugin is not valid for the room
                     raise ValueError
 
             else:
+                # Plugin does not exist
                 raise ValueError
 
         except ValueError:
             help_text = "Plugin not active (in this room), try `help`"
 
     else:
+        # too many arguments or invalid plugin-name
         help_text = "try `help` ;-)"
 
     await send_text_to_room(command.client, current_room_id, help_text)
