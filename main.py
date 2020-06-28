@@ -2,7 +2,7 @@
 
 import logging
 import asyncio
-from time import sleep
+from time import sleep, time
 
 from nio import (
     AsyncClient,
@@ -22,15 +22,20 @@ from pluginloader import PluginLoader
 logger = logging.getLogger(__name__)
 client: AsyncClient
 plugin_loader: PluginLoader
+timestamp: int = 0
 
 
 async def run_plugins(response):
 
     global plugin_loader
     global client
+    global timestamp
 
-    for timer in plugin_loader.get_timers():
-        await timer(client)
+    """Do not run timers more often than every 30s"""
+    if time() >= timestamp+30:
+        timestamp = time()
+        for timer in plugin_loader.get_timers():
+            await timer(client)
 
 
 async def main():
