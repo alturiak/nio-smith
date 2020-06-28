@@ -70,10 +70,10 @@ class PluginLoader:
         logger.debug(f"Running Command {command.command} with args {command.args}")
 
         command_start = command.command.split()[0].lower()
+        run_command: str = ""
 
         if command_start in self.commands.keys():
-            if self.commands[command_start].room_id is None or command.room.room_id in self.commands[command_start].room_id:
-                await self.commands[command_start].method(command)
+            run_command = command_start
 
         # Command not found, try fuzzy matching
         else:
@@ -82,13 +82,17 @@ class PluginLoader:
                 if fuzz.ratio(command_start, key) > 60:
                     ratios[key] = fuzz.ratio(command_start, key)
 
-            # Sort matching commands by match percentage
-            # ratios is a list, there is probably a less ugly way to do this
-            ratios: List[Dict[str, int]] = sorted(ratios.items(), key=operator.itemgetter(1), reverse=True)
-            for candidate in ratios:
-                candidate_command = candidate[0]
-                if self.commands[candidate_command].room_id is None or command.room.room_id in self.commands[candidate_command].room_id:
-                    await self.commands[candidate_command].method(command)
+            # Sort matching commands by match percentage and get the highest match
+            if ratios:
+                run_command = sorted(ratios.items(), key=operator.itemgetter(1), reverse=True)[0][0]
+
+        if run_command and self.commands[run_command].room_id is None or command.room.room_id in self.commands[run_command].room_id:
+
+            # Make sure, exceptions raised by plugins do not kill the bot
+            try:
+                await self.commands[run_command].method(command)
+            except Exception as err:
+                logger.critical(f"Exception caused by command {command_start}: {err}")
 
     async def run_hooks(self, client, event_type: str, room, event):
 
@@ -97,4 +101,8 @@ class PluginLoader:
 
             for event_hook in event_hooks:
                 if room.room_id is None or room.room_id in event_hook.room_id:
-                    await event_hook.method(client, room.room_id, event)
+                    # Make sure, exceptions raised by plugins do not kill the bot
+                    try:
+                        await event_hook.method(client, room.room_id, event)
+                    except Exception as err:
+                        logger.critical(f"Exception caused by hook {event_hook.method} on {room} for {event}: {err}")
