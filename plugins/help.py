@@ -1,25 +1,35 @@
 from plugin import Plugin, PluginCommand
 from chat_functions import send_text_to_room
-from typing import List
 from re import match
+
+from typing import List, Tuple
 
 
 async def print_help(command):
     """Show the help text"""
 
     text: str = ""
-    loaded_plugin: Plugin
-    text_plugin_list: str = ""
     room_id: str = command.room.room_id
 
     if len(command.args) == 0:
-
         """print loaded plugins"""
+
+        loaded_plugin: Plugin
+        plugin_texts: List[Tuple[str, str]] = []
+        text_plugin_list: str = ""
+
+        # Load names and descriptions of all loaded plugins
         for loaded_plugin in command.plugin_loader.get_plugins().values():
             if not loaded_plugin.rooms or room_id in loaded_plugin.rooms:
-                text_plugin_list = text_plugin_list + "`" + loaded_plugin.name + "`" + " " + loaded_plugin.description + "  \n"
+                plugin_texts.append((loaded_plugin.name, loaded_plugin.description))
 
-        text = "**Available Plugins in this room**  \nuse `help <pluginname>` to get detailed help  \n" + text_plugin_list
+        # sort by plugin-name
+        plugin_texts.sort()
+
+        # build text output
+        for (plugin_name, plugin_description) in plugin_texts:
+            text_plugin_list = f"{text_plugin_list}`{plugin_name}`: {plugin_description}  \n"
+        text = f"**Available Plugins in this room**  \nuse `help <pluginname>` to get detailed help  \n {text_plugin_list}"
 
     elif len(command.args) == 1 and match("[A-z]*", command.args[0]):
 
