@@ -31,7 +31,7 @@ class PluginLoader:
         for key in modules.keys():
             if match("^plugins\.\w*", key):
                 # TODO: this needs to catch exceptions
-                found_plugin: Plugin = modules[key].plugin.get_plugin()
+                found_plugin: Plugin = modules[key].plugin
                 if isinstance(found_plugin, Plugin):
                     self.__plugin_list[found_plugin.name] = found_plugin
 
@@ -52,6 +52,15 @@ class PluginLoader:
     def get_plugins(self) -> Dict[str, Plugin]:
 
         return self.__plugin_list
+
+    def get_plugin_by_name(self, name: str) -> Plugin or None:
+
+        """Try to find a plugin by the name provided and return it"""
+
+        try:
+            return self.get_plugins()[name]
+        except KeyError:
+            return None
 
     def get_hooks(self) -> Dict[str, List[PluginHook]]:
 

@@ -44,18 +44,9 @@ async def print_help(command):
 
         """print plugin-specific commands"""
         try:
-            available_plugins: Dict[str, Plugin] = command.plugin_loader.get_plugins()
-            requested_plugin_name: str = command.args[0]
-            
-            # check if requested plugin is actually available
-            if requested_plugin_name in available_plugins.keys():
-                requested_plugin: Plugin = available_plugins[requested_plugin_name]
-
-                # get all rooms the plugin has commands for
-                plugin_rooms: List[str] = requested_plugin.rooms
-
-                # check if plugin is global or is valid for the current room
-                if not plugin_rooms or current_room_id in plugin_rooms:
+            requested_plugin: Plugin
+            if requested_plugin := command.plugin_loader.get_plugin_by_name(command.args[0]):
+                if requested_plugin.is_valid_for_room(command.room.room_id):
                     plugin_command_name: str
                     plugin_command: PluginCommand
                     command_texts: List[Tuple[str, str]] = []
@@ -64,7 +55,7 @@ async def print_help(command):
                     for (plugin_command_name, plugin_command) in requested_plugin.get_commands().items():
                         command_texts.append((plugin_command_name, plugin_command.help_text))
 
-                    headline: str = f"**Plugin {requested_plugin_name}**"
+                    headline: str = f"**Plugin {requested_plugin.name}**"
                     help_text = build_sorted_text_output(headline, command_texts)
 
                 else:
