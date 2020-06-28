@@ -8,8 +8,12 @@ import re
 import random
 from chat_functions import send_typing
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from bot_commands import Command
 
-async def pick(command):
+
+async def pick(command: Command):
 
     message = " ".join(command.args)
     message = message.replace(" and say:", ":")

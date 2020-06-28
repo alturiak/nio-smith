@@ -1,7 +1,9 @@
-from plugin import Plugin, PluginCommand
 from chat_functions import send_text_to_room
-from typing import List
 from re import match
+
+from typing import TYPE_CHECKING, List
+if TYPE_CHECKING:
+    from plugin import Plugin, PluginCommand
 
 
 async def print_help(command):

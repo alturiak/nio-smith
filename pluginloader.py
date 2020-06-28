@@ -2,12 +2,8 @@
     Imports all plugins from plugins subdirectory
 
 """
-import operator
-from typing import List, Dict, Callable
 
-import nio
 from fuzzywuzzy import fuzz
-
 from plugin import Plugin, PluginCommand, PluginHook
 # import all plugins
 from plugins import *
@@ -15,6 +11,9 @@ from sys import modules
 from re import match
 import logging
 import operator
+
+from typing import List, Dict, Callable
+
 logger = logging.getLogger(__name__)
 
 

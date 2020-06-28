@@ -7,8 +7,12 @@ from plugin import Plugin
 import random
 from chat_functions import send_typing
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from bot_commands import Command
 
-async def roll(command):
+
+async def roll(command: Command):
 
     if not command.args:
         await send_typing(command.client, command.room.room_id, "No argument given.")
