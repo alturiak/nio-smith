@@ -2,19 +2,19 @@
     Imports all plugins from plugins subdirectory
 
 """
-import operator
-from typing import List, Dict, Callable
-
-import nio
-from fuzzywuzzy import fuzz
 
 from plugin import Plugin, PluginCommand, PluginHook
+from fuzzywuzzy import fuzz
 # import all plugins
 from plugins import *
 from sys import modules
 from re import match
-import logging
+from time import time
 import operator
+
+from typing import List, Dict, Callable
+
+import logging
 logger = logging.getLogger(__name__)
 
 
@@ -22,7 +22,7 @@ class PluginLoader:
 
     def __init__(self):
         # get all loaded plugins from sys.modules and make them available as plugin_list
-        self.__plugin_list: List[Plugin] = []
+        self.__plugin_list: Dict[str, Plugin] = {}
         self.commands: Dict[str, PluginCommand] = {}
         self.help_texts: Dict[str, str] = {}
         self.hooks: Dict[str, List[PluginHook]] = {}
@@ -31,11 +31,11 @@ class PluginLoader:
         for key in modules.keys():
             if match("^plugins\.\w*", key):
                 # TODO: this needs to catch exceptions
-                found_plugin = modules[key].plugin.get_plugin()
+                found_plugin: Plugin = modules[key].plugin.get_plugin()
                 if isinstance(found_plugin, Plugin):
-                    self.__plugin_list.append(found_plugin)
+                    self.__plugin_list[found_plugin.name] = found_plugin
 
-        for plugin in self.__plugin_list:
+        for plugin in self.__plugin_list.values():
             logger.debug("Reading commands from " + plugin.name)
             logger.debug(self.commands)
             # assemble all valid commands and their respective methods
@@ -49,7 +49,7 @@ class PluginLoader:
         logger.debug("Active Hooks:")
         logger.debug(self.hooks)
 
-    def get_plugins(self) -> List[Plugin]:
+    def get_plugins(self) -> Dict[str, Plugin]:
 
         return self.__plugin_list
 
@@ -83,16 +83,18 @@ class PluginLoader:
                     ratios[key] = fuzz.ratio(command_start, key)
 
             # Sort matching commands by match percentage and get the highest match
-            if ratios:
+            if ratios != {}:
                 run_command = sorted(ratios.items(), key=operator.itemgetter(1), reverse=True)[0][0]
 
-        if run_command and self.commands[run_command].room_id is None or command.room.room_id in self.commands[run_command].room_id:
+        # check if we did actually find a matching command
+        if run_command != "":
+            if self.commands[run_command].room_id is None or command.room.room_id in self.commands[run_command].room_id:
 
-            # Make sure, exceptions raised by plugins do not kill the bot
-            try:
-                await self.commands[run_command].method(command)
-            except Exception as err:
-                logger.critical(f"Exception caused by command {command_start}: {err}")
+                # Make sure, exceptions raised by plugins do not kill the bot
+                try:
+                    await self.commands[run_command].method(command)
+                except Exception as err:
+                    logger.critical(f"Plugin failed to catch exception caused by {command_start}: {err}")
 
     async def run_hooks(self, client, event_type: str, room, event):
 
@@ -105,4 +107,18 @@ class PluginLoader:
                     try:
                         await event_hook.method(client, room.room_id, event)
                     except Exception as err:
-                        logger.critical(f"Exception caused by hook {event_hook.method} on {room} for {event}: {err}")
+                        logger.critical(f"Plugin failed to catch exception caused by hook {event_hook.method} on"
+                                        f" {room} for {event}: {err}")
+
+    async def run_timers(self, client, timestamp: float) -> float:
+
+        """Do not run timers more often than every 30s"""
+        if time() >= timestamp+30:
+            for timer in self.get_timers():
+                try:
+                    await timer(client)
+                except Exception as err:
+                    logger.critical(f"Plugin failed to catch exception in {timer}: {err}")
+            return time()
+        else:
+            return timestamp
