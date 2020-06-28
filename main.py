@@ -22,7 +22,7 @@ from pluginloader import PluginLoader
 logger = logging.getLogger(__name__)
 client: AsyncClient
 plugin_loader: PluginLoader
-timestamp: int = 0
+timestamp: float = time()
 
 
 async def run_plugins(response):
@@ -31,11 +31,7 @@ async def run_plugins(response):
     global client
     global timestamp
 
-    """Do not run timers more often than every 30s"""
-    if time() >= timestamp+30:
-        timestamp = time()
-        for timer in plugin_loader.get_timers():
-            await timer(client)
+    timestamp = await plugin_loader.run_timers(client, timestamp)
 
 
 async def main():

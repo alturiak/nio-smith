@@ -2,19 +2,19 @@
     Imports all plugins from plugins subdirectory
 
 """
-import operator
-from typing import List, Dict, Callable
-
-import nio
-from fuzzywuzzy import fuzz
 
 from plugin import Plugin, PluginCommand, PluginHook
+from fuzzywuzzy import fuzz
 # import all plugins
 from plugins import *
 from sys import modules
 from re import match
-import logging
+from time import time
 import operator
+
+from typing import List, Dict, Callable
+
+import logging
 logger = logging.getLogger(__name__)
 
 
@@ -92,7 +92,7 @@ class PluginLoader:
             try:
                 await self.commands[run_command].method(command)
             except Exception as err:
-                logger.critical(f"Exception caused by command {command_start}: {err}")
+                logger.critical(f"Plugin failed to catch exception caused by {command_start}: {err}")
 
     async def run_hooks(self, client, event_type: str, room, event):
 
@@ -105,4 +105,18 @@ class PluginLoader:
                     try:
                         await event_hook.method(client, room.room_id, event)
                     except Exception as err:
-                        logger.critical(f"Exception caused by hook {event_hook.method} on {room} for {event}: {err}")
+                        logger.critical(f"Plugin failed to catch exception caused by hook {event_hook.method} on"
+                                        f" {room} for {event}: {err}")
+
+    async def run_timers(self, client, timestamp: float) -> float:
+
+        """Do not run timers more often than every 30s"""
+        if time() >= timestamp+30:
+            for timer in self.get_timers():
+                try:
+                    await timer(client)
+                except Exception as err:
+                    logger.critical(f"Plugin failed to catch exception in {timer}: {err}")
+            return time()
+        else:
+            return timestamp
