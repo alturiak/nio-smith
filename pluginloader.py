@@ -22,7 +22,7 @@ class PluginLoader:
 
     def __init__(self):
         # get all loaded plugins from sys.modules and make them available as plugin_list
-        self.__plugin_list: List[Plugin] = []
+        self.__plugin_list: Dict[str, Plugin] = {}
         self.commands: Dict[str, PluginCommand] = {}
         self.help_texts: Dict[str, str] = {}
         self.hooks: Dict[str, List[PluginHook]] = {}
@@ -31,11 +31,11 @@ class PluginLoader:
         for key in modules.keys():
             if match("^plugins\.\w*", key):
                 # TODO: this needs to catch exceptions
-                found_plugin = modules[key].plugin.get_plugin()
+                found_plugin: Plugin = modules[key].plugin.get_plugin()
                 if isinstance(found_plugin, Plugin):
-                    self.__plugin_list.append(found_plugin)
+                    self.__plugin_list[found_plugin.name] = found_plugin
 
-        for plugin in self.__plugin_list:
+        for plugin in self.__plugin_list.values():
             logger.debug("Reading commands from " + plugin.name)
             logger.debug(self.commands)
             # assemble all valid commands and their respective methods
@@ -49,7 +49,7 @@ class PluginLoader:
         logger.debug("Active Hooks:")
         logger.debug(self.hooks)
 
-    def get_plugins(self) -> List[Plugin]:
+    def get_plugins(self) -> Dict[str, Plugin]:
 
         return self.__plugin_list
 

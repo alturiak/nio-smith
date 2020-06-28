@@ -1,6 +1,7 @@
 from plugin import Plugin, PluginCommand
 from chat_functions import send_text_to_room
 from typing import List
+from re import match
 
 
 async def print_help(command):
@@ -8,34 +9,36 @@ async def print_help(command):
 
     text: str = ""
     loaded_plugin: Plugin
-    loaded_plugins_names: List[str] = []
     text_plugin_list: str = ""
 
     if len(command.args) == 0:
-        # Print loaded plugins
+
+        """print loaded plugins"""
         loaded_plugins: List[Plugin] = []
-        for loaded_plugin in command.plugin_loader.get_plugins():
-            if loaded_plugin.rooms is None or command.room.room_id in loaded_plugin.rooms:
+        for loaded_plugin in command.plugin_loader.get_plugins().values():
+            if not loaded_plugin.rooms or command.room.room_id in loaded_plugin.rooms:
                 text_plugin_list = text_plugin_list + "`" + loaded_plugin.name + "`" + " " + loaded_plugin.description + "  \n"
                 loaded_plugins.append(loaded_plugin)
 
-        text = "**Available Plugins**  \n" + "use `help <pluginname>` to get detailed help  \n" + text_plugin_list
+        text = "**Available Plugins in this room**  \nuse `help <pluginname>` to get detailed help  \n" + text_plugin_list
 
-    elif len(command.args) == 1:
+    elif len(command.args) == 1 and match("[A-z]*", command.args[0]):
+
+        """print plugin-specific commands"""
         try:
-            for loaded_plugin in command.plugin_loader.get_plugins():
-                loaded_plugins_names.append(loaded_plugin.name)
-            loaded_plugin_pos: int = loaded_plugins_names.index(command.args[0])
-            loaded_command_name: str
-            loaded_command: PluginCommand
-            for loaded_command_name, loaded_command in command.plugin_loader.get_plugins()[
-                loaded_plugin_pos].get_commands().items():
-                text = text + "`" + loaded_command_name + "`" + "    " + loaded_command.help_text + "  \n"
+            if not command.plugin_loader.get_plugins()[command.args[0]].rooms or command.room.room_id in \
+                    command.plugin_loader.get_plugins()[command.args[0]].rooms:
+                loaded_command_name: str
+                loaded_command: PluginCommand
+                for loaded_command_name, loaded_command in command.plugin_loader.get_plugins()[command.args[0]].get_commands().items():
+                    text = text + "`" + loaded_command_name + "`" + "    " + loaded_command.help_text + "  \n"
 
-            text = "**Plugin " + loaded_plugins_names[loaded_plugin_pos] + "**  \n" + text
+                text = "**Plugin " + command.args[0] + "**  \n" + text
+            else:
+                raise ValueError
 
         except ValueError:
-            text = "Plugin not found, try `help`"
+            text = "Plugin not active (in this room), try `help`"
 
     else:
         text = "try `help` ;-)"
