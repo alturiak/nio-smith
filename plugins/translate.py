@@ -5,6 +5,7 @@ import pickle
 import googletrans
 from nio import AsyncClient
 from chat_functions import send_text_to_room
+from re import sub
 
 from typing import List
 
@@ -89,6 +90,8 @@ async def translate(client: AsyncClient, room_id: str, message: str):
         roomsdb = {}
 
     if room_id in allowed_rooms and room_id in roomsdb.keys():
+        # Remove special characters before translation
+        message = sub('[^A-z0-9\-\.\?!:\sÄäÜüÖö]+', '', message)
         trans = googletrans.Translator()
         logger.debug(f"Detecting language for message: {message}")
         message_source_lang = trans.detect(message).lang
