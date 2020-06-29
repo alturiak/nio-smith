@@ -2,7 +2,8 @@
 
 import logging
 import asyncio
-from time import sleep, time
+from time import time
+from asyncio import sleep
 
 from nio import (
     AsyncClient,
@@ -111,11 +112,12 @@ async def main():
             logger.info(f"Logged in as {config.user_id}")
             await client.sync_forever(timeout=30000, full_state=True)
 
-        except (ClientConnectionError, ServerDisconnectedError):
-            logger.warning("Unable to connect to homeserver, retrying in 15s...")
+        except (ClientConnectionError, ServerDisconnectedError) as err:
+            logger.warning(f"Unable to connect to homeserver, retrying in 15s...")
+            logger.debug(err)
 
             # Sleep so we don't bombard the server with login requests
-            sleep(15)
+            await sleep(15)
         finally:
             # Make sure to close the client connection on disconnect
             await client.close()
