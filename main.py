@@ -75,6 +75,7 @@ async def main():
     client.add_response_callback(run_plugins)
 
     # Keep trying to reconnect on failure (with some time in-between)
+    error_retries: int = 0
     while True:
         try:
             # Try to login with the configured username/password
@@ -87,7 +88,15 @@ async def main():
                 # Check if login failed
                 if type(login_response) == LoginError:
                     logger.error(f"Failed to login: %s", login_response.message)
-                    return False
+                    # try logging in a few times to work around temporary login errors during homeserver restarts
+                    if error_retries < 3:
+                        error_retries += 1
+                        continue
+                    else:
+                        return False
+                else:
+                    error_retries = 0
+
             except LocalProtocolError as e:
                 # There's an edge case here where the user enables encryption but hasn't installed
                 # the correct C dependencies. In that case, a LocalProtocolError is raised on login.
@@ -112,9 +121,9 @@ async def main():
             logger.info(f"Logged in as {config.user_id}")
             await client.sync_forever(timeout=30000, full_state=True)
 
-        except (ClientConnectionError, ServerDisconnectedError) as err:
-            logger.warning(f"Unable to connect to homeserver, retrying in 15s...")
+        except (ClientConnectionError, ServerDisconnectedError, AttributeError) as err:
             logger.debug(err)
+            logger.warning(f"Unable to connect to homeserver, retrying in 15s...")
 
             # Sleep so we don't bombard the server with login requests
             await sleep(15)
