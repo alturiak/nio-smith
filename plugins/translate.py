@@ -1,16 +1,22 @@
 # -*- coding: utf8 -*-
 from plugin import Plugin
+from chat_functions import send_text_to_room
+from nio import AsyncClient
+
 import os.path
 import pickle
-import googletrans
-from nio import AsyncClient
-from chat_functions import send_text_to_room
 from re import sub
 
 from typing import List
 
 import logging
 logger = logging.getLogger(__name__)
+
+try:
+    import googletrans
+except ImportError as err:
+    logger.fatal(f"Module {err.name} not found")
+    raise ImportError(name="translate")
 
 allowed_rooms: List = ["!hIWWJKHWQMUcrVPRqW:pack.rocks", "!iAxDarGKqYCIKvNSgu:pack.rocks"]
 default_source: List = ['any']

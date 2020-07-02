@@ -4,9 +4,7 @@
 """
 
 from plugin import Plugin, PluginCommand, PluginHook
-from fuzzywuzzy import fuzz
-# import all plugins
-from plugins import *
+
 from sys import modules
 from re import match
 from time import time
@@ -16,6 +14,15 @@ from typing import List, Dict, Callable
 
 import logging
 logger = logging.getLogger(__name__)
+
+from fuzzywuzzy import fuzz
+
+# import all plugins
+try:
+    from plugins import *
+except ImportError as err:
+    logger.critical(f"Error importing plugin: {err.name}, running without plugins.\nConsider removing or repairing the faulty plugin(s).")
+    pass
 
 
 class PluginLoader:
