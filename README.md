@@ -1,13 +1,14 @@
 # Nio Smith
-A modular bot for @matrix-org, written in python using
+A modular bot for [@matrix-org](https://github.com/matrix-org), written in python using
 [matrix-nio](https://matrix-nio.readthedocs.io/en/latest/nio.html), supporting end-to-end-encryption out of the box.
 It's based on the lovely [nio-template](https://github.com/anoadragon453/nio-template) and tries to incorporate most
- of @anoadragon453's improvements.
+ of [@anoadragon453](https://github.com/anoadragon453) 's improvements.
 
 Be advised: the bot (and it's name ;-) is a work in progress, but basic functionality exists. Huge or small rewrites of
  any part of the project may or may not happen soon(ish).
  
-Currently included plugins consist mostly of pretty silly, mostly semi-useful stuff we used on IRC. PRs welcome. :-)
+Currently included plugins consist mostly of pretty silly, mostly semi-useful stuff we used on IRC. PRs and
+[feedback](https://matrix.to/#/#nio-smith:pack.rocks) welcome. :-)
 
 ## Features
 - ✔ transparent end-to-end encryption (EE2E)
@@ -55,6 +56,16 @@ Currently included plugins consist mostly of pretty silly, mostly semi-useful st
 ### Current plugin 3rd party requirements
 - `translate`: [googletrans](https://pypi.org/project/googletrans/)
 
+## Plugins
+- `echo`: echoes back text following the command.
+- `help`: lists all available plugins. If called with a plugin as parameter, lists all available commands
+- `meter`: accurately measures someones somethingness
+- `oracle`: predicts the inevitable future
+- `pick`: aids you in those really important life decisions
+- `roll`: the dice giveth and the dice taketh away
+- `sampleplugin`: Just a simple sample.
+- `spruch`: famous quotes from even more famous people (german, sorry)
+- `translate`: provides near-realtime translations of all room-messages via Google Translate
 
 ## Project structure
 
