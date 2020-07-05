@@ -110,6 +110,9 @@ The class used by all plugins, providing the following methods:
     - an optional list of rooms the hook is valid for
 - `add_timer`: define
     - the method to be called (currently once every ~30s whenever a sync event is received)
+- `store_data`: persistently store data for later use
+- `read_data`: read data from store
+- `clear_data`: clear stored data
     
 #### `pluginloader.py`
 
