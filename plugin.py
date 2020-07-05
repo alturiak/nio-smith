@@ -1,4 +1,5 @@
 import os.path
+from os import remove
 import pickle
 from typing import List, Any, Dict, Callable
 import yaml
@@ -97,7 +98,7 @@ class Plugin:
 
         return self.timers
 
-    def store_data(self, name: str, data: Any):
+    def store_data(self, name: str, data: Any) -> bool:
         """
         Store data in plugins/<pluginname>.pickle
         :param name: Name of the data to store, used as a reference to retrieve it later
@@ -107,12 +108,7 @@ class Plugin:
         """
 
         self.plugin_data[name] = data
-        try:
-            pickle.dump(self.plugin_data, (open(self.plugin_data_filename, "wb")))
-            return True
-        except Exception as err:
-            logger.critical(f"Could not write plugin_data to {self.plugin_data_filename}: {err}")
-            return False
+        return self.__save_data()
 
     def read_data(self, name: str) -> Any:
         """
@@ -131,12 +127,12 @@ class Plugin:
         Clear a specific field in self.plugin_data
         :param name: name of the field to be cleared
         :return:    True, if successfully cleared
-                    False, if name not contained in self.plugin_data
+                    False, if name not contained in self.plugin_data or data could not be saved to disk
         """
 
         if name in self.plugin_data:
             del self.plugin_data[name]
-            return True
+            return self.__save_data()
         else:
             return False
 
@@ -154,6 +150,30 @@ class Plugin:
         except Exception as err:
             logger.critical(f"Could not load plugin_data from {self.plugin_data_filename}: {err}")
             return {}
+
+    def __save_data(self) -> bool:
+        """
+        Save modified plugin_data to disk
+        :return:
+        """
+
+        if self.plugin_data != {}:
+            """there is actual data to save"""
+            try:
+                pickle.dump(self.plugin_data, (open(self.plugin_data_filename, "wb")))
+                return True
+            except Exception as err:
+                logger.critical(f"Could not write plugin_data to {self.plugin_data_filename}: {err}")
+                return False
+        else:
+            """no data to save, remove file"""
+            if os.path.isfile(self.plugin_data_filename):
+                try:
+                    remove(self.plugin_data_filename)
+                    return True
+                except Exception as err:
+                    logger.critical(f"Could not remove file {self.plugin_data_filename}: {err}")
+                    return False
 
     def add_config_items(self, config_items: Dict[str, Any]):
         """Add config items (and their default value) to get from a configuration file"""
