@@ -31,8 +31,8 @@ Currently included plugins consist mostly of pretty silly, mostly semi-useful st
 - ✔ react to received room-messages
 - ✔ register methods for recurring execution (roughly once every 30s)
 - ✔ limit commands to certain rooms
+- ✔ use built-in persistent storage
 - ❌ automatically be supplied with config-values from plugin-specific config-files
-- ❌ use built-in persistent storage
 - ❌ hook into other room-events
 
 ### Plugins must

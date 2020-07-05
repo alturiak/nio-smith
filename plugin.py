@@ -1,4 +1,5 @@
 import os.path
+import pickle
 from typing import List, Any, Dict, Callable
 import yaml
 from errors import ConfigError
@@ -21,6 +22,9 @@ class Plugin:
         self.hooks: Dict[str, List[PluginHook]] = {}
         self.timers: List[Callable] = []
         self.rooms: List[str] = []
+
+        self.plugin_data_filename: str = f"plugins/{self.name}.pickle"
+        self.plugin_data: Dict[str, Any] = self.__load_data()
 
         self.config_items: Dict[str, Any] = {}
         self.configuration: Dict[str, Any] = {}
@@ -92,6 +96,64 @@ class Plugin:
     def get_timers(self) -> List[Callable]:
 
         return self.timers
+
+    def store_data(self, name: str, data: Any):
+        """
+        Store data in plugins/<pluginname>.pickle
+        :param name: Name of the data to store, used as a reference to retrieve it later
+        :param data: data to be stored
+        :return:    True, if data was successfully stored
+                    False, if data could not be stored
+        """
+
+        self.plugin_data[name] = data
+        try:
+            pickle.dump(self.plugin_data, (open(self.plugin_data_filename, "wb")))
+            return True
+        except Exception as err:
+            logger.critical(f"Could not write plugin_data to {self.plugin_data_filename}: {err}")
+            return False
+
+    def read_data(self, name: str) -> Any:
+        """
+        Read data from self.plugin_data
+        :param name: Name of the data to be retrieved
+        :return: the previously stored data
+        """
+
+        if name in self.plugin_data:
+            return self.plugin_data[name]
+        else:
+            raise ValueError
+
+    def clear_data(self, name: str) -> bool:
+        """
+        Clear a specific field in self.plugin_data
+        :param name: name of the field to be cleared
+        :return:    True, if successfully cleared
+                    False, if name not contained in self.plugin_data
+        """
+
+        if name in self.plugin_data:
+            del self.plugin_data[name]
+            return True
+        else:
+            return False
+
+    def __load_data(self) -> Any:
+        """
+        Load plugin_data from file
+        :return: Data read from file to be loaded into self.plugin_data
+        """
+
+        try:
+            return pickle.load(open(self.plugin_data_filename, "rb"))
+        except FileNotFoundError:
+            logger.debug(f"File {self.plugin_data_filename} not found, plugin_data will be empty")
+            return {}
+        except Exception as err:
+            logger.critical(f"Could not load plugin_data from {self.plugin_data_filename}: {err}")
+            return {}
 
     def add_config_items(self, config_items: Dict[str, Any]):
         """Add config items (and their default value) to get from a configuration file"""
