@@ -109,7 +109,8 @@ async def main():
                     return False
                 else:
                     # We don't know why this was raised. Throw it at the user
-                    logger.fatal("Error logging in: %s", e)
+                    logger.fatal(f"Error logging in: {e}, retrying in 15s... ({error_retries})")
+                    await sleep(15)
 
             # Login succeeded!
 
