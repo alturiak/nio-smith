@@ -1,6 +1,7 @@
 import os.path
 from os import remove
 import pickle
+import dill
 from typing import List, Any, Dict, Callable
 import yaml
 from errors import ConfigError
@@ -26,7 +27,7 @@ class Plugin:
         self.timers: List[Callable] = []
         self.rooms: List[str] = []
 
-        self.plugin_data_filename: str = f"plugins/{self.name}.pickle"
+        self.plugin_data_filename: str = f"plugins/{self.name}.dill"
         self.plugin_data: Dict[str, Any] = self.__load_data()
 
         self.config_items: Dict[str, Any] = {}
@@ -102,7 +103,7 @@ class Plugin:
 
     def store_data(self, name: str, data: Any) -> bool:
         """
-        Store data in plugins/<pluginname>.pickle
+        Store data in plugins/<pluginname>.dill
         :param name: Name of the data to store, used as a reference to retrieve it later
         :param data: data to be stored
         :return:    True, if data was successfully stored
@@ -145,10 +146,12 @@ class Plugin:
         """
 
         try:
-            return pickle.load(open(self.plugin_data_filename, "rb"))
+            return dill.load(open(self.plugin_data_filename, "rb"), ignore=True)
+
         except FileNotFoundError:
             logger.debug(f"File {self.plugin_data_filename} not found, plugin_data will be empty")
             return {}
+
         except Exception as err:
             logger.critical(f"Could not load plugin_data from {self.plugin_data_filename}: {err}")
             return {}
@@ -162,7 +165,7 @@ class Plugin:
         if self.plugin_data != {}:
             """there is actual data to save"""
             try:
-                pickle.dump(self.plugin_data, (open(self.plugin_data_filename, "wb")))
+                dill.dump(self.plugin_data, open(self.plugin_data_filename, "wb"))
                 return True
             except Exception as err:
                 logger.critical(f"Could not write plugin_data to {self.plugin_data_filename}: {err}")
