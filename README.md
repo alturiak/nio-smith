@@ -38,7 +38,7 @@ Currently included plugins consist mostly of pretty silly, mostly semi-useful st
 ### Plugins must
 - ✔ use async
 - ✔ instantiate `Plugin`
-- ❌ use `time.sleep()` - please use `async.sleep()` instead
+- ❌ use `time.sleep()` - please use `asyncio.sleep()` instead
 
 ### Plugins should
 - ✔ raise `ImportError`s with meaningful messages for missing 3rd-party modules
@@ -113,6 +113,10 @@ The class used by all plugins, providing the following methods:
 - `store_data`: persistently store data for later use
 - `read_data`: read data from store
 - `clear_data`: clear stored data
+- `reply`: reply to a command with a message
+- `reply_notice`: reply to a command with a notice
+- `message`: send a message to a room
+- `notice`: send a notice to a room
     
 #### `pluginloader.py`
 

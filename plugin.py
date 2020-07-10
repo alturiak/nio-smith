@@ -4,6 +4,8 @@ import pickle
 from typing import List, Any, Dict, Callable
 import yaml
 from errors import ConfigError
+from chat_functions import send_text_to_room
+from asyncio import sleep
 import logging
 logger = logging.getLogger(__name__)
 
@@ -43,14 +45,14 @@ class Plugin:
         Extract helptexts from commands
 
         :return:
-        list[dict]: {command: helptext}
+        List[dict]: {command: helptext}
         """
 
-        commandhelp: List[Dict] = []
+        command_help: List[Dict] = []
         for command in self.commands:
-            commandhelp.append({command[0]: command[2]})
+            command_help.append({command[0]: command[2]})
 
-        return commandhelp
+        return command_help
 
     def add_command(self, command: str, method: Callable, help_text: str, room_id: List[str] = None):
 
@@ -174,6 +176,58 @@ class Plugin:
                 except Exception as err:
                     logger.critical(f"Could not remove file {self.plugin_data_filename}: {err}")
                     return False
+
+    async def message(self, client, room_id, message: str, delay: int = 0):
+        """
+        Send a message to a room, usually utilized by plugins to respond to commands
+        :param client: AsyncClient used to send the message
+        :param room_id: room_id to send to message to
+        :param message: the actual message
+        :param delay: optional delay with typing notification, 1..1000ms
+        :return:
+        """
+
+        if delay > 0:
+            if delay > 1000:
+                delay = 1000
+
+            await client.room_typing(room_id, timeout=delay)
+            await sleep(float(delay/1000))
+            await client.room_typing(room_id, typing_state=False)
+
+        await send_text_to_room(client, room_id, message, notice=False)
+
+    async def reply(self, command, message: str, delay: int = 0):
+        """
+        Simplified version of message to reply to commands
+        :param command: the command object passed by the message we're responding to
+        :param message: the actual message
+        :param delay: optional delay with typing notification, 1..1000ms
+        :return:
+        """
+
+        await self.message(command.client, command.room.room_id, message, delay)
+
+    async def notice(self, client, room_id, message: str):
+        """
+        Send a notice to a room, usually utilized by plugins to post errors, help texts or other messages not warranting pinging users
+        :param client: AsyncClient used to send the message
+        :param room_id: room_id to send to message to
+        :param message: the actual message
+        :return:
+        """
+
+        await send_text_to_room(client, room_id, message, notice=True)
+
+    async def reply_notice(self, command, message: str):
+        """
+        Simplified version of notice to reply to commands
+        :param command: the command object passed by the message we're responding to
+        :param message: the actual message
+        :return:
+        """
+
+        await self.notice(command.client, command.room.room_id, message)
 
     def add_config_items(self, config_items: Dict[str, Any]):
         """Add config items (and their default value) to get from a configuration file"""

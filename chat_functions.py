@@ -55,7 +55,7 @@ async def send_text_to_room(
 
 
 async def send_typing(client, room_id, message, notice=False, markdown_convert=True):
-    """Send text to a room after displaying a typing notification for one second
+    """DEPRECATED by plugin.message(): Send text to a room after displaying a typing notification for .2s
     Args:
         client (nio.AsyncClient): The client to communicate to matrix with
 
