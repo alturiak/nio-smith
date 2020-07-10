@@ -87,10 +87,11 @@ async def main():
 
                 # Check if login failed
                 if type(login_response) == LoginError:
-                    logger.error(f"Failed to login: %s", login_response.message)
+                    logger.error(f"Failed to login: {login_response.message}, retrying in 15s... ({error_retries})")
                     # try logging in a few times to work around temporary login errors during homeserver restarts
                     if error_retries < 3:
                         error_retries += 1
+                        await sleep(15)
                         continue
                     else:
                         return False
@@ -109,8 +110,7 @@ async def main():
                     return False
                 else:
                     # We don't know why this was raised. Throw it at the user
-                    logger.fatal(f"Error logging in: {e}, retrying in 15s... ({error_retries})")
-                    await sleep(15)
+                    logger.fatal(f"Error logging in: {e}")
 
             # Login succeeded!
 
