@@ -1,5 +1,4 @@
 from plugin import Plugin
-from chat_functions import send_text_to_room
 
 import logging
 logger = logging.getLogger(__name__)
@@ -8,7 +7,7 @@ plugin = Plugin("sampleplugin", "General", "Just a simple sample.")
 
 
 async def sample_command(command):
-    await send_text_to_room(command.client, command.room.room_id, "This is a sample output")
+    await plugin.reply(command, "This is a sample output")
 
 
 async def sample_store(command):
@@ -18,14 +17,15 @@ async def sample_store(command):
     :return:
     """
 
-    logger.debug(f"sample_store called with {command.args}")
     if command.args:
-        if plugin.store_data("message", command.args):
-            await send_text_to_room(command.client, command.room.room_id, f"Message {command.args} stored successfully")
+        logger.debug(f"sample_store called with {command.args}")
+        message: str = " ".join(command.args)
+        if plugin.store_data("message", message):
+            await plugin.reply_notice(command, f"Message \"{message}\" stored successfully")
         else:
-            await send_text_to_room(command.client, command.room.room_id, "Could not store message")
+            await plugin.reply_notice(command, "Could not store message")
     else:
-        await send_text_to_room(command.client, command.room.room_id, "No message supplied")
+        await plugin.reply_notice(command, "No message supplied")
 
 
 async def sample_read(command):
@@ -37,9 +37,9 @@ async def sample_read(command):
 
     try:
         message: str = plugin.read_data("message")
-        await send_text_to_room(command.client, command.room.room_id, f"Message loaded: {message}")
+        await plugin.reply(command, f"Message: {message}", 200)
     except ValueError:
-        await send_text_to_room(command.client, command.room.room_id, "Message could not be loaded")
+        await plugin.reply_notice(command, "Message could not be loaded")
 
 
 async def sample_clear(command):
@@ -50,9 +50,9 @@ async def sample_clear(command):
     """
 
     if plugin.clear_data("message"):
-        await send_text_to_room(command.client, command.room.room_id, "Message cleared")
+        await plugin.reply_notice(command, "Message cleared")
     else:
-        await send_text_to_room(command.client, command.room.room_id, "Could not clear message as no message was stored")
+        await plugin.reply_notice(command, "Could not clear message as no message was stored")
 
 plugin.add_command("sample", sample_command, "A simple sample command, producing a simple sample output")
 plugin.add_command("sample_store", sample_store, "Store a message persistently")
