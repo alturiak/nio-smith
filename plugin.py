@@ -120,7 +120,7 @@ class Plugin:
         if name in self.plugin_data:
             return self.plugin_data[name]
         else:
-            raise ValueError
+            raise KeyError
 
     def clear_data(self, name: str) -> bool:
         """
