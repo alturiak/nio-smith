@@ -1,7 +1,6 @@
 import os.path
 from os import remove
 import pickle
-import dill
 from typing import List, Any, Dict, Callable
 import yaml
 from errors import ConfigError
@@ -27,8 +26,8 @@ class Plugin:
         self.timers: List[Callable] = []
         self.rooms: List[str] = []
 
-        self.plugin_data_filename: str = f"plugins/{self.name}.dill"
-        self.plugin_data: Dict[str, Any] = self.__load_data()
+        self.plugin_data_filename: str = f"plugins/{self.name}.pkl"
+        self.plugin_data: Dict[str, Any] = {}
 
         self.config_items: Dict[str, Any] = {}
         self.configuration: Dict[str, Any] = {}
@@ -139,14 +138,14 @@ class Plugin:
         else:
             return False
 
-    def __load_data(self) -> Any:
+    def load_data(self) -> Any:
         """
         Load plugin_data from file
         :return: Data read from file to be loaded into self.plugin_data
         """
 
         try:
-            return dill.load(open(self.plugin_data_filename, "rb"), ignore=True)
+            return pickle.load(open(self.plugin_data_filename, "rb"))
 
         except FileNotFoundError:
             logger.debug(f"File {self.plugin_data_filename} not found, plugin_data will be empty")
@@ -165,7 +164,7 @@ class Plugin:
         if self.plugin_data != {}:
             """there is actual data to save"""
             try:
-                dill.dump(self.plugin_data, open(self.plugin_data_filename, "wb"))
+                pickle.dump(self.plugin_data, open(self.plugin_data_filename, "wb"))
                 return True
             except Exception as err:
                 logger.critical(f"Could not write plugin_data to {self.plugin_data_filename}: {err}")

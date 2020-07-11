@@ -45,11 +45,14 @@ class PluginLoader:
         for plugin in self.__plugin_list.values():
             logger.debug("Reading commands from " + plugin.name)
             logger.debug(self.commands)
-            # assemble all valid commands and their respective methods
+            """assemble all valid commands and their respective methods"""
 
             self.commands.update(plugin.get_commands())
             self.hooks.update(plugin.get_hooks())
             self.timers.extend(plugin.get_timers())
+
+            """load the plugin's saved data"""
+            plugin.plugin_data = plugin.load_data()
 
         logger.debug("Active Commands:")
         logger.debug(self.commands)
