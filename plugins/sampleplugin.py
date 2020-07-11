@@ -6,6 +6,11 @@ logger = logging.getLogger(__name__)
 plugin = Plugin("sampleplugin", "General", "Just a simple sample.")
 
 
+class Sample:
+    def __init__(self, message: str):
+        self.message = message
+
+
 async def sample_command(command):
     await plugin.reply(command, "This is a sample output")
 
@@ -20,7 +25,8 @@ async def sample_store(command):
     if command.args:
         logger.debug(f"sample_store called with {command.args}")
         message: str = " ".join(command.args)
-        if plugin.store_data("message", message):
+        sample: Sample = Sample(message)
+        if plugin.store_data("sample", sample):
             await plugin.reply_notice(command, f"Message \"{message}\" stored successfully")
         else:
             await plugin.reply_notice(command, "Could not store message")
@@ -36,9 +42,9 @@ async def sample_read(command):
     """
 
     try:
-        message: str = plugin.read_data("message")
-        await plugin.reply(command, f"Message: {message}", 200)
-    except ValueError:
+        sample: Sample = plugin.read_data("sample")
+        await plugin.reply(command, f"Message: {sample.message}", 200)
+    except KeyError:
         await plugin.reply_notice(command, "Message could not be loaded")
 
 
@@ -49,7 +55,7 @@ async def sample_clear(command):
     :return:
     """
 
-    if plugin.clear_data("message"):
+    if plugin.clear_data("sample"):
         await plugin.reply_notice(command, "Message cleared")
     else:
         await plugin.reply_notice(command, "Could not clear message as no message was stored")

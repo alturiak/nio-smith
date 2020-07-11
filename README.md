@@ -49,12 +49,12 @@ Currently included plugins consist mostly of pretty silly, mostly semi-useful st
  me) 
 
 ## Requirements
-- python 3.8.3 or later
+- python 3.8 or later
 - [matrix-nio](https://matrix-nio.readthedocs.io/en/latest/nio.html) with end-to-end-encryption enabled
 - [fuzzywuzzy](https://github.com/seatgeek/fuzzywuzzy) for fuzzy command matching (yes, it's worth it)
 
 ### Current plugin 3rd party requirements
-- `translate`: [googletrans](https://pypi.org/project/googletrans/)
+- `translate`: [googletrans](https://pypi.org/project/googletrans/) to provide language detection and translation
 
 ## Plugins
 - `echo`: echoes back text following the command.
@@ -66,6 +66,7 @@ Currently included plugins consist mostly of pretty silly, mostly semi-useful st
 - `sampleplugin`: Just a simple sample.
 - `spruch`: famous quotes from even more famous people (german, sorry)
 - `translate`: provides near-realtime translations of all room-messages via Google Translate
+- `quote`: store quotes and provide several means to display them
 
 ## Project structure
 
