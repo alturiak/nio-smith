@@ -1,3 +1,4 @@
+import operator
 import os.path
 from os import remove
 import pickle
@@ -7,7 +8,8 @@ from errors import ConfigError
 from chat_functions import send_text_to_room
 from asyncio import sleep
 import logging
-from nio import MatrixRoom, MatrixUser, AsyncClient, JoinedMembersResponse, RoomMember
+from nio import AsyncClient, JoinedMembersResponse, RoomMember
+from fuzzywuzzy import fuzz
 logger = logging.getLogger(__name__)
 
 
@@ -232,11 +234,15 @@ class Plugin:
 
         await self.notice(command.client, command.room.room_id, message)
 
-    async def is_user_in_room(self, command, display_name: str) -> RoomMember or None:
+    async def is_user_in_room(self, command, display_name: str, strictness: str = "loose") -> RoomMember or None:
         """
         Try to determine if a diven displayname is currently a member of the room
         :param command:
         :param display_name: displayname of the user
+        :param strictness: how strict to match the nickname
+                            strict: exact match
+                            loose: case-insensitive match (default)
+                            fuzzy: fuzzy matching
         :return:    RoomMember matching the displayname if found,
                     None otherwise
         """
@@ -246,23 +252,48 @@ class Plugin:
 
         room_member: RoomMember
 
-        for room_member in room_members.members:
-            if room_member.display_name.lower() == display_name.lower():
-                return room_member
-        else:
-            return None
+        if strictness == "strict" or strictness == "loose":
+            for room_member in room_members.members:
 
-    async def link_user(self, command, display_name: str) -> str or None:
+                if strictness == "strict":
+                    if room_member.display_name.lower() == display_name.lower():
+                        return room_member
+
+                else:
+                    """loose matching"""
+                    if room_member.display_name.lower() == display_name.lower():
+                        return room_member
+            else:
+                return None
+
+        else:
+            """attempt fuzzy matching"""
+            ratios: Dict[int, RoomMember] = {}
+            for room_member in room_members.members:
+                score: int
+                if (score := fuzz.ratio(display_name.lower(), room_member.display_name.lower())) > 75:
+                    ratios[score] = room_member
+
+            if ratios != {}:
+                return ratios[max(ratios.keys())]
+            else:
+                return None
+
+    async def link_user(self, command, display_name: str, strictness: str = "loose") -> str or None:
         """
         Given a displayname and a command, returns a userlink
         :param command:
         :param display_name: displayname of the user
+        :param strictness: how strict to match the nickname
+                            strict: exact match
+                            loose: case-insensitive match (default)
+                            fuzzy: fuzzy matching
         :return:    string with the userlink-html-code if found,
                     None otherwise
         """
 
         user: RoomMember
-        if user := await self.is_user_in_room(command, display_name):
+        if user := await self.is_user_in_room(command, display_name, strictness):
             return f"<a href=\"https://matrix.to/#/{user.user_id}\">{display_name}</a>"
         else:
             return None

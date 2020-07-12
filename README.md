@@ -51,7 +51,7 @@ Currently included plugins consist mostly of pretty silly, mostly semi-useful st
 ## Requirements
 - python 3.8 or later
 - [matrix-nio](https://matrix-nio.readthedocs.io/en/latest/nio.html) with end-to-end-encryption enabled
-- [fuzzywuzzy](https://github.com/seatgeek/fuzzywuzzy) for fuzzy command matching (yes, it's worth it)
+- [fuzzywuzzy](https://github.com/seatgeek/fuzzywuzzy) for fuzzy command matching and nick linking (yes, it's worth it)
 
 ### Current plugin 3rd party requirements
 - `translate`: [googletrans](https://pypi.org/project/googletrans/) to provide language detection and translation
