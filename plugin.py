@@ -234,7 +234,7 @@ class Plugin:
 
         await self.notice(command.client, command.room.room_id, message)
 
-    async def is_user_in_room(self, command, display_name: str, strictness: str = "loose") -> RoomMember or None:
+    async def is_user_in_room(self, command, display_name: str, strictness: str = "loose", fuzziness: int = 75) -> RoomMember or None:
         """
         Try to determine if a diven displayname is currently a member of the room
         :param command:
@@ -243,6 +243,7 @@ class Plugin:
                             strict: exact match
                             loose: case-insensitive match (default)
                             fuzzy: fuzzy matching
+        :param fuzziness: if strictness == fuzzy, fuzziness determines the required percentage for a match
         :return:    RoomMember matching the displayname if found,
                     None otherwise
         """
@@ -271,7 +272,7 @@ class Plugin:
             ratios: Dict[int, RoomMember] = {}
             for room_member in room_members.members:
                 score: int
-                if (score := fuzz.ratio(display_name.lower(), room_member.display_name.lower())) > 75:
+                if (score := fuzz.ratio(display_name.lower(), room_member.display_name.lower())) >= fuzziness:
                     ratios[score] = room_member
 
             if ratios != {}:
@@ -279,7 +280,7 @@ class Plugin:
             else:
                 return None
 
-    async def link_user(self, command, display_name: str, strictness: str = "loose") -> str or None:
+    async def link_user(self, command, display_name: str, strictness: str = "loose", fuzziness: int = 75) -> str or None:
         """
         Given a displayname and a command, returns a userlink
         :param command:
@@ -288,12 +289,13 @@ class Plugin:
                             strict: exact match
                             loose: case-insensitive match (default)
                             fuzzy: fuzzy matching
+        :param fuzziness: if strictness == fuzzy, fuzziness determines the required percentage for a match
         :return:    string with the userlink-html-code if found,
                     None otherwise
         """
 
         user: RoomMember
-        if user := await self.is_user_in_room(command, display_name, strictness):
+        if user := await self.is_user_in_room(command, display_name, strictness, fuzziness):
             return f"<a href=\"https://matrix.to/#/{user.user_id}\">{display_name}</a>"
         else:
             return None

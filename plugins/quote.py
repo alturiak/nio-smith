@@ -86,7 +86,7 @@ class Quote:
             nick: str
             nick_link: str
             for nick in nick_list:
-                if nick_link := await plugin.link_user(command, nick, strictness="fuzzy"):
+                if nick_link := await plugin.link_user(command, nick, strictness="fuzzy", fuzziness=55):
                     quote_text = quote_text.replace(f"&lt;{nick}&gt;", nick_link)
 
         reactions_text: str = ""
@@ -96,7 +96,7 @@ class Quote:
             else:
                 reactions_text += f"{reaction}({count}) "
 
-        return f"**Quote {self.id}**:  \n{quote_text}  \n{reactions_text}"
+        return f"**Quote {self.id}**:  \n{quote_text}  \n\n{reactions_text}"
 
     async def display_details(self, command) -> str:
         """
