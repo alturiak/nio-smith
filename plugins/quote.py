@@ -153,13 +153,13 @@ async def quote_command(command):
     if len(command.args) == 0:
         """no id or search term supplied, randomly select a quote"""
         quote_id, quote_object = random.choice(list(quotes.items()))
-        await plugin.reply(command, await quote_object.display_text(command))
+        await plugin.reply_notice(command, await quote_object.display_text(command))
 
     elif len(command.args) == 1 and command.args[0].isdigit():
         """specific quote requested by id"""
 
         if quote_object := await find_quote_by_id(quotes, int(command.args[0])):
-            await plugin.reply(command, await quote_object.display_text(command))
+            await plugin.reply_notice(command, await quote_object.display_text(command))
         else:
             await plugin.reply_notice(command, f"Quote {command.args[0]} not found")
 
@@ -180,7 +180,7 @@ async def quote_command(command):
             quote_object = await find_quote_by_search_term(quotes, terms)
 
         if quote_object:
-            await plugin.reply(command, await quote_object.display_text(command))
+            await plugin.reply_notice(command, await quote_object.display_text(command))
         else:
             await plugin.reply_notice(command, f"No quote found matching {terms}")
 
@@ -295,7 +295,7 @@ async def quote_delete_command(command):
         except KeyError:
             await plugin.reply_notice(command, f"Quote {quote_id} not found")
     else:
-        await plugin.reply(command, f"Usage: quote_delete <id>")
+        await plugin.reply_notice(command, f"Usage: quote_delete <id>")
 
 
 async def quote_restore_command(command):
@@ -324,7 +324,7 @@ async def quote_restore_command(command):
         except KeyError:
             await plugin.reply_notice(command, f"Quote {quote_id} not found")
     else:
-        await plugin.reply(command, f"Usage: quote_restore <id>")
+        await plugin.reply_notice(command, f"Usage: quote_restore <id>")
 
 
 async def quote_add_reaction_command(command):
