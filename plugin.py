@@ -7,6 +7,7 @@ from errors import ConfigError
 from chat_functions import send_text_to_room
 from asyncio import sleep
 import logging
+from nio import MatrixRoom, MatrixUser, AsyncClient, JoinedMembersResponse, RoomMember
 logger = logging.getLogger(__name__)
 
 
@@ -210,7 +211,7 @@ class Plugin:
 
         await self.message(command.client, command.room.room_id, message, delay)
 
-    async def notice(self, client, room_id, message: str):
+    async def notice(self, client, room_id: str, message: str):
         """
         Send a notice to a room, usually utilized by plugins to post errors, help texts or other messages not warranting pinging users
         :param client: AsyncClient used to send the message
@@ -230,6 +231,41 @@ class Plugin:
         """
 
         await self.notice(command.client, command.room.room_id, message)
+
+    async def is_user_in_room(self, command, display_name: str) -> RoomMember or None:
+        """
+        Try to determine if a diven displayname is currently a member of the room
+        :param command:
+        :param display_name: displayname of the user
+        :return:    RoomMember matching the displayname if found,
+                    None otherwise
+        """
+
+        client: AsyncClient = command.client
+        room_members: JoinedMembersResponse = await client.joined_members(command.room.room_id)
+
+        room_member: RoomMember
+
+        for room_member in room_members.members:
+            if room_member.display_name.lower() == display_name.lower():
+                return room_member
+        else:
+            return None
+
+    async def link_user(self, command, display_name: str) -> str or None:
+        """
+        Given a displayname and a command, returns a userlink
+        :param command:
+        :param display_name: displayname of the user
+        :return:    string with the userlink-html-code if found,
+                    None otherwise
+        """
+
+        user: RoomMember
+        if user := await self.is_user_in_room(command, display_name):
+            return f"<a href=\"https://matrix.to/#/{user.user_id}\">{display_name}</a>"
+        else:
+            return None
 
     def add_config_items(self, config_items: Dict[str, Any]):
         """Add config items (and their default value) to get from a configuration file"""

@@ -118,6 +118,8 @@ The class used by all plugins, providing the following methods:
 - `reply_notice`: reply to a command with a notice
 - `message`: send a message to a room
 - `notice`: send a notice to a room
+- `is_user_in_room`: checks if a given displayname is a member of the current room
+- `link_user`: given a displayname, returns a link to the user (rendered as userpill in riot)
     
 #### `pluginloader.py`
 

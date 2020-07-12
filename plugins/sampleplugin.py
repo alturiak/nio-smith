@@ -60,7 +60,24 @@ async def sample_clear(command):
     else:
         await plugin.reply_notice(command, "Could not clear message as no message was stored")
 
+
+async def sample_link_user(command):
+    """
+    Highlight a user (produce userlink by displayname)
+    :param command:
+    :return:
+    """
+
+    if len(command.args) == 1:
+        user_link: str
+        if user_link := await plugin.link_user(command, command.args[0]):
+            await plugin.reply(command, f"Requested Displayname: {command.args[0]}, User Link: {user_link}")
+        else:
+            await plugin.reply_notice(command, f"No user found for {command.args[0]}")
+
+
 plugin.add_command("sample", sample_command, "A simple sample command, producing a simple sample output")
 plugin.add_command("sample_store", sample_store, "Store a message persistently")
 plugin.add_command("sample_read", sample_read, "Read the stored message")
 plugin.add_command("sample_clear", sample_clear, "Clear the stored message")
+plugin.add_command("sample_link_user", sample_link_user, "Given a displayname, try to produce a userlink")
