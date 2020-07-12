@@ -64,7 +64,7 @@ class Quote:
         :return: the textual representation of the quote
         """
 
-        quote_text: str = self.text.replace("|", "  \n")
+        quote_text: str = self.text.replace(" | ", "  \n")
         p = compile(r'<(\S+)>')
         nick_list: List[str] = p.findall(quote_text)
 
