@@ -2,6 +2,7 @@ from plugin import Plugin
 from typing import Dict, List
 import time
 import random
+from re import compile
 
 import logging
 logger = logging.getLogger(__name__)
@@ -57,15 +58,28 @@ class Quote:
         self.members: List[str] = []
         """List of people participating in the quote"""
 
-    async def display_text(self) -> str:
+    async def display_text(self, command) -> str:
         """
         Build the default textual representation of a randomly called quote
         :return: the textual representation of the quote
         """
 
         quote_text: str = self.text.replace("|", "  \n")
+        p = compile(r'<(\S+)>')
+        nick_list: List[str] = p.findall(quote_text)
+
+        """replace problematic characters"""
         quote_text = quote_text.replace("<", "&lt;")
         quote_text = quote_text.replace(">", "&gt;")
+        quote_text = quote_text.replace("`", "&#96;")
+
+        """replace nicknames by userlinks"""
+        if plugin.read_data("nick_links"):
+            nick: str
+            nick_link: str
+            for nick in nick_list:
+                if nick_link := await plugin.link_user(command, nick):
+                    quote_text = quote_text.replace(f"&lt;{nick}&gt;", nick_link)
 
         reactions_text: str = ""
         for reaction, count in self.reactions.items():
@@ -76,13 +90,13 @@ class Quote:
 
         return f"**Quote {self.id}**:  \n{quote_text}  \n{reactions_text}"
 
-    async def display_details(self) -> str:
+    async def display_details(self, command) -> str:
         """
         Build the textual output of a quotes' full details
         :return: the detailed textual representation of the quote
         """
 
-        full_text: str = f"{self.display_text()}\n  " \
+        full_text: str = f"{self.display_text(command)}\n  " \
                          f"Date: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(self.date))}\n" \
                          f"Added by: {self.user} / {self.mxuser}\n" \
                          f"Added on: {self.chan} / {self.mxroom}\n" \
@@ -134,18 +148,18 @@ async def quote_command(command):
         return False
 
     quote_id: int
-    quote: Quote
+    quote_object: Quote
 
     if len(command.args) == 0:
         """no id or search term supplied, randomly select a quote"""
-        quote_id, quote = random.choice(list(quotes.items()))
-        await plugin.reply(command, await quote.display_text())
+        quote_id, quote_object = random.choice(list(quotes.items()))
+        await plugin.reply(command, await quote_object.display_text(command))
 
     elif len(command.args) == 1 and command.args[0].isdigit():
         """specific quote requested by id"""
 
-        if quote := await find_quote_by_id(quotes, int(command.args[0])):
-            await plugin.reply(command, await quote.display_text())
+        if quote_object := await find_quote_by_id(quotes, int(command.args[0])):
+            await plugin.reply(command, await quote_object.display_text(command))
         else:
             await plugin.reply_notice(command, f"Quote {command.args[0]} not found")
 
@@ -158,15 +172,15 @@ async def quote_command(command):
         if command.args[-1].isdigit():
             """check if a specific match is requested"""
             terms = command.args[:-1]
-            match_id = command.args[-1]
-            quote = await find_quote_by_search_term(quotes, terms, match_id)
+            match_id = int(command.args[-1])
+            quote_object = await find_quote_by_search_term(quotes, terms, match_id)
 
         else:
             terms = command.args
-            quote = await find_quote_by_search_term(quotes, terms)
+            quote_object = await find_quote_by_search_term(quotes, terms)
 
-        if quote:
-            await plugin.reply(command, await quote.display_text())
+        if quote_object:
+            await plugin.reply(command, await quote_object.display_text(command))
         else:
             await plugin.reply_notice(command, f"No quote found matching {terms}")
 
@@ -182,9 +196,9 @@ async def find_quote_by_search_term(quotes: Dict[int, Quote], terms: List[str], 
 
     matching_quotes: List[Quote] = []
 
-    for quote_id, quote in quotes.items():
-        if await quote.match(terms):
-            matching_quotes.append(quote)
+    for quote_id, quote_object in quotes.items():
+        if await quote_object.match(terms):
+            matching_quotes.append(quote_object)
 
     if matching_quotes:
         if 0 < match_id <= len(matching_quotes):
@@ -203,8 +217,8 @@ async def find_quote_by_id(quotes: Dict[int, Quote], quote_id: int) -> Quote or 
     :return: the Quote that has been found, None otherwise
     """
     try:
-        quote: Quote = quotes[quote_id]
-        return quote
+        quote_object: Quote = quotes[quote_id]
+        return quote_object
     except KeyError:
         return None
 
@@ -340,9 +354,26 @@ async def quote_add_reaction_command(command):
         await plugin.reply_notice(command, f"Usage: quote_add_reaction <quote_id> <emoji>")
 
 
+async def quote_links_command(command):
+    """
+    Toggle linking of nicknames on or off
+    :param command:
+    :return:
+    """
+
+    try:
+        plugin.store_data("nick_links", not plugin.read_data("nick_links"))
+
+    except KeyError:
+        plugin.store_data("nick_links", False)
+
+    await plugin.reply_notice(command, f"Nick linking {plugin.read_data('nick_links')}")
+
+
 plugin.add_command("quote", quote_command, "Post quotes, either randomly, by id, or by search string")
 # plugin.add_command("quote_detail", quote_detail_command, "View a detailed output of a specific quote")
 plugin.add_command("quote_add", quote_add_command, "Add a quote")
 plugin.add_command("quote_del", quote_delete_command, "Delete a quote (can be restored)")
 plugin.add_command("quote_restore", quote_restore_command, "Restore a quote")
 plugin.add_command("quote_add_reaction", quote_add_reaction_command, "Add a reaction to a quote - to be replaced by automatic reaction detection later")
+plugin.add_command("quote_links", quote_links_command, "Toggle automatic nickname linking")
