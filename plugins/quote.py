@@ -201,10 +201,10 @@ async def find_quote_by_search_term(quotes: Dict[int, Quote], terms: List[str], 
             matching_quotes.append(quote_object)
 
     if matching_quotes:
-        if 0 < match_id <= len(matching_quotes):
-            return random.random(matching_quotes)
-        else:
+        if int(match_id) != 0 and match_id <= len(matching_quotes):
             return matching_quotes[match_id-1]
+        else:
+            return random.choice(matching_quotes)
     else:
         return None
 
