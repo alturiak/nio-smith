@@ -225,7 +225,7 @@ async def find_quote_by_search_term(quotes: Dict[int, Quote], terms: List[str], 
             return matching_quotes[match_id-1], match_id, len(matching_quotes)
         else:
             match_index: int = random.randint(1, len(matching_quotes))
-            return matching_quotes[match_index], match_index, len(matching_quotes)
+            return matching_quotes[match_index-1], match_index, len(matching_quotes)
     else:
         return None
 
