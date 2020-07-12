@@ -1,5 +1,5 @@
 from plugin import Plugin
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import time
 import random
 from re import compile
@@ -64,16 +64,24 @@ class Quote:
         :return: the textual representation of the quote
         """
 
-        quote_text: str = self.text.replace(" | ", "  \n")
+        quote_text: str = self.text
+        """pre nick-detection cleanup"""
+        quote_text = quote_text.replace("<@", "<")
+        quote_text = quote_text.replace("<+", "<")
+
+        """try to find nicknames"""
         p = compile(r'<(\S+)>')
         nick_list: List[str] = p.findall(quote_text)
 
-        """replace problematic characters"""
+        """replace problematic characters with their html-representation"""
         quote_text = quote_text.replace("<", "&lt;")
         quote_text = quote_text.replace(">", "&gt;")
         quote_text = quote_text.replace("`", "&#96;")
 
-        """replace nicknames by userlinks"""
+        """matrix allows us to display quotes as multiline-messages :)"""
+        quote_text = quote_text.replace(" | ", "  \n")
+
+        """optionally replace nicknames by userlinks"""
         if plugin.read_data("nick_links"):
             nick: str
             nick_link: str
@@ -168,30 +176,42 @@ async def quote_command(command):
 
         terms: List[str]
         match_id: int
+        match_index: int
+        total_matches: int
 
         if command.args[-1].isdigit():
             """check if a specific match is requested"""
             terms = command.args[:-1]
             match_id = int(command.args[-1])
-            quote_object = await find_quote_by_search_term(quotes, terms, match_id)
+            try:
+                (quote_object, match_index, total_matches) = await find_quote_by_search_term(quotes, terms, match_id)
+            except TypeError:
+                quote_object = None
 
         else:
             terms = command.args
-            quote_object = await find_quote_by_search_term(quotes, terms)
+            try:
+                (quote_object, match_index, total_matches) = await find_quote_by_search_term(quotes, terms)
+            except TypeError:
+                quote_object = None
 
         if quote_object:
-            await plugin.reply_notice(command, await quote_object.display_text(command))
+            await plugin.reply_notice(command, f"{await quote_object.display_text(command)}  \nMatch {match_index} of {total_matches}")
         else:
             await plugin.reply_notice(command, f"No quote found matching {terms}")
 
 
-async def find_quote_by_search_term(quotes: Dict[int, Quote], terms: List[str], match_id: int = 0) -> Quote or None:
+async def find_quote_by_search_term(quotes: Dict[int, Quote], terms: List[str], match_id: int = 0) -> Tuple[Quote, int, int] or None:
     """
     Search for a matching quote by search terms
     :param quotes: Dict of quotes
     :param terms: search terms the quotes must match
     :param match_id: optionally provide a number to return the n'th match to the search terms
-    :return: a randomquote matching the search terms
+    :return:    If a quote has been found:
+                Tuple of
+                    the quote that has been found
+                    the index of the search result
+                    the total search results
     """
 
     matching_quotes: List[Quote] = []
@@ -202,9 +222,10 @@ async def find_quote_by_search_term(quotes: Dict[int, Quote], terms: List[str], 
 
     if matching_quotes:
         if int(match_id) != 0 and match_id <= len(matching_quotes):
-            return matching_quotes[match_id-1]
+            return matching_quotes[match_id-1], match_id, len(matching_quotes)
         else:
-            return random.choice(matching_quotes)
+            match_index: int = random.randint(1, len(matching_quotes))
+            return matching_quotes[match_index], match_index, len(matching_quotes)
     else:
         return None
 
