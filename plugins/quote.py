@@ -226,7 +226,7 @@ async def quote_command(command):
                 quote_object = None
 
         if quote_object:
-            await post_quote(command, quote_object)
+            await post_quote(command, quote_object, match_index, total_matches)
         else:
             await plugin.reply_notice(command, f"No quote found matching {terms}")
 
