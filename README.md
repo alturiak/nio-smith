@@ -28,7 +28,9 @@ Currently included plugins consist mostly of pretty silly, mostly semi-useful st
 - ✔ use (almost) arbitrary python-code
 - ✔ send room-messages
 - ✔ add multiple commands
-- ✔ react to received room-messages
+- ✔ track their sent messages
+- ✔ hook into to received room-messages
+- ✔ hook into to received reactions
 - ✔ register methods for recurring execution (roughly once every 30s)
 - ✔ limit commands to certain rooms
 - ✔ use built-in persistent storage
@@ -63,7 +65,7 @@ Currently included plugins consist mostly of pretty silly, mostly semi-useful st
 - `oracle`: predicts the inevitable future
 - `pick`: aids you in those really important life decisions
 - `roll`: the dice giveth and the dice taketh away
-- `sampleplugin`: Just a simple sample.
+- `sampleplugin`: Just a simple sample, demonstrating the current possibilities of `Plugin`
 - `spruch`: famous quotes from even more famous people (german, sorry)
 - `translate`: provides near-realtime translations of all room-messages via Google Translate
 - `quote`: store quotes and provide several means to display them
@@ -106,7 +108,9 @@ The class used by all plugins, providing the following methods:
     - a short helptext and
     - an optional list of rooms the command is valid for
 - `add_hook`: define
-    - an event type to be hooked into (only "m.room.message" is currently supported)
+    - an event type to be hooked into
+        - "m.room.message": normal text messages sent to rooms
+        - "m.reaction": reactions to room messages
     - the method called when the event is encountered,
     - an optional list of rooms the hook is valid for
 - `add_timer`: define

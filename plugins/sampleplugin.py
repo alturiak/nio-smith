@@ -1,5 +1,6 @@
+from nio import AsyncClient, UnknownEvent
+
 from plugin import Plugin
-from typing import List, Any
 
 import logging
 logger = logging.getLogger(__name__)
@@ -88,10 +89,27 @@ async def sample_reaction_test(command):
     if len(command.args) == 0:
         event_id: str = await plugin.reply(command, f"Reactions to this message will be tracked and posted back to the room")
         await plugin.reply_notice(command, f"Tracking Event ID {event_id}")
-        plugin.store_data("tracked_messages", event_id)
+        plugin.store_data("tracked_message", event_id)
 
     else:
         await plugin.reply_notice(command, "Usage: sample_reaction_test")
+
+
+async def hook_reactions(client: AsyncClient, room_id: str, event: UnknownEvent):
+    """
+    Hooks into reactions, checks if they relate to tracked_message and - if true - posts them to the room
+    :param client: AsyncClient
+    :param room_id: The room_id the reaction was received on
+    :param event: nio.events.room_events.UnknownEvent: the actual event received
+    :return:
+    """
+
+    relates_to: str = event.source['content']['m.relates_to']['event_id']
+    tracked_message: str = plugin.read_data("tracked_message")
+    reaction: str = event.source['content']['m.relates_to']['key']
+
+    if relates_to == tracked_message:
+        await plugin.notice(client, room_id, f"Reaction received to event {relates_to} received: {reaction}")
 
 
 plugin.add_command("sample", sample_command, "A simple sample command, producing a simple sample output")
@@ -100,3 +118,4 @@ plugin.add_command("sample_read", sample_read, "Read the stored message")
 plugin.add_command("sample_clear", sample_clear, "Clear the stored message")
 plugin.add_command("sample_link_user", sample_link_user, "Given a displayname, try to produce a userlink")
 plugin.add_command("sample_reaction_test", sample_reaction_test, "Post a message and record reactions to this message")
+plugin.add_hook("m.reaction", hook_reactions)

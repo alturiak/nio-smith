@@ -121,7 +121,7 @@ class PluginLoader:
             event_hooks: List[PluginHook] = self.hooks[event_type]
 
             for event_hook in event_hooks:
-                if room.room_id is None or room.room_id in event_hook.room_id:
+                if event_hook.room_id is None or room.room_id in event_hook.room_id:
                     # Make sure, exceptions raised by plugins do not kill the bot
                     try:
                         await event_hook.method(client, room.room_id, event)

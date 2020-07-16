@@ -1,10 +1,13 @@
 from bot_commands import Command
 from nio import (
-    JoinError,
+    JoinError, MatrixRoom, UnknownEvent,
 )
 from message_responses import Message
 
 import logging
+
+from pluginloader import PluginLoader
+
 logger = logging.getLogger(__name__)
 
 
@@ -23,7 +26,7 @@ class Callbacks(object):
         self.store = store
         self.config = config
         self.command_prefix = config.command_prefix
-        self.plugin_loader = plugin_loader
+        self.plugin_loader: PluginLoader = plugin_loader
 
     async def message(self, room, event):
         """Callback for when a message event is received
@@ -69,6 +72,17 @@ class Callbacks(object):
                 split_message = split_message.lstrip()
                 command = Command(self.client, self.store, self.config, split_message, room, event, self.plugin_loader)
                 await command.process()
+
+    async def event_unknown(self, room: MatrixRoom, event: UnknownEvent):
+        """
+        Handles events that are not yet known to matrix-nio (might change or break on updates)
+        :param room: nio.rooms.MatrixRoom: the room the event came from
+        :param event: nio.events.room_events.RoomMessage: The event defining the message
+        :return:
+        """
+
+        if event.type == "m.reaction":
+            await self.plugin_loader.run_hooks(self.client, event.type, room, event)
 
     async def invite(self, room, event):
         """Callback for when an invite is received. Join the room specified in the invite"""

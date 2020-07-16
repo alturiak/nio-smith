@@ -10,7 +10,7 @@ from nio import (
     AsyncClientConfig,
     RoomMessageText,
     InviteEvent,
-    LocalProtocolError, LoginResponse, LoginError)
+    LocalProtocolError, LoginError, UnknownEvent)
 from callbacks import Callbacks
 from config import Config
 from storage import Storage
@@ -72,6 +72,7 @@ async def main():
     callbacks = Callbacks(client, store, config, plugin_loader)
     client.add_event_callback(callbacks.message, (RoomMessageText,))
     client.add_event_callback(callbacks.invite, (InviteEvent,))
+    client.add_event_callback(callbacks.event_unknown, (UnknownEvent,))
     client.add_response_callback(run_plugins)
 
     # Keep trying to reconnect on failure (with some time in-between)
