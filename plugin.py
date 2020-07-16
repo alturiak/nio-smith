@@ -244,7 +244,7 @@ class Plugin:
         :return: the event_id of the sent message or None in case of an error
         """
 
-        await self.notice(command.client, command.room.room_id, message)
+        return await self.notice(command.client, command.room.room_id, message)
 
     async def is_user_in_room(self, command, display_name: str, strictness: str = "loose", fuzziness: int = 75) -> RoomMember or None:
         """

@@ -1,3 +1,5 @@
+from nio import AsyncClient, UnknownEvent
+
 from plugin import Plugin
 from typing import Dict, List, Tuple
 import time
@@ -138,9 +140,37 @@ class Quote:
             self.reactions[reaction] = 1
 
 
+class TrackedQuote:
+
+    def __init__(self, event_id: str, quote_id: int, timestamp: float = time.time()):
+        """
+        A tracked quote, consisting of event, quote and timestamp to allow for tracking reactions
+        :param event_id: the event_id of the message used by the bot to post the quote
+        :param quote_id: the id of the quote
+        :param timestamp: the timestamp of when the quote was posted to allow removing outdated event_ids
+        """
+        self.event_id = event_id
+        self.quote_id = quote_id
+        self.timestamp = timestamp
+
+    async def is_expired(self, max_age: float):
+        """
+        Check if the TrackedQuote is older than max_age
+        :param max_age: the maximum age in seconds a TrackedQuote may have
+        :return:    True, if the quote is older than max_age
+                    False, if it is not older than max_age
+        """
+
+        if self.timestamp < time.time()-max_age:
+            return True
+        else:
+            return False
+
+
 async def quote_command(command):
     """
     Display a quote, either randomly selected or by specific id, search terms or attributes
+    add the event id to tracked_quotes to allow for tracking reactions
     :param command:
     :return: -
     """
@@ -161,13 +191,13 @@ async def quote_command(command):
     if len(command.args) == 0:
         """no id or search term supplied, randomly select a quote"""
         quote_id, quote_object = random.choice(list(quotes.items()))
-        await plugin.reply_notice(command, await quote_object.display_text(command))
+        await post_quote(command, quote_object)
 
     elif len(command.args) == 1 and command.args[0].isdigit():
         """specific quote requested by id"""
 
         if quote_object := await find_quote_by_id(quotes, int(command.args[0])):
-            await plugin.reply_notice(command, await quote_object.display_text(command))
+            await post_quote(command, quote_object)
         else:
             await plugin.reply_notice(command, f"Quote {command.args[0]} not found")
 
@@ -196,9 +226,39 @@ async def quote_command(command):
                 quote_object = None
 
         if quote_object:
-            await plugin.reply_notice(command, f"{await quote_object.display_text(command)}  \nMatch {match_index} of {total_matches}")
+            await post_quote(command, quotes, quote_object)
         else:
             await plugin.reply_notice(command, f"No quote found matching {terms}")
+
+
+async def post_quote(command, quote_object: Quote, match_index: int = -1, total_matches: int = -1):
+    """
+    Post a given quote to the room, storing the event id for later tracking
+    :param command:
+    :param quote_object: the quote to be posted
+    :param match_index: index of the quote in matching quotes if found by search term
+    :param total_matches: number of total matches if found by search term
+    :return:
+    """
+
+    event_id: str
+
+    if match_index != -1:
+        event_id = await plugin.reply_notice(command, f"{await quote_object.display_text(command)}  \nMatch {match_index} of {total_matches}")
+    else:
+        event_id = await plugin.reply_notice(command, f"{await quote_object.display_text(command)}")
+
+    """store the event id of the message to allow for tracking reactions to the last 100 posted quotes"""
+    tracked_quotes: List[TrackedQuote] = []
+    try:
+        tracked_quotes = plugin.read_data("tracked_quotes")
+        while len(tracked_quotes) > 100:
+            tracked_quotes.pop()
+        tracked_quote = TrackedQuote(event_id, quote_object.id)
+        tracked_quotes.insert(0, tracked_quote)
+        plugin.store_data("tracked_quotes", tracked_quotes)
+    except KeyError:
+        plugin.store_data("tracked_quotes", [TrackedQuote(event_id, quote_object.id)])
 
 
 async def find_quote_by_search_term(quotes: Dict[int, Quote], terms: List[str], match_id: int = 0) -> Tuple[Quote, int, int] or None:
@@ -348,33 +408,6 @@ async def quote_restore_command(command):
         await plugin.reply_notice(command, f"Usage: quote_restore <id>")
 
 
-async def quote_add_reaction_command(command):
-    """
-    Add a reaction to a quote
-    :param command:
-    :return:
-    """
-
-    quotes: Dict[int, Quote]
-    try:
-        quotes = plugin.read_data("quotes")
-    except KeyError:
-        quotes = {}
-
-    if len(command.args) == 2 and command.args[0].isdigit():
-        quote: Quote = await find_quote_by_id(quotes, int(command.args[0]))
-        if quote:
-            await quote.quote_add_reaction(command.args[1])
-            quotes[quote.id] = quote
-            plugin.store_data("quotes", quotes)
-            await plugin.reply_notice(command, f"Reaction {command.args[1]} added to quote {command.args[0]}")
-        else:
-            await plugin.reply_notice(command, f"Quote {command.args[0]} not found")
-
-    else:
-        await plugin.reply_notice(command, f"Usage: quote_add_reaction <quote_id> <emoji>")
-
-
 async def quote_links_command(command):
     """
     Toggle linking of nicknames on or off
@@ -391,10 +424,47 @@ async def quote_links_command(command):
     await plugin.reply_notice(command, f"Nick linking {plugin.read_data('nick_links')}")
 
 
+async def quote_add_reaction(client: AsyncClient, room_id: str, event: UnknownEvent):
+    """
+    Adds reactions to quotes if their event id is known (and tracked in tracked_messages)
+    :param client: AsyncClient:
+    :param room_id: str:
+    :param event: UnknownEvent
+    :return:
+    """
+
+    quotes: Dict[int, Quote]
+    try:
+        quotes = plugin.read_data("quotes")
+    except KeyError:
+        quotes = {}
+
+    tracked_quotes: List[TrackedQuote]
+    try:
+        tracked_quotes = plugin.read_data("tracked_quotes")
+    except KeyError:
+        return
+
+    relates_to: str = event.source['content']['m.relates_to']['event_id']
+    reaction: str = event.source['content']['m.relates_to']['key']
+    quote_id: int = -1
+
+    for tracked_quote in tracked_quotes:
+        if relates_to == tracked_quote.event_id:
+            quote_id = tracked_quote.quote_id
+            break
+
+    if quote_id != -1:
+        quote_object: Quote = await find_quote_by_id(quotes, quote_id)
+        await quote_object.quote_add_reaction(reaction)
+        quotes[quote_id] = quote_object
+        plugin.store_data("quotes", quotes)
+
+
 plugin.add_command("quote", quote_command, "Post quotes, either randomly, by id, or by search string")
 # plugin.add_command("quote_detail", quote_detail_command, "View a detailed output of a specific quote")
 plugin.add_command("quote_add", quote_add_command, "Add a quote")
 plugin.add_command("quote_del", quote_delete_command, "Delete a quote (can be restored)")
 plugin.add_command("quote_restore", quote_restore_command, "Restore a quote")
-plugin.add_command("quote_add_reaction", quote_add_reaction_command, "Add a reaction to a quote - to be replaced by automatic reaction detection later")
 plugin.add_command("quote_links", quote_links_command, "Toggle automatic nickname linking")
+plugin.add_hook("m.reaction", quote_add_reaction)
