@@ -46,9 +46,20 @@ class PluginLoader:
             logger.debug("Reading commands from " + plugin.name)
             logger.debug(self.commands)
             """assemble all valid commands and their respective methods"""
-
             self.commands.update(plugin.get_commands())
-            self.hooks.update(plugin.get_hooks())
+
+            """assemble all hooks and their respective methods"""
+            event_type: str
+            plugin_hooks: List[PluginHook]
+            plugin_hook: PluginHook
+            for event_type, plugin_hooks in plugin.get_hooks().items():
+                if event_type in self.hooks.keys():
+                    for plugin_hook in plugin_hooks:
+                        self.hooks[event_type].append(plugin_hook)
+                else:
+                    self.hooks[event_type] = plugin_hooks
+
+            """assemble all timers and their respective methods"""
             self.timers.extend(plugin.get_timers())
 
             """load the plugin's saved data"""
@@ -120,6 +131,7 @@ class PluginLoader:
         if event_type in self.hooks.keys():
             event_hooks: List[PluginHook] = self.hooks[event_type]
 
+            event_hook: PluginHook
             for event_hook in event_hooks:
                 if event_hook.room_id is None or room.room_id in event_hook.room_id:
                     # Make sure, exceptions raised by plugins do not kill the bot

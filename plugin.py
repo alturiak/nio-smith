@@ -87,9 +87,9 @@ class Plugin:
         plugin_hook = PluginHook(event_type, method, room_id)
         if event_type not in self.hooks.keys():
             self.hooks[event_type] = [plugin_hook]
-            logger.debug(f"Added hook for {event_type} to rooms {room_id}")
         else:
             self.hooks[event_type].append(plugin_hook)
+        logger.debug(f"Added hook for {event_type} to rooms {room_id}")
 
     def get_hooks(self):
 
