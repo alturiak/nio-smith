@@ -8,7 +8,7 @@ from errors import ConfigError
 from chat_functions import send_text_to_room
 from asyncio import sleep
 import logging
-from nio import AsyncClient, JoinedMembersResponse, RoomMember
+from nio import AsyncClient, JoinedMembersResponse, RoomMember, RoomSendResponse
 from fuzzywuzzy import fuzz
 logger = logging.getLogger(__name__)
 
@@ -182,14 +182,14 @@ class Plugin:
                     logger.critical(f"Could not remove file {self.plugin_data_filename}: {err}")
                     return False
 
-    async def message(self, client, room_id, message: str, delay: int = 0):
+    async def message(self, client, room_id, message: str, delay: int = 0) -> str or None:
         """
         Send a message to a room, usually utilized by plugins to respond to commands
         :param client: AsyncClient used to send the message
         :param room_id: room_id to send to message to
         :param message: the actual message
         :param delay: optional delay with typing notification, 1..1000ms
-        :return:
+        :return: the event_id of the sent message or None in case of an error
         """
 
         if delay > 0:
@@ -200,36 +200,48 @@ class Plugin:
             await sleep(float(delay/1000))
             await client.room_typing(room_id, typing_state=False)
 
-        await send_text_to_room(client, room_id, message, notice=False)
+        event_response: RoomSendResponse
+        event_response = await send_text_to_room(client, room_id, message, notice=False)
 
-    async def reply(self, command, message: str, delay: int = 0):
+        if event_response:
+            return event_response.event_id
+        else:
+            return None
+
+    async def reply(self, command, message: str, delay: int = 0) -> str or None:
         """
-        Simplified version of message to reply to commands
+        Simplified version of self.message() to reply to commands
         :param command: the command object passed by the message we're responding to
         :param message: the actual message
         :param delay: optional delay with typing notification, 1..1000ms
-        :return:
+        :return: the event_id of the sent message or None in case of an error
         """
 
-        await self.message(command.client, command.room.room_id, message, delay)
+        return await self.message(command.client, command.room.room_id, message, delay)
 
-    async def notice(self, client, room_id: str, message: str):
+    async def notice(self, client, room_id: str, message: str) -> str or None:
         """
         Send a notice to a room, usually utilized by plugins to post errors, help texts or other messages not warranting pinging users
         :param client: AsyncClient used to send the message
         :param room_id: room_id to send to message to
         :param message: the actual message
-        :return:
+        :return: the event_id of the sent message or None in case of an error
         """
 
-        await send_text_to_room(client, room_id, message, notice=True)
+        event_response: RoomSendResponse
+        event_response = await send_text_to_room(client, room_id, message, notice=True)
 
-    async def reply_notice(self, command, message: str):
+        if event_response:
+            return event_response.event_id
+        else:
+            return None
+
+    async def reply_notice(self, command, message: str) -> str or None:
         """
-        Simplified version of notice to reply to commands
+        Simplified version of self.notice() to reply to commands
         :param command: the command object passed by the message we're responding to
         :param message: the actual message
-        :return:
+        :return: the event_id of the sent message or None in case of an error
         """
 
         await self.notice(command.client, command.room.room_id, message)

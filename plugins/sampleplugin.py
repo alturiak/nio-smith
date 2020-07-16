@@ -1,4 +1,5 @@
 from plugin import Plugin
+from typing import List, Any
 
 import logging
 logger = logging.getLogger(__name__)
@@ -76,8 +77,26 @@ async def sample_link_user(command):
             await plugin.reply_notice(command, f"No user found for {command.args[0]}")
 
 
+async def sample_reaction_test(command):
+    """
+    Posts a message and tracks reactions. If a reaction is received, post it to the room.
+    This only stores the event_id of the tracked message but needs another method to track replies or reactions.
+    :param command:
+    :return:
+    """
+
+    if len(command.args) == 0:
+        event_id: str = await plugin.reply(command, f"Reactions to this message will be tracked and posted back to the room")
+        await plugin.reply_notice(command, f"Tracking Event ID {event_id}")
+        plugin.store_data("tracked_messages", event_id)
+
+    else:
+        await plugin.reply_notice(command, "Usage: sample_reaction_test")
+
+
 plugin.add_command("sample", sample_command, "A simple sample command, producing a simple sample output")
 plugin.add_command("sample_store", sample_store, "Store a message persistently")
 plugin.add_command("sample_read", sample_read, "Read the stored message")
 plugin.add_command("sample_clear", sample_clear, "Clear the stored message")
 plugin.add_command("sample_link_user", sample_link_user, "Given a displayname, try to produce a userlink")
+plugin.add_command("sample_reaction_test", sample_reaction_test, "Post a message and record reactions to this message")

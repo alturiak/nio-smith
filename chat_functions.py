@@ -2,7 +2,7 @@ import logging
 from asyncio import sleep
 
 from nio import (
-    SendRetryError
+    SendRetryError, RoomSendResponse
 )
 from markdown import markdown
 
@@ -15,7 +15,7 @@ async def send_text_to_room(
     message,
     notice=True,
     markdown_convert=True
-):
+) -> RoomSendResponse or None:
     """Send text to a matrix room
 
     Args:
@@ -43,15 +43,19 @@ async def send_text_to_room(
     if markdown_convert:
         content["formatted_body"] = markdown(message)
 
+    response: RoomSendResponse
+
     try:
-        await client.room_send(
+        response = await client.room_send(
             room_id,
             "m.room.message",
             content,
             ignore_unverified_devices=True,
         )
+        return response
     except SendRetryError:
         logger.exception(f"Unable to send message response to {room_id}")
+        return None
 
 
 async def send_typing(client, room_id, message, notice=False, markdown_convert=True):
