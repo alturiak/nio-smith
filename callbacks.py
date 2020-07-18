@@ -66,10 +66,10 @@ class Callbacks(object):
             if has_command_prefix:
                 # Remove the command prefix
                 split_message = split_message[len(self.command_prefix):]
-
-            if split_message:
                 # remove leading spaces
                 split_message = split_message.lstrip()
+
+            if split_message != "":
                 command = Command(self.client, self.store, self.config, split_message, room, event, self.plugin_loader)
                 await command.process()
 
