@@ -9,7 +9,6 @@ from sys import modules
 from re import match
 from time import time
 import operator
-
 from typing import List, Dict, Callable
 
 import logging
@@ -43,8 +42,7 @@ class PluginLoader:
                     self.__plugin_list[found_plugin.name] = found_plugin
 
         for plugin in self.__plugin_list.values():
-            logger.debug("Reading commands from " + plugin.name)
-            logger.debug(self.commands)
+
             """assemble all valid commands and their respective methods"""
             self.commands.update(plugin.get_commands())
 
@@ -64,11 +62,16 @@ class PluginLoader:
 
             """load the plugin's saved data"""
             plugin.plugin_data = plugin.load_data()
-
-        logger.debug("Active Commands:")
-        logger.debug(self.commands)
-        logger.debug("Active Hooks:")
-        logger.debug(self.hooks)
+            logger.info(f"Loaded plugin {plugin.name}:")
+            if plugin.get_commands() != {}:
+                logger.info(f"  Commands: {', '.join([*plugin.get_commands().keys()])}")
+            if plugin.get_hooks() != {}:
+                logger.info(f"  Hooks:    {', '.join([*plugin.get_hooks().keys()])}")
+            if plugin.get_timers():
+                timers: List[str] = []
+                for timer in plugin.get_timers():
+                    timers.append(timer.__name__)
+                logger.info(f"  Timers:   {', '.join(timers)}")
 
     def get_plugins(self) -> Dict[str, Plugin]:
 
