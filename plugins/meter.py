@@ -29,9 +29,9 @@ def build_block(color: str, inactive: bool = False) -> str:
     block: str = ""
 
     if not inactive:
-        block = "&#x2588;"
+        block = "&#x2593;"
     else:
-        block = "&#x2591;"
+        block = "&#x2592;"
 
     return f"<font color=\"{color}\">{block}</font>"
 
