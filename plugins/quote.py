@@ -12,7 +12,23 @@ logger = logging.getLogger(__name__)
 quote_attributes: List[str] = ["user", "members"]
 """valid attributes to select quotes by"""
 
+
 plugin = Plugin("quote", "General", "Store (more or less) funny quotes and access them randomly or by search term")
+
+
+def setup():
+    """
+    Register commands and hooks
+    :return:
+    """
+
+    plugin.add_command("quote", quote_command, "Post quotes, either randomly, by id, or by search string")
+    # plugin.add_command("quote_detail", quote_detail_command, "View a detailed output of a specific quote")
+    plugin.add_command("quote_add", quote_add_command, "Add a quote")
+    plugin.add_command("quote_del", quote_delete_command, "Delete a quote (can be restored)")
+    plugin.add_command("quote_restore", quote_restore_command, "Restore a quote")
+    plugin.add_command("quote_links", quote_links_command, "Toggle automatic nickname linking")
+    plugin.add_hook("m.reaction", quote_add_reaction)
 
 
 class Quote:
@@ -461,10 +477,4 @@ async def quote_add_reaction(client: AsyncClient, room_id: str, event: UnknownEv
         plugin.store_data("quotes", quotes)
 
 
-plugin.add_command("quote", quote_command, "Post quotes, either randomly, by id, or by search string")
-# plugin.add_command("quote_detail", quote_detail_command, "View a detailed output of a specific quote")
-plugin.add_command("quote_add", quote_add_command, "Add a quote")
-plugin.add_command("quote_del", quote_delete_command, "Delete a quote (can be restored)")
-plugin.add_command("quote_restore", quote_restore_command, "Restore a quote")
-plugin.add_command("quote_links", quote_links_command, "Toggle automatic nickname linking")
-plugin.add_hook("m.reaction", quote_add_reaction)
+setup()
