@@ -11,18 +11,18 @@ venv/
 # Bot local files
 *.db
 
-# Config file
-config.yaml
-
 # Python
 __pycache__/
 
-# Config file
+# Config files
 config.yaml
+plugins/*.yaml
+
+# Plugin data
+plugins/*.pkl
 
 # Log files
 *.log
 
 # other stuff
 plugins/sabnzbdapi.py
-plugins/sonarrapi.py
