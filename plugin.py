@@ -1,6 +1,6 @@
 import operator
 import os.path
-from os import remove
+from os import remove, path
 import pickle
 from typing import List, Any, Dict, Callable
 import yaml
@@ -32,8 +32,8 @@ class Plugin:
         self.plugin_data_filename: str = f"plugins/{self.name}.pkl"
         self.plugin_data: Dict[str, Any] = {}
 
-        self.config_items: Dict[str, Any] = {}
-        self.configuration: Dict[str, Any] = {}
+        self.config_items_filename: str = f"plugins/{self.name}.yaml"
+        self.config_items: Dict[str, ConfigItem] = {}
 
     def is_valid_for_room(self, room_id: str) -> bool:
 
@@ -312,43 +312,75 @@ class Plugin:
         else:
             return None
 
-    def add_config_items(self, config_items: Dict[str, Any]):
-        """Add config items (and their default value) to get from a configuration file"""
-
-        self.config_items = config_items
-
-    def _get_cfg(self, filepath: str, path: List[str], default: Any = None, required: bool = True) -> Any:
-        """Get a config option from a path and option name, specifying whether it is
-        required.
-
-        Raises:
-            ConfigError: If required is specified and the object is not found
-                (and there is no default value provided), this error will be raised
+    def add_config(self, config_item: str, default_value: Any = None, is_required: bool = False) -> bool:
         """
-        # Sift through the the config until we reach our option
-        with open(filepath) as file_stream:
-            config = yaml.safe_load(file_stream.read())
-        for name in path:
-            config = config.get(name)
+        Add a config value to be searched for in the plugin-specific configuration file upon loading
+        :param config_item: the name of the configuration Item
+        :param default_value: The value to use if the item is not specified in the configuration
+        :param is_required: specify whether the configuration has to be present in the config-file for successful loading
+        :return:    True, if the config_item is stored and not a duplicate
+                    False, if the config_item already exists
+        """
 
-            # If at any point we don't get our expected option...
-            if config is None:
-                # Raise an error if it was required
-                if required or not default:
-                    raise ConfigError(f"Config option {'.'.join(path)} is required")
+        if config_item in self.config_items.keys():
+            logger.warning(f"{self.name}: Configuration item {config_item} has been defined already")
+            return False
+        else:
+            self.config_items[config_item] = ConfigItem(config_item, default_value, is_required)
+            return True
 
-                # or return the default value
-                return default
+    def read_config(self, config_item: str) -> Any:
+        """
+        Read and return a specific value from the configuration
+        If the actual value hasn't been read from the configuration, return the default value
+        :param config_item: the name of the configuration item to look for
+        :return:    The value of the requested config_item
+                    None, if the value could not be found or does not have a default value defined
+        """
 
-        # We found the option. Return it
-        return config
+        try:
+            return self.config_items[config_item].value
+        except KeyError:
+            return None
 
-    def read_config(self):
-        configfile = os.path.join(os.path.dirname(__file__), os.path.basename(__file__)[:-3] + ".yaml")
-        configuration: dict = {}
-        for value in self.config_items:
-            configuration[value] = self._get_cfg(configfile, [value], required=True)
-            
+    def _load_config(self):
+        """
+        Load the plugins configuration from a .yaml-file. The filename needs to match the plugins name
+        e.g. the configuration for sampleplugin has to be provided in sampleplugin.yaml
+        :return:    True, None: if all required config_items have been found
+                    False, config_item_name: if a required config_item has not been found and does not have a default_value
+        """
+
+        config = {}
+        if path.exists(self.config_items_filename):
+            try:
+                with open(self.config_items_filename) as file_stream:
+                    config = yaml.safe_load(file_stream.read())
+            except OSError as err:
+                logger.info(f"Error loading {self.config_items_filename}: {format(err)}")
+
+        # loop through all required configuration items and store their values
+        config_item_name: str
+        for config_item_name in self.config_items.keys():
+            config_value: Any = config.get(config_item_name)
+            if config_value is not None:
+                # we found a value, store it
+                self.config_items[config_item_name].value = config_value
+
+            elif self.config_items[config_item_name].default_value is not None:
+                # no value found, use default if available
+                self.config_items[config_item_name].value = self.config_items[config_item_name].default_value
+
+            elif not self.config_items[config_item_name].is_required:
+                # no value found, no default value and config_item is not required
+                self.config_items[config_item_name].value = None
+
+            else:
+                # no value found, no default value and config_item is required
+                return False, config_item_name
+
+        return True, None
+
 
 class PluginCommand:
 
@@ -365,3 +397,21 @@ class PluginHook:
         self.event_type: str = event_type
         self.method: Callable = method
         self.room_id: List[str] = room_id
+
+
+class ConfigItem:
+    def __init__(self, name: str, default_value: Any = None,  is_required: bool = False, value: Any = None):
+        """
+        Stores a specific configuration item to be searched for in plugin-specific config files
+        :param name: the name of the configuration Item
+        :param default_value: The value to use if the item is not specified in the configuration
+        :param is_required: specify whether the configuration has to be present in the config-file for successful loading
+        :param value: the actual value as specified in the configuration file
+
+        """
+
+        self.name: str = name
+        self.default_value: Any = default_value
+        self.is_required: bool = is_required
+        self.value: Any = value
+

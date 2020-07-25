@@ -8,6 +8,27 @@ logger = logging.getLogger(__name__)
 plugin = Plugin("sampleplugin", "General", "Just a simple sample.")
 
 
+def setup():
+
+    plugin.add_command("sample", sample_command, "A simple sample command, producing a simple sample output")
+    plugin.add_command("sample_store", sample_store, "Store a message persistently")
+    plugin.add_command("sample_read", sample_read, "Read the stored message")
+    plugin.add_command("sample_clear", sample_clear, "Clear the stored message")
+    plugin.add_command("sample_link_user", sample_link_user, "Given a displayname, try to produce a userlink")
+    plugin.add_command("sample_reaction_test", sample_reaction_test, "Post a message and record reactions to this message")
+    plugin.add_hook("m.reaction", hook_reactions)
+
+    """The following part demonstrates defining a configuration value to be expected in the plugin's configuration file and reading the value"""
+
+    plugin.add_config("default_message", "this is the default message if no message was loaded from configuration", is_required=True)
+    """
+    Define a configuration value to be loaded at startup.
+    The value supplied is a default value that is used if no configuration was found in the configuration file 
+    """
+
+    plugin.add_command("read_configuration", read_configuration, "Reads the value `default_message` from the plugin configuration")
+
+
 class Sample:
     def __init__(self, message: str):
         self.message = message
@@ -112,10 +133,18 @@ async def hook_reactions(client: AsyncClient, room_id: str, event: UnknownEvent)
         await plugin.notice(client, room_id, f"Reaction received to event {relates_to} received: {reaction}")
 
 
-plugin.add_command("sample", sample_command, "A simple sample command, producing a simple sample output")
-plugin.add_command("sample_store", sample_store, "Store a message persistently")
-plugin.add_command("sample_read", sample_read, "Read the stored message")
-plugin.add_command("sample_clear", sample_clear, "Clear the stored message")
-plugin.add_command("sample_link_user", sample_link_user, "Given a displayname, try to produce a userlink")
-plugin.add_command("sample_reaction_test", sample_reaction_test, "Post a message and record reactions to this message")
-plugin.add_hook("m.reaction", hook_reactions)
+async def read_configuration(command):
+    """
+    Reads `default_message` from configuration and sends it as message
+    :param command:
+    :return:
+    """
+
+    try:
+        message: str = plugin.read_config("default_message")
+        await plugin.reply(command, f"Configuration value: {message}")
+    except KeyError:
+        await plugin.reply_notice(command, f"Could not read message from configuration")
+
+
+setup()

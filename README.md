@@ -34,7 +34,7 @@ Currently included plugins consist mostly of pretty silly, mostly semi-useful st
 - ✔ register methods for recurring execution (roughly once every 30s)
 - ✔ limit commands to certain rooms
 - ✔ use built-in persistent storage
-- ❌ automatically be supplied with config-values from plugin-specific config-files
+- ✔ automatically be supplied with config-values from plugin-specific config-files at startup
 - ❌ hook into other room-events
 
 ### Plugins must
@@ -124,6 +124,13 @@ The class used by all plugins, providing the following methods:
 - `notice`: send a notice to a room
 - `is_user_in_room`: checks if a given displayname is a member of the current room
 - `link_user`: given a displayname, returns a link to the user (rendered as userpill in riot)
+- `add_config`: define
+    - a config_item to look for in `<plugin_name>.yaml`
+    - an optional default_value
+    - if the value is required (must be in configuration or have a default value)
+- `read_config`: read a config_item, \
+        either returning the value found in the configuration file \
+        or the default_value, if supplied
     
 #### `pluginloader.py`
 
