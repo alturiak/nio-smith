@@ -56,6 +56,7 @@ Currently included plugins consist mostly of pretty silly, mostly semi-useful st
 - [fuzzywuzzy](https://github.com/seatgeek/fuzzywuzzy) for fuzzy command matching and nick linking (yes, it's worth it)
 
 ### Current plugin 3rd party requirements
+- `sonarr`: [requests](https://pypi.org/project/requests/) to query sonarr's API
 - `translate`: [googletrans](https://pypi.org/project/googletrans/) to provide language detection and translation
 
 ## Plugins
@@ -64,11 +65,12 @@ Currently included plugins consist mostly of pretty silly, mostly semi-useful st
 - `meter`: accurately measures someones somethingness
 - `oracle`: predicts the inevitable future
 - `pick`: aids you in those really important life decisions
+- `quote`: store quotes and provide several means to display them
 - `roll`: the dice giveth and the dice taketh away
 - `sampleplugin`: Just a simple sample, demonstrating the current possibilities of `Plugin`
+- `sonarr`: provides commands to query sonarr's API
 - `spruch`: famous quotes from even more famous people (german, sorry)
 - `translate`: provides near-realtime translations of all room-messages via Google Translate
-- `quote`: store quotes and provide several means to display them
 
 ## Project structure
 
