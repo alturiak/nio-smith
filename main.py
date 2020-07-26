@@ -122,7 +122,8 @@ async def main():
 
             logger.info(f"Logged in as {config.user_id}")
             await client.sync_forever(timeout=30000, full_state=True)
-        except (ClientConnectionError, ServerDisconnectedError) as err:
+
+        except (ClientConnectionError, ServerDisconnectedError, AttributeError) as err:
             logger.debug(err)
             logger.warning(f"Unable to connect to homeserver, retrying in 15s...")
 
