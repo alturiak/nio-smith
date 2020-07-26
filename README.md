@@ -1,7 +1,6 @@
 Nio Smith
 ===
-
-[![#nio-smith](https://img.shields.io/matrix/nio-smith:pack.rocks?color=blue&label=%23nio-smith&server_fqdn=matrix.pack.rocks)](https://matrix.to/#/!rdBDrHapAsYdvmgGMP:pack.rocks?via=pack.rocks)
+[![#nio-smith](https://img.shields.io/matrix/nio-smith:matrix.org?color=blue&label=%23nio-smith)](https://matrix.to/#/!rdBDrHapAsYdvmgGMP:pack.rocks?via=pack.rocks)
 
 A modular bot for [@matrix-org](https://github.com/matrix-org), written in python using
 [matrix-nio](https://matrix-nio.readthedocs.io/en/latest/nio.html), supporting end-to-end-encryption out of the box.
