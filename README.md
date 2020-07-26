@@ -1,4 +1,8 @@
-# Nio Smith
+Nio Smith
+===
+
+[![#nio-smith](https://img.shields.io/matrix/nio-smith:pack.rocks?color=blue&label=%23nio-smith&server_fqdn=matrix.pack.rocks)](https://matrix.to/#/!rdBDrHapAsYdvmgGMP:pack.rocks?via=pack.rocks)
+
 A modular bot for [@matrix-org](https://github.com/matrix-org), written in python using
 [matrix-nio](https://matrix-nio.readthedocs.io/en/latest/nio.html), supporting end-to-end-encryption out of the box.
 It's based on the lovely [nio-template](https://github.com/anoadragon453/nio-template) and tries to incorporate most
@@ -125,7 +129,7 @@ The class used by all plugins, providing the following methods:
 - `message`: send a message to a room
 - `notice`: send a notice to a room
 - `is_user_in_room`: checks if a given displayname is a member of the current room
-- `link_user`: given a displayname, returns a link to the user (rendered as userpill in riot)
+- `link_user`: given a displayname, returns a link to the user (rendered as userpill in [Element](https://element.io))
 - `add_config`: define
     - a config_item to look for in `<plugin_name>.yaml`
     - an optional default_value
