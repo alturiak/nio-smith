@@ -20,8 +20,9 @@ from fuzzywuzzy import fuzz
 try:
     from plugins import *
 except ImportError as err:
-    logger.critical(f"Error importing plugin: {err.name}, running without plugins.\nConsider removing or repairing the faulty plugin(s).")
-    pass
+    logger.critical(f"Error importing plugin: {err.name}: {err}")
+except KeyError as err:
+    logger.critical(f"Error importing plugin: {err}")
 
 
 class PluginLoader:
@@ -41,22 +42,7 @@ class PluginLoader:
                 if isinstance(found_plugin, Plugin):
                     self.__plugin_list[found_plugin.name] = found_plugin
 
-        error_plugins: List[str] = []
-
         for plugin in self.__plugin_list.values():
-
-            """
-            Load the plugin's configuration data from the configuration file
-            Abort loading the plugin, if a required configuration is not found
-            """
-            config_successfully_loaded: bool
-            missing_config_item: str or None
-            (config_successfully_loaded, missing_config_item) = plugin._load_config()
-
-            if not config_successfully_loaded:
-                logger.warning(f"Plugin {plugin.name}: required config_item {missing_config_item} not found in configuration, aborting load")
-                error_plugins.append(plugin.name)
-                continue
 
             """assemble all valid commands and their respective methods"""
             self.commands.update(plugin.get_commands())
@@ -87,11 +73,6 @@ class PluginLoader:
                 for timer in plugin.get_timers():
                     timers.append(timer.__name__)
                 logger.info(f"  Timers:   {', '.join(timers)}")
-
-        if error_plugins:
-            logger.warning(f"Removing {error_plugins} due to previous errors")
-            for error_plugin in error_plugins:
-                self.__plugin_list.pop(error_plugin)
 
     def get_plugins(self) -> Dict[str, Plugin]:
 

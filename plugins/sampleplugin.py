@@ -1,7 +1,5 @@
 from nio import AsyncClient, UnknownEvent
-
 from plugin import Plugin
-
 import logging
 logger = logging.getLogger(__name__)
 
@@ -20,7 +18,7 @@ def setup():
 
     """The following part demonstrates defining a configuration value to be expected in the plugin's configuration file and reading the value"""
 
-    plugin.add_config("default_message", "this is the default message if no message was loaded from configuration", is_required=True)
+    plugin.add_config("default_message", "this is the default message", is_required=True)
     """
     Define a configuration value to be loaded at startup.
     The value supplied is a default value that is used if no configuration was found in the configuration file 
