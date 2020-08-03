@@ -327,7 +327,7 @@ class Plugin:
             return False
         else:
             # check for the value in configuration file and apply it if found
-            if self.configuration.get(config_item):
+            if self.configuration and self.configuration.get(config_item):
                 self.config_items[config_item] = self.configuration.get(config_item)
 
             # otherwise apply default
@@ -365,7 +365,7 @@ class Plugin:
         Load the plugins configuration from a .yaml-file. The filename needs to match the plugins name
         e.g. the configuration for sampleplugin has to be provided in sampleplugin.yaml
         :return:    result of yaml.safe_load, if the config file has been successfully read
-                    False, if there was an error reading the configuration
+                    None, if there was an error reading the configuration
         """
 
         if path.exists(self.config_items_filename):
@@ -374,9 +374,9 @@ class Plugin:
                     return yaml.safe_load(file_stream.read())
             except OSError as err:
                 logger.info(f"Error loading {self.config_items_filename}: {format(err)}")
-                return False
+                return None
         else:
-            return False
+            return None
 
 
 class PluginCommand:
