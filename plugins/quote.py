@@ -204,7 +204,7 @@ async def quote_command(command):
         return False
 
     quote_id: int
-    quote_object: Quote or None
+    quote_object: Quote
 
     if len(command.args) == 0:
         """no id or search term supplied, randomly select a quote"""
