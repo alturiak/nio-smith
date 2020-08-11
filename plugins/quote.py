@@ -5,6 +5,7 @@ from typing import Dict, List, Tuple
 import time
 import random
 from re import compile
+from shlex import split
 
 import logging
 logger = logging.getLogger(__name__)
@@ -141,7 +142,8 @@ class Quote:
         for search_term in search_terms:
             if search_term.lower() not in self.text.lower():
                 return False
-        return True
+        else:
+            return True
 
     async def quote_add_reaction(self, reaction: str):
         """
@@ -202,7 +204,7 @@ async def quote_command(command):
         return False
 
     quote_id: int
-    quote_object: Quote
+    quote_object: Quote or None
 
     if len(command.args) == 0:
         """no id or search term supplied, randomly select a quote"""
@@ -227,23 +229,17 @@ async def quote_command(command):
 
         if command.args[-1].isdigit():
             """check if a specific match is requested"""
-            terms = command.args[:-1]
+            # list of search terms, keeping quoted substrings
+            terms = split(" ".join(command.args[:-1]))
             match_id = int(command.args[-1])
-            try:
-                (quote_object, match_index, total_matches) = await find_quote_by_search_term(quotes, terms, match_id)
-            except TypeError:
-                quote_object = None
-
         else:
-            terms = command.args
-            try:
-                (quote_object, match_index, total_matches) = await find_quote_by_search_term(quotes, terms)
-            except TypeError:
-                quote_object = None
+            terms = split(" ".join(command.args))
+            match_id = 0
 
-        if quote_object:
+        try:
+            (quote_object, match_index, total_matches) = await find_quote_by_search_term(quotes, terms, match_id)
             await post_quote(command, quote_object, match_index, total_matches)
-        else:
+        except TypeError:
             await plugin.reply_notice(command, f"No quote found matching {terms}")
 
 
@@ -265,7 +261,7 @@ async def post_quote(command, quote_object: Quote, match_index: int = -1, total_
         event_id = await plugin.reply_notice(command, f"{await quote_object.display_text(command)}")
 
     """store the event id of the message to allow for tracking reactions to the last 100 posted quotes"""
-    tracked_quotes: List[TrackedQuote] = []
+    tracked_quotes: List[TrackedQuote]
     try:
         tracked_quotes = plugin.read_data("tracked_quotes")
         while len(tracked_quotes) > 100:
