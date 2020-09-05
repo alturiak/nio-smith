@@ -84,7 +84,6 @@ class Quote:
         self.mxuser: str = mxuser
         self.version: int = current_version
         self.lines: List[QuoteLine] = lines
-        self.convert_string_to_quote_lines()
 
         self.deleted: bool = False
         """Flag to mark a quote as deleted"""
@@ -443,11 +442,34 @@ async def quote_add_command(command):
             quotes = plugin.read_data("quotes")
         except KeyError:
             quotes = {}
-        quote_text: str = " ".join(command.args)
-        new_quote: Quote = Quote("local", text=quote_text, mxroom=command.room.room_id)
+
+        quote_text: str = ""
+        new_quote: Quote
+
+        # try to guess formatting
+        if command.command.find(' | ') != -1:
+            # assume irc-formatting
+            quote_text: str = " ".join(command.args)
+            new_quote: Quote = Quote("local", text=quote_text, mxroom=command.room.room_id)
+            new_quote.convert_string_to_quote_lines()
+
+        else:
+            # assume matrix c&p
+            # strip command name
+            lines: List[str] = command.command.split(' ', 1)[1].split('\n')
+            index: int = 0
+            quote_lines: List[QuoteLine] = []
+            while index < len(lines)-1:
+                quote_lines.append(QuoteLine(lines[index], lines[index+1]))
+                quote_text += f"<{lines[index]}> {lines[index+1]} | "
+                index += 2
+            quote_text = quote_text.rstrip(' | ')
+            new_quote = Quote("local", text=quote_text, mxroom=command.room.room_id, lines=quote_lines)
+
         quotes[new_quote.id] = new_quote
         plugin.store_data("quotes", quotes)
         await plugin.reply_notice(command, f"Quote {new_quote.id} added")
+
     else:
         await plugin.reply_notice(command, "Usage: quote_add <quote_text>")
 
