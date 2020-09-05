@@ -4,7 +4,7 @@ from plugin import Plugin
 from typing import Dict, List, Tuple
 import time
 import random
-from re import compile
+import re
 from shlex import split
 
 import logging
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 quote_attributes: List[str] = ["user", "members"]
 """valid attributes to select quotes by"""
 
-
+current_version: int = 2
 plugin = Plugin("quote", "General", "Store (more or less) funny quotes and access them randomly or by search term")
 
 
@@ -30,6 +30,22 @@ def setup():
     plugin.add_command("quote_restore", quote_restore_command, "Restore a quote")
     plugin.add_command("quote_links", quote_links_command, "Toggle automatic nickname linking")
     plugin.add_hook("m.reaction", quote_add_reaction)
+    plugin.add_command("quote_upgrade", upgrade_quotes, "Upgrade all Quotes to the most recent version")
+
+
+class QuoteLine:
+
+    def __init__(self, nick: str, message: str, message_type: str = "message"):
+        """
+        A specific line of a quote
+        :param nick: the person's nickname
+        :param message: the actual message
+        :param message_type: type of the quote, currently either "message" or "action"
+        """
+
+        self.nick: str = nick
+        self.message: str = message
+        self.message_type: str = message_type
 
 
 class Quote:
@@ -37,7 +53,8 @@ class Quote:
     def __init__(self, quote_type: str = "local", text: str = "", url: str = "",
                  channel: str = "", mxroom: str = "",
                  user: str = "", mxuser: str = "",
-                 date: float = time.time()
+                 date: float = time.time(),
+                 lines: List[QuoteLine] = [],
                  ):
         """
         A textual quote and all its parameters
@@ -48,6 +65,7 @@ class Quote:
         :param mxroom: matrix room id
         :param user: (legacy) IRC-username of the user who added the quote
         :param mxuser: matrix username of the user who added the quote
+        :param lines: text of the quote in separate lines
         """
 
         try:
@@ -64,6 +82,9 @@ class Quote:
         self.mxroom: str = mxroom
         self.user: str = user
         self.mxuser: str = mxuser
+        self.version: int = current_version
+        self.lines: List[QuoteLine] = lines
+        self.convert_string_to_quote_lines()
 
         self.deleted: bool = False
         """Flag to mark a quote as deleted"""
@@ -83,30 +104,44 @@ class Quote:
         :return: the textual representation of the quote
         """
 
-        quote_text: str = self.text
-        """pre nick-detection cleanup"""
-        quote_text = quote_text.replace("<@", "<")
-        quote_text = quote_text.replace("<+", "<")
+        quote_text: str = ""
+        if self.get_version() < 2:
+            quote_text = self.text
+            """pre nick-detection cleanup"""
+            quote_text = quote_text.replace("<@", "<")
+            quote_text = quote_text.replace("<+", "<")
 
-        """try to find nicknames"""
-        p = compile(r'<(\S+)>')
-        nick_list: List[str] = p.findall(quote_text)
+            """try to find nicknames"""
+            p = re.compile(r'<(\S+)>')
+            nick_list: List[str] = p.findall(quote_text)
 
-        """replace problematic characters with their html-representation"""
-        quote_text = quote_text.replace("<", "&lt;")
-        quote_text = quote_text.replace(">", "&gt;")
-        quote_text = quote_text.replace("`", "&#96;")
+            """replace problematic characters with their html-representation"""
+            quote_text = quote_text.replace("<", "&lt;")
+            quote_text = quote_text.replace(">", "&gt;")
+            quote_text = quote_text.replace("`", "&#96;")
 
-        """matrix allows us to display quotes as multiline-messages :)"""
-        quote_text = quote_text.replace(" | ", "  \n")
+            """matrix allows us to display quotes as multiline-messages :)"""
+            quote_text = quote_text.replace(" | ", "  \n")
 
-        """optionally replace nicknames by userlinks"""
-        if plugin.read_data("nick_links"):
-            nick: str
-            nick_link: str
-            for nick in nick_list:
-                if nick_link := await plugin.link_user(command, nick, strictness="fuzzy", fuzziness=55):
-                    quote_text = quote_text.replace(f"&lt;{nick}&gt;", nick_link)
+            """optionally replace nicknames by userlinks"""
+            if plugin.read_data("nick_links"):
+                nick: str
+                nick_link: str
+                for nick in nick_list:
+                    if nick_link := await plugin.link_user(command, nick, strictness="fuzzy", fuzziness=55):
+                        quote_text = quote_text.replace(f"&lt;{nick}&gt;", nick_link)
+
+        else:
+            line: QuoteLine
+            for line in self.lines:
+                if plugin.read_data("nick_links"):
+                    nick_link: str
+                    if nick_link := await plugin.link_user(command, line.nick, strictness="fuzzy", fuzziness=80):
+                        quote_text += f"{nick_link} {line.message}  \n"
+                    else:
+                        quote_text += f"&lt;{line.nick}&gt; {line.message}  \n"
+                else:
+                    quote_text += f"&lt;{line.nick}&gt; {line.message}  \n"
 
         reactions_text: str = ""
         for reaction, count in self.reactions.items():
@@ -156,6 +191,61 @@ class Quote:
             self.reactions[reaction] += 1
         else:
             self.reactions[reaction] = 1
+
+    def get_version(self) -> int:
+        """
+        Returns the current version of the quote
+        :return: current version of the quote
+        """
+
+        try:
+            return self.version
+        except AttributeError:
+            return 0
+
+    def upgrade(self):
+        """
+        Upgrade a quote to the most recent version
+        :return:
+        """
+
+        # Version 0 to current
+        if self.get_version() < current_version:
+            self.convert_string_to_quote_lines()
+            if self.lines and len(self.lines) > 0:
+                self.version = current_version
+                return True
+            else:
+                return False
+
+    def convert_string_to_quote_lines(self):
+        """
+        Convert the textual quote string to separate lines
+        :return:
+        """
+
+        # split text into lines
+        full_lines: List[str] = re.split('\r\n?|\n| [|] ', self.text)
+        quote_lines: List[QuoteLine] = []
+
+        for line in full_lines:
+            nick: str
+            message: str
+            message_type: str
+
+            if line != "":
+                if line[0] == '*':
+                    message_type = "action"
+                    nick = line.split(' ')[1]
+                    message = ' '.join(line.split(' ')[2:])
+                else:
+                    message_type = "message"
+                    nick = line.split(' ')[0].replace('<', '').replace('>', '')
+                    message = ' '.join(line.split(' ')[1:])
+
+                quote_lines.append(QuoteLine(nick, message, message_type))
+
+        self.lines = quote_lines
 
 
 class TrackedQuote:
@@ -472,5 +562,34 @@ async def quote_add_reaction(client: AsyncClient, room_id: str, event: UnknownEv
         quotes[quote_id] = quote_object
         plugin.store_data("quotes", quotes)
 
+
+async def upgrade_quotes(command):
+    """
+    Upgrade all quotes to the most recent version
+    :return:
+    """
+
+    quotes: Dict[int, Quote]
+    try:
+        quotes = plugin.read_data("quotes")
+
+    except KeyError:
+        quotes = {}
+
+    upgraded_quotes: int = 0
+    upgrade_successful: bool = True
+    for quote in quotes.values():
+        if quote.get_version() < current_version:
+            if not quote.upgrade():
+                upgrade_successful = False
+            else:
+                upgraded_quotes += 1
+
+    if upgrade_successful:
+        plugin.store_data("quotes", quotes)
+        plugin.store_data("store_version", current_version)
+        await plugin.reply_notice(command, f"Success: upgraded {upgraded_quotes} of {len(quotes)} Quotes to Version {current_version}")
+    else:
+        await plugin.reply_notice(command, f"Error: upgraded {upgraded_quotes} of {len(quotes)} Quotes to Version {current_version}")
 
 setup()
