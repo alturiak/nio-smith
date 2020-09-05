@@ -29,8 +29,9 @@ def setup():
     plugin.add_command("quote_del", quote_delete_command, "Delete a quote (can be restored)")
     plugin.add_command("quote_restore", quote_restore_command, "Restore a quote")
     plugin.add_command("quote_links", quote_links_command, "Toggle automatic nickname linking")
-    plugin.add_hook("m.reaction", quote_add_reaction)
+    plugin.add_command("quote_replace", quote_replace_command, "Replace a specific quote with the supplied text - destructive, can not be reverted")
     plugin.add_command("quote_upgrade", upgrade_quotes, "Upgrade all Quotes to the most recent version")
+    plugin.add_hook("m.reaction", quote_add_reaction)
 
 
 class QuoteLine:
@@ -437,41 +438,84 @@ async def quote_add_command(command):
     """
 
     if len(command.args) > 0:
-        quotes: Dict[int, Quote]
-        try:
-            quotes = plugin.read_data("quotes")
-        except KeyError:
-            quotes = {}
-
-        quote_text: str = ""
-        new_quote: Quote
-
-        # try to guess formatting
-        if command.command.find(' | ') != -1:
-            # assume irc-formatting
-            quote_text: str = " ".join(command.args)
-            new_quote: Quote = Quote("local", text=quote_text, mxroom=command.room.room_id)
-            new_quote.convert_string_to_quote_lines()
-
-        else:
-            # assume matrix c&p
-            # strip command name
-            lines: List[str] = command.command.split(' ', 1)[1].split('\n')
-            index: int = 0
-            quote_lines: List[QuoteLine] = []
-            while index < len(lines)-1:
-                quote_lines.append(QuoteLine(lines[index], lines[index+1]))
-                quote_text += f"<{lines[index]}> {lines[index+1]} | "
-                index += 2
-            quote_text = quote_text.rstrip(' | ')
-            new_quote = Quote("local", text=quote_text, mxroom=command.room.room_id, lines=quote_lines)
-
-        quotes[new_quote.id] = new_quote
-        plugin.store_data("quotes", quotes)
-        await plugin.reply_notice(command, f"Quote {new_quote.id} added")
-
+        quote: Quote = await quote_add_or_replace(command)
+        await plugin.reply_notice(command, f"Quote {quote.id} added")
     else:
         await plugin.reply_notice(command, "Usage: quote_add <quote_text>")
+
+
+async def quote_replace_command(command):
+    """
+    Replace a quote
+    :param command:
+    :return:
+    """
+
+    if len(command.args) > 2 and re.match(r'\d+', command.args[0]) and int(command.args[0]) in plugin.read_data("quotes").keys():
+        old_quote_text: str = await plugin.read_data("quotes")[int(command.args[0])].display_text(command)
+        quote: Quote = await quote_add_or_replace(command, int(command.args[0]))
+        await plugin.reply_notice(command, f"Quote {quote.id} replaced  \n"
+                                           f"**Old:**  \n"
+                                           f"{old_quote_text}  \n\n"
+                                           f"**New:**  \n"
+                                           f"{await quote.display_text(command)}")
+    else:
+        await plugin.reply_notice(command, "Usage: quote_replace <quote_id> <quote_text>")
+
+
+async def quote_add_or_replace(command, quote_id: int = 0) -> Quote or None:
+    """
+
+    :param command:
+    :param quote_id: optional quote_id to replace an existing quote
+    :return: added quote_object or None
+    """
+
+    quotes: Dict[int, Quote]
+    try:
+        quotes = plugin.read_data("quotes")
+    except KeyError:
+        quotes = {}
+
+    quote_text: str = ""
+    new_quote: Quote
+
+    # try to guess formatting
+    if command.command.find(' | ') != -1:
+        # assume irc-formatting
+        quote_text: str
+        if quote_id != 0:
+            quote_text = " ".join(command.args[1:])
+        else:
+            quote_text = " ".join(command.args)
+        new_quote: Quote = Quote("local", text=quote_text, mxroom=command.room.room_id)
+        new_quote.convert_string_to_quote_lines()
+
+    else:
+        # assume matrix c&p
+        # strip command name
+        lines: List[str] = command.command.split(' ', 1)[1].split('\n')
+        if quote_id != 0:
+            # strip quote from nickname
+            lines[0] = lines[0].strip(f"{str(quote_id)} ")
+        index: int = 0
+        quote_lines: List[QuoteLine] = []
+        while index < len(lines)-1:
+            quote_lines.append(QuoteLine(lines[index], lines[index+1]))
+            quote_text += f"<{lines[index]}> {lines[index+1]} | "
+            index += 2
+        quote_text = quote_text.rstrip(' | ')
+        new_quote = Quote("local", text=quote_text, mxroom=command.room.room_id, lines=quote_lines)
+
+    if quote_id == 0:
+        quotes[new_quote.id] = new_quote
+        plugin.store_data("quotes", quotes)
+        return quotes[new_quote.id]
+    else:
+        quotes[quote_id].lines = new_quote.lines
+        quotes[quote_id].text = new_quote.text
+        plugin.store_data("quotes", quotes)
+        return quotes[quote_id]
 
 
 async def quote_delete_command(command):
