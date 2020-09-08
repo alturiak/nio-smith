@@ -134,14 +134,17 @@ class Quote:
         else:
             line: QuoteLine
             for line in self.lines:
+                message: str = line.message.replace("<", "&lt;").replace(">", "&gt;").replace("`", "&#96;").replace("*", '\\*').replace("_", '\\_')
                 if plugin.read_data("nick_links"):
                     nick_link: str
                     if nick_link := await plugin.link_user(command, line.nick, strictness="fuzzy", fuzziness=80):
-                        quote_text += f"{nick_link} {line.message}  \n"
+                        quote_text += f"{nick_link} {message}  \n"
                     else:
-                        quote_text += f"&lt;{line.nick}&gt; {line.message}  \n"
+                        nick: str = line.nick.replace("`", "&#96;").replace("_", '\\_')
+                        quote_text += f"&lt;{nick}&gt; {message}  \n"
                 else:
-                    quote_text += f"&lt;{line.nick}&gt; {line.message}  \n"
+                    nick: str = line.nick.replace("`", "&#96;").replace("_", '\\_')
+                    quote_text += f"&lt;{nick}&gt; {message}  \n"
 
         reactions_text: str = ""
         for reaction, count in self.reactions.items():
