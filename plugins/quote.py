@@ -6,6 +6,7 @@ import time
 import random
 import re
 from shlex import split
+from sys import maxsize
 
 import logging
 logger = logging.getLogger(__name__)
@@ -31,6 +32,7 @@ def setup():
     plugin.add_command("quote_links", quote_links_command, "Toggle automatic nickname linking")
     plugin.add_command("quote_replace", quote_replace_command, "Replace a specific quote with the supplied text - destructive, can not be reverted")
     plugin.add_command("quote_upgrade", upgrade_quotes, "Upgrade all Quotes to the most recent version")
+    plugin.add_command("quote_stats", quote_stats_command, "Display various stats about the currently stored quotes")
     plugin.add_hook("m.reaction", quote_add_reaction)
 
 
@@ -593,6 +595,79 @@ async def quote_links_command(command):
         plugin.store_data("nick_links", False)
 
     await plugin.reply_notice(command, f"Nick linking {plugin.read_data('nick_links')}")
+
+
+async def quote_stats_command(command):
+    """
+    Display various stats about the currently stored quotes
+    :param command:
+    :return:
+    """
+
+    quotes: Dict[int, Quote]
+    try:
+        quotes = plugin.read_data("quotes")
+    except KeyError:
+        quotes = {}
+
+    quote_count: int = len(quotes)
+    quote_max: int = max(quotes.keys())
+    quote_nicks: Dict[str, List[int]] = {}
+    quote_shortest: Tuple[int, int] = (0, maxsize)
+    quote_longest: Tuple[int, int] = (0, 0)
+    quote_max_reactions: Tuple[int, int] = (0, 0)
+    quote_highest_rank: Tuple[int, int] = (0, 0)
+
+    if len(command.args) == 1 and command.args[0] == "full":
+        full_output: bool = True
+    else:
+        full_output: bool = False
+
+    quote: Quote
+    line: QuoteLine
+    for quote in quotes.values():
+        quote_length: int = 0
+
+        for line in quote.lines:
+            quote_length += len(line.message)
+            if line.nick.lower() in quote_nicks.keys():
+                if quote.id not in quote_nicks[line.nick.lower()]:
+                    quote_nicks[line.nick.lower()].append(quote.id)
+            else:
+                quote_nicks[line.nick.lower()] = [quote.id]
+
+        if quote_length > quote_longest[1]:
+            quote_longest = (quote.id, quote_length)
+        if quote_length < quote_shortest[1]:
+            quote_shortest = (quote.id, quote_length)
+        if sum(quote.reactions.values()) > quote_max_reactions[1]:
+            quote_max_reactions = (quote.id, len(quote.reactions))
+        if quote.rank > quote_highest_rank[1]:
+            quote_highest_rank = (quote.id, quote.rank)
+
+    stats_message: str = f"**Total Quotes:** {quote_count}  \n" \
+                         f"**Highest ID:** {quote_max}  \n" \
+                         f"**Shortest Quote:** {quote_shortest[0]} ({quote_shortest[1]} chars)  \n" \
+                         f"**Longest Quote:** {quote_longest[0]} ({quote_longest[1]} chars)  \n" \
+                         f"**Highest Legacy Rank:** {quote_highest_rank[0]} ({quote_highest_rank[1]})  \n" \
+                         f"**Most Reactions:** {quote_max_reactions[0]} ({quote_max_reactions[1]})  \n  \n"
+
+    if full_output:
+        stats_message += f"**Most Participated:**  \n"
+    else:
+        stats_message += f"**Most Participated** (Top 5 of {len(quote_nicks)} in `quote_stats full`):  \n"
+
+    nick_count: int = 0
+    for nick in sorted(quote_nicks, key=lambda n: len(quote_nicks[n]), reverse=True):
+        if len(quote_nicks[nick]) < 10:
+            stats_message += f"{nick.replace('`','-')}: {len(quote_nicks[nick])} ({quote_nicks[nick]})  \n"
+        else:
+            stats_message += f"{nick}: {len(quote_nicks[nick])}  \n"
+        nick_count += 1
+        if not full_output and nick_count >= 5:
+            break
+
+    await plugin.reply_notice(command, stats_message)
 
 
 async def quote_add_reaction(client: AsyncClient, room_id: str, event: UnknownEvent):
