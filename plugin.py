@@ -307,7 +307,7 @@ class Plugin:
 
         user: RoomMember
         if user := await self.is_user_in_room(command, display_name, strictness, fuzziness):
-            return f"<a href=\"https://matrix.to/#/{user.user_id}\">{display_name}</a>"
+            return f"<a href=\"https://matrix.to/#/{user.user_id}\">{user.display_name}</a>"
         else:
             return None
 
