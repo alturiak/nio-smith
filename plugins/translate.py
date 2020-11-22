@@ -118,5 +118,5 @@ async def translate(client: AsyncClient, room_id: str, message: str):
 
 plugin = Plugin("translate", "General", "Provide near-realtime translations of all room-messages via Google Translate")
 plugin.add_command("translate", switch, "`translate [[bi] source_lang... dest_lang]` - translate text from "
-                                        "one or more source_lang to dest_lang", allowed_rooms)
-plugin.add_hook("m.room.message", translate, allowed_rooms)
+                                        "one or more source_lang to dest_lang", room_id=allowed_rooms)
+plugin.add_hook("m.room.message", translate, room_id=allowed_rooms)

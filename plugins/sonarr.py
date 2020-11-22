@@ -10,7 +10,7 @@ def setup():
     plugin.add_config("api_base", is_required=True)
     plugin.add_config("api_key", is_required=True)
     plugin.add_config("room_id", None, is_required=False)
-    plugin.add_command("series", series, "Get a list of currently tracked series", [plugin.read_config("room_id")])
+    plugin.add_command("series", series, "Get a list of currently tracked series", room_id=[plugin.read_config("room_id")])
 
 
 async def series(command):

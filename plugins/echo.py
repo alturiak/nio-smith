@@ -9,8 +9,5 @@ async def echo(command):
 
 
 plugin = Plugin("echo", "General", "A very simple Echo plugin")
-plugin.add_command("echo", echo, "make someone agree with you for once", ["!iAxDarGKqYCIKvNSgu:pack.rocks",
-                                                                           "!WLzPcYhULnmsuPwZSN:pack.rocks"])
-plugin.add_command("echo2", echo, "make someone agree with you for once - again",
-                        ["!iAxDarGKqYCIKvNSgu:pack.rocks",
-                                                                           "!WLzPcYhULnmsuPwZSN:pack.rocks"])
+plugin.add_command("echo", echo, "make someone agree with you for once", room_id=["!iAxDarGKqYCIKvNSgu:pack.rocks", "!WLzPcYhULnmsuPwZSN:pack.rocks"])
+plugin.add_command("echo2", echo, "make someone agree with you for once - again", room_id=["!iAxDarGKqYCIKvNSgu:pack.rocks", "!WLzPcYhULnmsuPwZSN:pack.rocks"])
