@@ -348,7 +348,11 @@ async def post_quote(command, quote_object: Quote, match_index: int = -1, total_
         event_id: str = await plugin.reply_notice(command, f"{await quote_object.display_text(command)}")
 
     for reaction, count in quote_object.reactions.items():
-        await plugin.react(command.client, command.room.room_id, event_id, f"{reaction} {count}")
+        if count == 1:
+            reaction_text: str = f"{reaction}"
+        else:
+            reaction_text: str = f"{reaction} {count}"
+        await plugin.react(command.client, command.room.room_id, event_id, reaction_text)
 
     """store the event id of the message to allow for tracking reactions to the last 100 posted quotes"""
     tracked_quotes: List[TrackedQuote]
