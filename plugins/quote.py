@@ -149,14 +149,7 @@ class Quote:
                     nick: str = line.nick.replace("`", "&#96;").replace("_", '\\_')
                     quote_text += f"&lt;{nick}&gt; {message}  \n"
 
-        reactions_text: str = ""
-        for reaction, count in self.reactions.items():
-            if count == 1:
-                reactions_text += f"{reaction} "
-            else:
-                reactions_text += f"{reaction}({count}) "
-
-        return f"**Quote {self.id}**:  \n{quote_text}  \n\n{reactions_text}"
+        return f"**Quote {self.id}**:  \n{quote_text}"
 
     async def display_details(self, command) -> str:
         """
@@ -349,12 +342,13 @@ async def post_quote(command, quote_object: Quote, match_index: int = -1, total_
     :return:
     """
 
-    event_id: str
-
     if match_index != -1:
-        event_id = await plugin.reply_notice(command, f"{await quote_object.display_text(command)}  \nMatch {match_index} of {total_matches}")
+        event_id: str = await plugin.reply_notice(command, f"{await quote_object.display_text(command)}  \nMatch {match_index} of {total_matches}")
     else:
-        event_id = await plugin.reply_notice(command, f"{await quote_object.display_text(command)}")
+        event_id: str = await plugin.reply_notice(command, f"{await quote_object.display_text(command)}")
+
+    for reaction, count in quote_object.reactions.items():
+        await plugin.react(command.client, command.room.room_id, event_id, f"{reaction} {count}")
 
     """store the event id of the message to allow for tracking reactions to the last 100 posted quotes"""
     tracked_quotes: List[TrackedQuote]
@@ -703,6 +697,8 @@ async def quote_add_reaction(client: AsyncClient, room_id: str, event: UnknownEv
 
     if quote_id != -1:
         quote_object: Quote = await find_quote_by_id(quotes, quote_id)
+        # strip " <int>" from reactions to avoid tracking clicks on self-posted reactions
+        reaction = re.sub(r"\s\d+", "", reaction)
         await quote_object.quote_add_reaction(reaction)
         quotes[quote_id] = quote_object
         plugin.store_data("quotes", quotes)
