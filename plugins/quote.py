@@ -27,11 +27,12 @@ def setup():
     plugin.add_command("quote", quote_command, "Post quotes, either randomly, by id, or by search string")
     # plugin.add_command("quote_detail", quote_detail_command, "View a detailed output of a specific quote")
     plugin.add_command("quote_add", quote_add_command, "Add a quote")
-    plugin.add_command("quote_del", quote_delete_command, "Delete a quote (can be restored)")
-    plugin.add_command("quote_restore", quote_restore_command, "Restore a quote")
-    plugin.add_command("quote_links", quote_links_command, "Toggle automatic nickname linking")
-    plugin.add_command("quote_replace", quote_replace_command, "Replace a specific quote with the supplied text - destructive, can not be reverted")
-    plugin.add_command("quote_upgrade", upgrade_quotes, "Upgrade all Quotes to the most recent version")
+    plugin.add_command("quote_del", quote_delete_command, "Delete a quote (can be restored)", power_level=50)
+    plugin.add_command("quote_restore", quote_restore_command, "Restore a quote", power_level=50)
+    plugin.add_command("quote_links", quote_links_command, "Toggle automatic nickname linking", power_level=100)
+    plugin.add_command("quote_replace", quote_replace_command, "Replace a specific quote with the supplied text - destructive, can not be reverted",
+                       power_level=50)
+    plugin.add_command("quote_upgrade", upgrade_quotes, "Upgrade all Quotes to the most recent version", power_level=100)
     plugin.add_command("quote_stats", quote_stats_command, "Display various stats about the currently stored quotes")
     plugin.add_hook("m.reaction", quote_add_reaction)
 

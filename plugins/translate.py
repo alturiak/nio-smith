@@ -23,6 +23,7 @@ default_source: List = ['any']
 default_dest: str = 'en'
 default_bidirectional: bool = False
 roomsfile: str = os.path.join(os.path.dirname(__file__), os.path.basename(__file__)[:-3] + ".pickle")
+power_level: int = 50
 
 """
 roomsdb = {
@@ -118,5 +119,5 @@ async def translate(client: AsyncClient, room_id: str, message: str):
 
 plugin = Plugin("translate", "General", "Provide near-realtime translations of all room-messages via Google Translate")
 plugin.add_command("translate", switch, "`translate [[bi] source_lang... dest_lang]` - translate text from "
-                                        "one or more source_lang to dest_lang", room_id=allowed_rooms)
+                                        "one or more source_lang to dest_lang", room_id=allowed_rooms, power_level=power_level)
 plugin.add_hook("m.room.message", translate, room_id=allowed_rooms)
