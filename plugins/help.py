@@ -5,7 +5,7 @@ from re import match
 from typing import List, Tuple, Dict
 
 
-def build_sorted_text_output(headline: str, content: List[Tuple[str, str]]) -> str:
+def build_sorted_text_output(headline: str, content: List[Tuple[str, str, int]]) -> str:
 
     """
     Takes a headline and a list of items and their respective descriptions,
@@ -14,8 +14,11 @@ def build_sorted_text_output(headline: str, content: List[Tuple[str, str]]) -> s
 
     content.sort()
     output: str = f"{headline}  \n\n"
-    for (item, description) in content:
-        output = f"{output}`{item}`: {description}  \n"
+    for (item, description, power_level) in content:
+        if power_level != 0:
+            output = f"{output}`{item}`: {description} (PL: {power_level})  \n"
+        else:
+            output = f"{output}`{item}`: {description}  \n"
 
     return output
 
@@ -30,12 +33,12 @@ async def print_help(command):
         """print loaded plugins"""
 
         loaded_plugin: Plugin
-        plugin_texts: List[Tuple[str, str]] = []
+        plugin_texts: List[Tuple[str, str, int]] = []
 
         # Load names and descriptions of all loaded plugins
         for loaded_plugin in command.plugin_loader.get_plugins().values():
             if not loaded_plugin.rooms or current_room_id in loaded_plugin.rooms:
-                plugin_texts.append((loaded_plugin.name, loaded_plugin.description))
+                plugin_texts.append((loaded_plugin.name, loaded_plugin.description, 0))
 
         headline: str = f"**Available Plugins in this room**  \nuse `help <pluginname>` to get detailed help"
         help_text = build_sorted_text_output(headline, plugin_texts)
@@ -49,11 +52,11 @@ async def print_help(command):
                 if requested_plugin.is_valid_for_room(command.room.room_id):
                     plugin_command_name: str
                     plugin_command: PluginCommand
-                    command_texts: List[Tuple[str, str]] = []
+                    command_texts: List[Tuple[str, str, int]] = []
 
                     # Iterate through all commands of requested plugin and add descriptions
                     for (plugin_command_name, plugin_command) in requested_plugin.get_commands().items():
-                        command_texts.append((plugin_command_name, plugin_command.help_text))
+                        command_texts.append((plugin_command_name, plugin_command.help_text, plugin_command.power_level))
 
                     headline: str = f"**Plugin {requested_plugin.name}**"
                     help_text = build_sorted_text_output(headline, command_texts)

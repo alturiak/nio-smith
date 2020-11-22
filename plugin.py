@@ -56,9 +56,18 @@ class Plugin:
 
         return command_help
 
-    def add_command(self, command: str, method: Callable, help_text: str, room_id: List[str] = None):
+    def add_command(self, command: str, method: Callable, help_text: str, room_id: List[str] = None, power_level: int = 0):
+        """
+        Adds a new command
+        :param command: the actual name of the command, e.g. !help
+        :param method: the method to be called when the command is received
+        :param help_text: the command's helptext, e.g. as displayed by !help
+        :param power_level: an optional matrix room power_level needed for users to be able to execute the command (defaults to 0, all users may execute the command)
+        :param room_id: an optional room_id-list the command will be added on (defaults to none, command will be active on all rooms)
+        :return:
+        """
 
-        plugin_command = PluginCommand(command, method, help_text, room_id)
+        plugin_command = PluginCommand(command, method, help_text, power_level, room_id)
         if command not in self.commands.keys():
             self.commands[command] = plugin_command
             self.help_texts[command] = help_text
@@ -381,10 +390,11 @@ class Plugin:
 
 class PluginCommand:
 
-    def __init__(self, command: str, method: Callable, help_text: str, room_id: List[str]):
+    def __init__(self, command: str, method: Callable, help_text: str, power_level, room_id: List[str]):
         self.command: str = command
         self.method: Callable = method
         self.help_text: str = help_text
+        self.power_level: int = power_level
         self.room_id: List[str] = room_id
 
 

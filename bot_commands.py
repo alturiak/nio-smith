@@ -1,4 +1,5 @@
 from pluginloader import PluginLoader
+from chat_functions import send_text_to_room
 
 
 class Command(object):
@@ -28,5 +29,12 @@ class Command(object):
         self.plugin_loader: PluginLoader = plugin_loader
 
     async def process(self):
+        """
+        Process the command, posting an error when user's power_level is insufficient
+        Do not react to commands that could not be found as those might be handled by other clients!
+        :return:
+        """
 
-        await self.plugin_loader.run_command(self)
+        if await self.plugin_loader.run_command(self) == 2:
+            # power_level insufficient
+            await send_text_to_room(self.client, self.room.room_id, f"Required power level for command {self.command[0]} not met")

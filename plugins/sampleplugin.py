@@ -9,7 +9,7 @@ plugin = Plugin("sampleplugin", "General", "Just a simple sample.")
 def setup():
 
     plugin.add_command("sample", sample_command, "A simple sample command, producing a simple sample output")
-    plugin.add_command("sample_store", sample_store, "Store a message persistently")
+    plugin.add_command("sample_store", sample_store, "Store a message persistently", power_level=50)
     plugin.add_command("sample_read", sample_read, "Read the stored message")
     plugin.add_command("sample_clear", sample_clear, "Clear the stored message")
     plugin.add_command("sample_link_user", sample_link_user, "Given a displayname, try to produce a userlink")

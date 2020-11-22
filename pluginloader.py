@@ -15,6 +15,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 from fuzzywuzzy import fuzz
+# from pprint import pprint
+
 
 # import all plugins
 try:
@@ -99,7 +101,14 @@ class PluginLoader:
 
         return self.timers
 
-    async def run_command(self, command):
+    async def run_command(self, command) -> int:
+        """
+
+        :param command:
+        :return:    0 if command was found and executed successfully
+                    1 if command was not found (or not valid for room)
+                    2 if command was found, but required power_level was not met
+        """
 
         logger.debug(f"Running Command {command.command} with args {command.args}")
 
@@ -124,11 +133,19 @@ class PluginLoader:
         if run_command != "":
             if self.commands[run_command].room_id is None or command.room.room_id in self.commands[run_command].room_id:
 
-                # Make sure, exceptions raised by plugins do not kill the bot
-                try:
-                    await self.commands[run_command].method(command)
-                except Exception as err:
-                    logger.critical(f"Plugin failed to catch exception caused by {command_start}: {err}")
+                # check if the user's power_level matches the command's requirement
+                if command.room.power_levels.get_user_level(command.event.sender) >= self.commands[run_command].power_level:
+
+                    # Make sure, exceptions raised by plugins do not kill the bot
+                    try:
+                        await self.commands[run_command].method(command)
+                    except Exception as err:
+                        logger.critical(f"Plugin failed to catch exception caused by {command_start}: {err}")
+                    return 0
+                else:
+                    return 2
+            else:
+                return 1
 
     async def run_hooks(self, client, event_type: str, room, event):
 
