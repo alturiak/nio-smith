@@ -81,6 +81,10 @@ class Callbacks(object):
         :return:
         """
 
+        # Ignore messages from ourselves
+        if event.sender == self.client.user:
+            return
+
         if event.type == "m.reaction":
             await self.plugin_loader.run_hooks(self.client, event.type, room, event)
 
