@@ -30,6 +30,7 @@ Currently included plugins consist mostly of pretty silly, mostly semi-useful st
 ### Plugins can
 - ✔ use (almost) arbitrary python-code
 - ✔ send room-messages
+- ✔ send reactions to specific messages
 - ✔ add multiple commands (with required power levels)
 - ✔ track their sent messages
 - ✔ hook into to received room-messages
@@ -125,6 +126,7 @@ The class used by all plugins, providing the following methods:
 - `clear_data`: clear stored data
 - `reply`: reply to a command with a message
 - `reply_notice`: reply to a command with a notice
+- `react`: react to a specific event
 - `message`: send a message to a room
 - `notice`: send a notice to a room
 - `is_user_in_room`: checks if a given displayname is a member of the current room

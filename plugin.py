@@ -3,7 +3,7 @@ from os import remove, path
 import pickle
 from typing import List, Any, Dict, Callable, Union, Hashable
 import yaml
-from chat_functions import send_text_to_room
+from chat_functions import send_text_to_room, send_reaction
 from asyncio import sleep
 import logging
 from nio import AsyncClient, JoinedMembersResponse, RoomMember, RoomSendResponse
@@ -253,6 +253,18 @@ class Plugin:
         """
 
         return await self.notice(command.client, command.room.room_id, message)
+
+    async def react(self, client, room_id: str, event_id: str, reaction: str):
+        """
+        React to a specific event
+        :param client: (nio.AsyncClient) The client to communicate to matrix with
+        :param room_id: (str) room_id to send the reaction to (is this actually being used?)
+        :param event_id: (str) event_id to react to
+        :param reaction: (str) the reaction to send
+        :return:
+        """
+
+        await send_reaction(client, room_id, event_id, reaction)
 
     async def is_user_in_room(self, command, display_name: str, strictness: str = "loose", fuzziness: int = 75) -> RoomMember or None:
         """

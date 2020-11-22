@@ -1,3 +1,4 @@
+from nio import RoomMessageText, AsyncClient, MatrixRoom
 from pluginloader import PluginLoader
 from chat_functions import send_text_to_room
 
@@ -19,12 +20,12 @@ class Command(object):
 
             event (nio.events.room_events.RoomMessageText): The event describing the command
         """
-        self.client = client
+        self.client: AsyncClient = client
         self.store = store
         self.config = config
         self.command = command
-        self.room = room
-        self.event = event
+        self.room: MatrixRoom = room
+        self.event: RoomMessageText = event
         self.args = self.command.split()[1:]
         self.plugin_loader: PluginLoader = plugin_loader
 

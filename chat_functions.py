@@ -58,6 +58,27 @@ async def send_text_to_room(
         return None
 
 
+async def send_reaction(client, room_id, event_id: str, reaction: str):
+    """
+    Send a reaction to a specific event
+    :param client: (nio.AsyncClient) The client to communicate to matrix with
+    :param room_id: (str) room_id to send the reaction to (is this actually being used?)
+    :param event_id: (str) event_id to react to
+    :param reaction: (str) the reaction to send
+    :return:
+    """
+
+    content = {
+        "m.relates_to": {
+            "event_id": event_id,
+            "rel_type": "m.annotation",
+            "key": reaction,
+        }
+    }
+
+    await client.room_send(room_id, "m.reaction", content, ignore_unverified_devices=True)
+
+
 async def send_typing(client, room_id, message, notice=False, markdown_convert=True):
     """DEPRECATED by plugin.message(): Send text to a room after displaying a typing notification for .2s
     Args:

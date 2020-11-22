@@ -14,6 +14,7 @@ def setup():
     plugin.add_command("sample_clear", sample_clear, "Clear the stored message")
     plugin.add_command("sample_link_user", sample_link_user, "Given a displayname, try to produce a userlink")
     plugin.add_command("sample_reaction_test", sample_reaction_test, "Post a message and record reactions to this message")
+    plugin.add_command("sample_react", sample_react, "Post reactions to a command")
     plugin.add_hook("m.reaction", hook_reactions)
 
     """The following part demonstrates defining a configuration value to be expected in the plugin's configuration file and reading the value"""
@@ -112,6 +113,18 @@ async def sample_reaction_test(command):
 
     else:
         await plugin.reply_notice(command, "Usage: sample_reaction_test")
+
+
+async def sample_react(command):
+    """
+    Posts a message and reacts to it
+    :param command:
+    :return:
+    """
+
+    if len(command.args) == 0:
+        await plugin.react(command.client, command.room.room_id, command.event.event_id, "Hello")
+        await plugin.react(command.client, command.room.room_id, command.event.event_id, "👋")
 
 
 async def hook_reactions(client: AsyncClient, room_id: str, event: UnknownEvent):
