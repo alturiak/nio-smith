@@ -30,7 +30,7 @@ Currently included plugins consist mostly of pretty silly, mostly semi-useful st
 ### Plugins can
 - ✔ use (almost) arbitrary python-code
 - ✔ send room-messages
-- ✔ add multiple commands
+- ✔ add multiple commands (with required power levels)
 - ✔ track their sent messages
 - ✔ hook into to received room-messages
 - ✔ hook into to received reactions
