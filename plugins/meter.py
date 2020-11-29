@@ -77,8 +77,12 @@ def get_comment(level: int, nick: str, condition: str) -> str:
 async def meter(command):
 
     try:
-        nick = command.args[0]
-        condition = " ".join(command.args[1:])
+        # try to build a userlink, if possible
+        nick: str
+        if not (nick := await plugin.link_user(command, command.args[0])):
+            nick = command.args[0]
+
+        condition: str = " ".join(command.args[1:])
         if not condition:
             raise IndexError
         else:
