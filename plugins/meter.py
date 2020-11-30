@@ -74,6 +74,14 @@ def get_comment(level: int, nick: str, condition: str) -> str:
     return comments[level]
 
 
+def display_level(level: int) -> str:
+
+    if level > 0:
+        return f"<font color =\"{get_level_color(level)}\">{str(level)}</font>/10"
+    else:
+        return f"{str(level)}/10"
+
+
 async def meter(command):
 
     try:
@@ -87,7 +95,7 @@ async def meter(command):
             raise IndexError
         else:
             level: int = random.randint(0, 10)
-            text: str = f"{condition.replace(' ', '-')}-o-Meter {build_gauge(level)} <font color=\"{get_level_color(level)}\">{str(level)}</font>/10 {nick} is " \
+            text: str = f"{condition.replace(' ', '-')}-o-Meter {build_gauge(level)} {display_level(level)} {nick} is " \
                         f"{get_comment(level, nick, condition)}"
             await send_typing(command.client, command.room.room_id, text)
 
