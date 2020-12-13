@@ -39,12 +39,12 @@ def setup():
 
 class QuoteLine:
 
-    def __init__(self, nick: str, message: str, message_type: str = "message"):
+    def __init__(self, message: str, nick: str or None = None, message_type: str = "message"):
         """
         A specific line of a quote
-        :param nick: the person's nickname
         :param message: the actual message
-        :param message_type: type of the quote, currently either "message" or "action"
+        :param nick: the person's nickname
+        :param message_type: type of the quote, currently either "message", "action" or "comment"
         """
 
         self.nick: str = nick
@@ -137,17 +137,21 @@ class Quote:
         else:
             line: QuoteLine
             for line in self.lines:
-                message: str = line.message.replace("<", "&lt;").replace(">", "&gt;").replace("`", "&#96;").replace("*", '\\*').replace("_", '\\_')
-                if plugin.read_data("nick_links"):
-                    nick_link: str
-                    if nick_link := await plugin.link_user(command, line.nick, strictness="fuzzy", fuzziness=80):
-                        quote_text += f"{nick_link} {message}  \n"
+                if line.message_type == "message" or line.message_type == "action":
+                    message: str = line.message.replace("<", "&lt;").replace(">", "&gt;").replace("`", "&#96;").replace("*", '\\*').replace("_", '\\_')
+                    if plugin.read_data("nick_links"):
+                        nick_link: str
+                        if nick_link := await plugin.link_user(command, line.nick, strictness="fuzzy", fuzziness=80):
+                            quote_text += f"{nick_link} {message}  \n"
+                        else:
+                            nick: str = line.nick.replace("`", "&#96;").replace("_", '\\_')
+                            quote_text += f"&lt;{nick}&gt; {message}  \n"
                     else:
                         nick: str = line.nick.replace("`", "&#96;").replace("_", '\\_')
                         quote_text += f"&lt;{nick}&gt; {message}  \n"
-                else:
-                    nick: str = line.nick.replace("`", "&#96;").replace("_", '\\_')
-                    quote_text += f"&lt;{nick}&gt; {message}  \n"
+
+                elif line.message_type == "annotation":
+                    quote_text += f"[{line.message}]  \n"
 
         return f"**Quote {self.id}**:  \n{quote_text}"
 
@@ -228,7 +232,7 @@ class Quote:
         quote_lines: List[QuoteLine] = []
 
         for line in full_lines:
-            nick: str
+            nick: str or None
             message: str
             message_type: str
 
@@ -237,12 +241,16 @@ class Quote:
                     message_type = "action"
                     nick = line.split(' ')[1]
                     message = ' '.join(line.split(' ')[2:])
+                elif re.match(r"^\[.*]$", line):
+                    message_type = "annotation"
+                    nick = None
+                    message = line[1:-1]
                 else:
                     message_type = "message"
                     nick = line.split(' ')[0].replace('<', '').replace('>', '')
                     message = ' '.join(line.split(' ')[1:])
 
-                quote_lines.append(QuoteLine(nick, message, message_type))
+                quote_lines.append(QuoteLine(message, nick=nick, message_type=message_type))
 
         self.lines = quote_lines
 
@@ -496,7 +504,7 @@ async def quote_add_or_replace(command, quote_id: int = 0) -> Quote or None:
         new_quote.convert_string_to_quote_lines()
 
     else:
-        # assume matrix c&p
+        # assume matrix c&p where nickname and actual message are on two separate lines
         # strip command name
         lines: List[str] = command.command.split(' ', 1)[1].split('\n')
         if quote_id != 0:
@@ -505,9 +513,14 @@ async def quote_add_or_replace(command, quote_id: int = 0) -> Quote or None:
         index: int = 0
         quote_lines: List[QuoteLine] = []
         while index < len(lines)-1:
-            quote_lines.append(QuoteLine(lines[index], lines[index+1]))
-            quote_text += f"<{lines[index]}> {lines[index+1]} | "
-            index += 2
+            if re.match(r"^\[.*]$", lines[index]):
+                # this is an annotation
+                quote_lines.append((QuoteLine(lines[index][1:-1], message_type="annotation")))
+                index += 1
+            else:
+                quote_lines.append(QuoteLine(lines[index+1], nick=lines[index]))
+                quote_text += f"<{lines[index]}> {lines[index+1]} | "
+                index += 2
         quote_text = quote_text.rstrip(' | ')
         new_quote = Quote("local", text=quote_text, mxroom=command.room.room_id, lines=quote_lines)
 
@@ -629,11 +642,12 @@ async def quote_stats_command(command):
 
         for line in quote.lines:
             quote_length += len(line.message)
-            if line.nick.lower() in quote_nicks.keys():
-                if quote.id not in quote_nicks[line.nick.lower()]:
-                    quote_nicks[line.nick.lower()].append(quote.id)
-            else:
-                quote_nicks[line.nick.lower()] = [quote.id]
+            if line.nick is not None:
+                if line.nick.lower() in quote_nicks.keys():
+                    if quote.id not in quote_nicks[line.nick.lower()]:
+                        quote_nicks[line.nick.lower()].append(quote.id)
+                else:
+                    quote_nicks[line.nick.lower()] = [quote.id]
 
         if quote_length > quote_longest[1]:
             quote_longest = (quote.id, quote_length)
