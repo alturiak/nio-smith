@@ -44,7 +44,7 @@ class QuoteLine:
         A specific line of a quote
         :param message: the actual message
         :param nick: the person's nickname
-        :param message_type: type of the quote, currently either "message", "action" or "comment"
+        :param message_type: type of the quote, currently either "message", "action" or "annotation"
         """
 
         self.nick: str = nick
