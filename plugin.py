@@ -25,7 +25,7 @@ class Plugin:
         self.commands: Dict[str, PluginCommand] = {}
         self.help_texts: Dict[str, str] = {}
         self.hooks: Dict[str, List[PluginHook]] = {}
-        self.timers: List[Tuple[str, Callable, str or datetime.timedelta]] = []
+        self.timers: List[Tuple[str, Callable, str or datetime.timedelta or None]] = []
         self.rooms: List[str] = []
 
         self.plugin_data_filename: str = f"plugins/{self.name}.pkl"
