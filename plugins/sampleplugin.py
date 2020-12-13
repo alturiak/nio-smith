@@ -1,9 +1,13 @@
 from nio import AsyncClient, UnknownEvent
 from plugin import Plugin
 import logging
+import datetime
 logger = logging.getLogger(__name__)
 
 plugin = Plugin("sampleplugin", "General", "Just a simple sample.")
+
+# Change this to true to actually enable the dummy timers for demo purposes
+timers_enabled: bool = False
 
 
 def setup():
@@ -17,15 +21,18 @@ def setup():
     plugin.add_command("sample_react", sample_react, "Post reactions to a command")
     plugin.add_hook("m.reaction", hook_reactions)
 
-    """The following part demonstrates defining a configuration value to be expected in the plugin's configuration file and reading the value"""
+    """The following part demonstrates defining a configuration value to be expected in the plugin's configuration file and reading the value
 
-    plugin.add_config("default_message", "this is the default message", is_required=True)
-    """
     Define a configuration value to be loaded at startup.
     The value supplied is a default value that is used if no configuration was found in the configuration file 
     """
-
+    plugin.add_config("default_message", "this is the default message", is_required=True)
     plugin.add_command("read_configuration", read_configuration, "Reads the value `default_message` from the plugin configuration")
+
+    """The following part demonstrates registering timers by fixed interval and timedelta"""
+    if timers_enabled:
+        plugin.add_timer(timer_daily, frequency="daily")
+        plugin.add_timer(timer_every_36_minutes, frequency=datetime.timedelta(minutes=36))
 
 
 class Sample:
@@ -156,6 +163,26 @@ async def read_configuration(command):
         await plugin.reply(command, f"Configuration value: {message}")
     except KeyError:
         await plugin.reply_notice(command, f"Could not read message from configuration")
+
+
+async def timer_daily(client):
+    """
+    Prints a dummy message at the start of the day
+    :param client:
+    :return:
+    """
+
+    print(f"This method is being executed around midnight every day")
+
+
+async def timer_every_36_minutes(client):
+    """
+    Prints a dummy message every 36 minutes
+    :param client:
+    :return:
+    """
+
+    print(f"This method is being executed every 36 minutes")
 
 
 setup()

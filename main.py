@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 client: AsyncClient
 plugin_loader: PluginLoader
 timestamp: float = time()
+timers_filepath: str = ""
 
 
 async def run_plugins(response):
@@ -31,8 +32,9 @@ async def run_plugins(response):
     global plugin_loader
     global client
     global timestamp
+    global timers_filepath
 
-    timestamp = await plugin_loader.run_timers(client, timestamp)
+    timestamp = await plugin_loader.run_timers(client, timestamp, timers_filepath)
 
 
 async def main():
@@ -41,6 +43,7 @@ async def main():
     # probably using https://docs.python.org/3.8/library/functools.html#functools.partial
     global client
     global plugin_loader
+    global timers_filepath
 
     # Read config file
     config = Config("config.yaml")
@@ -67,6 +70,10 @@ async def main():
 
     # instantiate the pluginLoader
     plugin_loader = PluginLoader()
+
+    # load execution times of timers
+    timers_filepath = config.timers_filepath
+    await plugin_loader.load_timers(timers_filepath)
 
     # Set up event callbacks
     callbacks = Callbacks(client, store, config, plugin_loader)

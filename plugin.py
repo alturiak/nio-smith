@@ -1,7 +1,8 @@
 import os.path
 from os import remove, path
 import pickle
-from typing import List, Any, Dict, Callable, Union, Hashable
+from typing import List, Any, Dict, Callable, Union, Hashable, Tuple
+import datetime
 import yaml
 from chat_functions import send_text_to_room, send_reaction
 from asyncio import sleep
@@ -24,7 +25,7 @@ class Plugin:
         self.commands: Dict[str, PluginCommand] = {}
         self.help_texts: Dict[str, str] = {}
         self.hooks: Dict[str, List[PluginHook]] = {}
-        self.timers: List[Callable] = []
+        self.timers: List[Tuple[str, Callable, str or datetime.timedelta]] = []
         self.rooms: List[str] = []
 
         self.plugin_data_filename: str = f"plugins/{self.name}.pkl"
@@ -103,11 +104,29 @@ class Plugin:
 
         return self.hooks
 
-    def add_timer(self, method: Callable):
+    def add_timer(self, method: Callable, frequency: str or datetime.timedelta or None = None):
+        """
 
-        self.timers.append(method)
+        :param method: the method to be called when the timer trigger
+        :param frequency: frequency in which the timer should trigger
+                can be:
+                - datetime.timedelta: to specify timeperiods between triggers or
+                - str:
+                    - "weekly": run once a week roughly at Monday, 00:00
+                    - "daily": run once a day roughly at midnight
+                    - "hourly": run once an hour roughly at :00
+                - None: triggers about every thirty seconds
 
-    def get_timers(self) -> List[Callable]:
+        :return:
+        """
+
+        if isinstance(frequency, str):
+            if frequency not in ["weekly", "daily", "hourly"]:
+                raise TypeError
+
+        self.timers.append((f"{self.name}.{method.__name__}", method, frequency))
+
+    def get_timers(self) -> List[Tuple[str, Callable, str or datetime.timedelta]]:
 
         return self.timers
 

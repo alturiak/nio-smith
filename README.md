@@ -39,6 +39,10 @@ Currently included plugins consist mostly of pretty silly, mostly semi-useful st
 - ✔ limit commands to certain rooms
 - ✔ use built-in persistent storage
 - ✔ automatically be supplied with config-values from plugin-specific config-files at startup
+- ✔ register timers for execution at custom intervals or at the start of each:
+    - week,
+    - day or
+    - hour
 - ❌ hook into other room-events
 
 ### Plugins must
@@ -107,7 +111,7 @@ should work though.
 
 #### `plugin.py`
 
-The class used by all plugins, providing the following methods:
+The class used by all plugins, providing the following methods. See `sampleplugin.py` for examples.
 - `add_command`: define
     - a command word,
     - the method called when the command is encountered,
@@ -121,6 +125,9 @@ The class used by all plugins, providing the following methods:
     - an optional list of rooms the hook is valid for
 - `add_timer`: define
     - the method to be called (currently once every ~30s whenever a sync event is received)
+    - the frequency, in whcih the method is to be called, either as
+        - datetime.timedelta or
+        - str: "weekly", "daily", "hourly"
 - `store_data`: persistently store data for later use
 - `read_data`: read data from store
 - `clear_data`: clear stored data
@@ -135,10 +142,9 @@ The class used by all plugins, providing the following methods:
     - a config_item to look for in `<plugin_name>.yaml`
     - an optional default_value
     - if the value is required (must be in configuration or have a default value)
-- `read_config`: read a config_item, \
-        either returning the value found in the configuration file \
-        or the default_value, if supplied
-    
+- `read_config`: read a config_item, either returning the value found in the configuration file or the default_value,
+  if supplied
+
 #### `pluginloader.py`
 
 Handles dynamic (at startup) loading of any plugins in the `plugins`-directory.

@@ -32,6 +32,8 @@ storage:
   # The path to a directory for internal bot storage
   # containing encryption keys, sync tokens, etc.
   store_filepath: "./store"
+  # The file to store execution times of timers for plugins
+  timers_filepath: "./timers.pkl"
 
 # Logging setup
 logging:
