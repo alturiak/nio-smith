@@ -126,7 +126,7 @@ class Plugin:
 
         self.timers.append((f"{self.name}.{method.__name__}", method, frequency))
 
-    def get_timers(self) -> List[Tuple[str, Callable, str or datetime.timedelta]]:
+    def get_timers(self) -> List[Tuple[str, Callable, str or datetime.timedelta or None]]:
 
         return self.timers
 
