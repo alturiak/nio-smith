@@ -13,7 +13,7 @@ def setup():
     plugin.add_config("room_id", None, is_required=False)
     plugin.add_command("series", series, "Get a list of currently tracked series", room_id=[plugin.read_config("room_id")])
     plugin.add_command("upcoming", upcoming, "Get a list of upcoming episodes from sonarr's calendar", room_id=[plugin.read_config("room_id")])
-    plugin.add_timer(episodes_today)
+    plugin.add_timer(episodes_today, frequency="daily")
 
 
 async def series(command):
@@ -98,21 +98,13 @@ async def episodes_today(client):
     :return: -
     """
 
-    last_run: datetime.date
-    try:
-        last_run = plugin.read_data("last_run")
-    except KeyError:
-        last_run = datetime.date.today() - datetime.timedelta(days=999)
+    if episodes := await get_calendar_episodes(1):
+        message: str = ""
+        for episode in episodes:
+            message += f"{str(episode['series']['title'])} {str(episode['seasonNumber'])}x{str(episode['episodeNumber'])} {str(episode['title'])}  \n"
 
-    if last_run < datetime.date.today():
-        if episodes := await get_calendar_episodes(1):
-            message: str = ""
-            for episode in episodes:
-                message += f"{str(episode['series']['title'])} {str(episode['seasonNumber'])}x{str(episode['episodeNumber'])} {str(episode['title'])}  \n"
-
-            if message != "":
-                message = f"**Episodes expected today:**  \n{message}"
-                await plugin.message(client, plugin.read_config("room_id"), message)
-        plugin.store_data("last_run", datetime.date.today())
+        if message != "":
+            message = f"**Episodes expected today:**  \n{message}"
+            await plugin.message(client, plugin.read_config("room_id"), message)
 
 setup()
