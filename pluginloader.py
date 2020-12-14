@@ -197,39 +197,42 @@ class PluginLoader:
                 # get last execution time and run timer if necessary
                 else:
                     # get last execution time for the method
-                    last_execution: datetime.datetime
-                    if not (last_execution := last_timers_execution.get(name)):
-                        last_execution = datetime.datetime(year=1970, month=1, day=1, hour=0, minute=0)
+                    last_execution: datetime.datetime or None
 
-                    # hardcoded intervals
-                    if isinstance(frequency, str):
-                        last_execution_day: datetime.date = last_execution.date()
-                        last_execution_hour: int = last_execution.time().hour
-                        current_day: datetime.date = datetime.datetime.today()
-                        current_hour: int = datetime.datetime.now().hour
-
-                        if frequency == "weekly":
-                            # last_execution is either in smaller weeknumber in same year or higher weeknumber in smaller year
-                            if (last_execution_day.isocalendar()[1] < current_day.isocalendar()[1] and last_execution_day.year == current_day.year) or\
-                                    (last_execution_day.isocalendar()[1] > current_day.isocalendar()[1] and last_execution_day.year < current_day.year):
-                                should_trigger = True
-
-                        elif frequency == "daily":
-                            if last_execution_day.day < current_day.day and last_execution_day.year <= current_day.year:
-                                should_trigger = True
-
-                        elif frequency == "hourly":
-                            if (last_execution_hour < current_hour and last_execution_day.day <= current_day.day) or\
-                                    (last_execution_day.day < current_day.day):
-                                should_trigger = True
-
-                    # timedelta intervals
-                    elif isinstance(frequency, datetime.timedelta):
-                        if datetime.datetime.now() - last_execution > frequency:
-                            should_trigger = True
+                    if (last_execution := last_timers_execution.get(name)) is None:
+                        should_trigger = True
 
                     else:
-                        logger.error(f"Invalid frequency specification for {timer}: {frequency}")
+                        # hardcoded intervals
+                        if isinstance(frequency, str) and frequency in ["weekly", "daily", "hourly"]:
+                            last_execution_date: datetime.date = last_execution.date()
+                            last_execution_week: int = last_execution_date.isocalendar()[1]
+                            last_execution_hour: int = last_execution.time().hour
+                            current_week: int = datetime.datetime.today().isocalendar()[1]
+                            current_hour: int = datetime.datetime.now().hour
+
+                            if frequency == "weekly":
+                                # triggers if weeknumbers differ
+                                if last_execution_week != current_week:
+                                    should_trigger = True
+
+                            elif frequency == "daily":
+                                # triggers if day of month differs
+                                if last_execution_date.day != datetime.datetime.today().day:
+                                    should_trigger = True
+
+                            elif frequency == "hourly":
+                                # triggers if hour or day differ
+                                if last_execution_hour != current_hour or last_execution_date.day != datetime.datetime.today().day:
+                                    should_trigger = True
+
+                        # timedelta intervals
+                        elif isinstance(frequency, datetime.timedelta):
+                            if datetime.datetime.now() - last_execution > frequency:
+                                should_trigger = True
+
+                        else:
+                            logger.error(f"Invalid frequency specification for {timer}: {frequency}")
 
                 if should_trigger:
                     try:
@@ -241,7 +244,10 @@ class PluginLoader:
                         logger.critical(f"Plugin failed to catch exception in {timer}: {err}")
 
             if timers_triggered:
-                # write timers to file
+                # TODO: remove stale timers (timers that have not run in the last frequency), as they are probably not used anymore
+                # they will run if they're loaded again either way
+
+                # write all timers to file
                 try:
                     pickle.dump(last_timers_execution, open(filepath, "wb"))
                 except IOError as err:
