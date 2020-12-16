@@ -79,11 +79,6 @@ class PluginLoader:
                     if stored_timer.name == new_timer.name:
                         logger.debug(f"Updated existing timer {stored_timer.name}")
                         self.timers.append(Timer(new_timer.name, new_timer.method, new_timer.frequency, stored_timer.last_execution))
-                        if stored_timer.method != new_timer.method:
-                            stored_timer.method = new_timer.method
-                        if stored_timer.frequency != new_timer.frequency:
-                            stored_timer.frequency = new_timer.frequency
-
                         break
                 else:
                     # timer not found in stored timers
@@ -206,9 +201,10 @@ class PluginLoader:
             timer: Timer
             timers_triggered: bool = False
 
-            # check all timers for execution, remove stale timers
+            # check all timers for execution
             for timer in self.get_timers():
-                timers_triggered = await timer.trigger(client)
+                if await timer.trigger(client):
+                    timers_triggered = True
 
             if timers_triggered:
                 # write all timers to file
