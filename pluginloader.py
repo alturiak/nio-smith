@@ -4,6 +4,7 @@
 """
 
 from plugin import Plugin, PluginCommand, PluginHook
+from timer import Timer
 
 from sys import modules
 from re import match
@@ -11,7 +12,7 @@ from time import time
 import operator
 import pickle
 import datetime
-from typing import List, Dict, Callable, Tuple
+from typing import List, Dict
 
 import logging
 logger = logging.getLogger(__name__)
@@ -27,19 +28,20 @@ except ImportError as err:
 except KeyError as err:
     logger.critical(f"Error importing plugin: {err}")
 
-# global variable to store last timer execution timestamp
-last_timers_execution: Dict[str, datetime.datetime]
-
 
 class PluginLoader:
 
-    def __init__(self):
+    def __init__(self, timers_filepath: str):
         # get all loaded plugins from sys.modules and make them available as plugin_list
         self.__plugin_list: Dict[str, Plugin] = {}
         self.commands: Dict[str, PluginCommand] = {}
         self.help_texts: Dict[str, str] = {}
         self.hooks: Dict[str, List[PluginHook]] = {}
-        self.timers: List[Tuple[str, Callable, str or datetime.timedelta or None]] = []
+
+        """load stored timers"""
+        self.timers_filepath: str = timers_filepath
+        self.timers: List[Timer] = []
+        stored_timers: List[Timer] = self.__load_timers()
 
         for key in modules.keys():
             if match("^plugins\.\w*", key):
@@ -64,8 +66,29 @@ class PluginLoader:
                 else:
                     self.hooks[event_type] = plugin_hooks
 
-            """assemble all timers and their respective methods"""
-            self.timers.extend(plugin.get_timers())
+            """
+            check if a timer of the same name exists already,
+            overwrite method if needed, keep last_execution from stored timer
+            non-existing timers will be added as is
+            """
+            new_timer: Timer
+            stored_timer: Timer
+
+            for new_timer in plugin.get_timers():
+                for stored_timer in stored_timers:
+                    if stored_timer.name == new_timer.name:
+                        logger.debug(f"Updated existing timer {stored_timer.name}")
+                        self.timers.append(Timer(new_timer.name, new_timer.method, new_timer.frequency, stored_timer.last_execution))
+                        if stored_timer.method != new_timer.method:
+                            stored_timer.method = new_timer.method
+                        if stored_timer.frequency != new_timer.frequency:
+                            stored_timer.frequency = new_timer.frequency
+
+                        break
+                else:
+                    # timer not found in stored timers
+                    self.timers.append(new_timer)
+                    logger.debug(f"Added new timer: {new_timer.name}")
 
             """load the plugin's saved data"""
             plugin.plugin_data = plugin.load_data()
@@ -78,8 +101,8 @@ class PluginLoader:
                 logger.info(f"  Hooks:    {', '.join([*plugin.get_hooks().keys()])}")
             if plugin.get_timers():
                 timers: List[str] = []
-                for name, timer, frequency in plugin.get_timers():
-                    timers.append(name)
+                for timer in plugin.get_timers():
+                    timers.append(timer.name)
                 logger.info(f"  Timers:   {', '.join(timers)}")
 
     def get_plugins(self) -> Dict[str, Plugin]:
@@ -103,7 +126,7 @@ class PluginLoader:
 
         return self.commands
 
-    def get_timers(self) -> List[Tuple[str, Callable, str or datetime.timedelta or None]]:
+    def get_timers(self) -> List[Timer]:
 
         return self.timers
 
@@ -177,79 +200,20 @@ class PluginLoader:
         :return:
         """
 
-        global last_timers_execution
-
         """Do not run timers more often than every 30s"""
         if time() >= timestamp+30:
 
-            timer: Callable
-            frequency = datetime.timedelta or str or None
+            timer: Timer
             timers_triggered: bool = False
 
-            for name, timer, frequency in self.get_timers():
-
-                should_trigger: bool = False
-
-                # run perpetual timers without storing last execution time
-                if frequency is None:
-                    should_trigger = True
-
-                # get last execution time and run timer if necessary
-                else:
-                    # get last execution time for the method
-                    last_execution: datetime.datetime or None
-
-                    if (last_execution := last_timers_execution.get(name)) is None:
-                        should_trigger = True
-
-                    else:
-                        # hardcoded intervals
-                        if isinstance(frequency, str) and frequency in ["weekly", "daily", "hourly"]:
-                            last_execution_date: datetime.date = last_execution.date()
-                            last_execution_week: int = last_execution_date.isocalendar()[1]
-                            last_execution_hour: int = last_execution.time().hour
-                            current_week: int = datetime.datetime.today().isocalendar()[1]
-                            current_hour: int = datetime.datetime.now().hour
-
-                            if frequency == "weekly":
-                                # triggers if weeknumbers differ
-                                if last_execution_week != current_week:
-                                    should_trigger = True
-
-                            elif frequency == "daily":
-                                # triggers if day of month differs
-                                if last_execution_date.day != datetime.datetime.today().day:
-                                    should_trigger = True
-
-                            elif frequency == "hourly":
-                                # triggers if hour or day differ
-                                if last_execution_hour != current_hour or last_execution_date.day != datetime.datetime.today().day:
-                                    should_trigger = True
-
-                        # timedelta intervals
-                        elif isinstance(frequency, datetime.timedelta):
-                            if datetime.datetime.now() - last_execution > frequency:
-                                should_trigger = True
-
-                        else:
-                            logger.error(f"Invalid frequency specification for {timer}: {frequency}")
-
-                if should_trigger:
-                    try:
-                        logger.info(f"Triggering timer {name} at {datetime.datetime.now()}")
-                        await timer(client)
-                        timers_triggered = True
-                        last_timers_execution[name] = datetime.datetime.now()
-                    except Exception as err:
-                        logger.critical(f"Plugin failed to catch exception in {timer}: {err}")
+            # check all timers for execution, remove stale timers
+            for timer in self.get_timers():
+                timers_triggered = await timer.trigger(client)
 
             if timers_triggered:
-                # TODO: remove stale timers (timers that have not run in the last frequency), as they are probably not used anymore
-                # they will run if they're loaded again either way
-
                 # write all timers to file
                 try:
-                    pickle.dump(last_timers_execution, open(filepath, "wb"))
+                    pickle.dump(self.get_timers(), open(filepath, "wb"))
                 except IOError as err:
                     logger.error(f"Error writing last timers execution to {filepath}: {err}")
 
@@ -257,17 +221,14 @@ class PluginLoader:
         else:
             return timestamp
 
-    async def load_timers(self, filepath: str):
+    def __load_timers(self) -> List[Timer]:
         """
         Load all timers' last execution time from file
-        :param filepath: path to the file containing the dict
         :return:
         """
 
-        global last_timers_execution
-
         try:
-            last_timers_execution = pickle.load(open(filepath, "rb"))
+            return pickle.load(open(self.timers_filepath, "rb"))
         except FileNotFoundError as err:
-            last_timers_execution = {}
-            logger.warning(f"Failed loading last timers execution from {filepath}: {err}")
+            logger.warning(f"Failed loading last timers execution from {self.timers_filepath}: {err}")
+            return []

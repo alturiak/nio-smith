@@ -8,6 +8,7 @@ from chat_functions import send_text_to_room, send_reaction
 from asyncio import sleep
 import logging
 from nio import AsyncClient, JoinedMembersResponse, RoomMember, RoomSendResponse
+from timer import Timer
 from fuzzywuzzy import fuzz
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ class Plugin:
         self.commands: Dict[str, PluginCommand] = {}
         self.help_texts: Dict[str, str] = {}
         self.hooks: Dict[str, List[PluginHook]] = {}
-        self.timers: List[Tuple[str, Callable, str or datetime.timedelta or None]] = []
+        self.timers: List[Timer] = []
         self.rooms: List[str] = []
 
         self.plugin_data_filename: str = f"plugins/{self.name}.pkl"
@@ -120,13 +121,9 @@ class Plugin:
         :return:
         """
 
-        if isinstance(frequency, str):
-            if frequency not in ["weekly", "daily", "hourly"]:
-                raise TypeError
+        self.timers.append(Timer(f"{self.name}.{method.__name__}", method, frequency))
 
-        self.timers.append((f"{self.name}.{method.__name__}", method, frequency))
-
-    def get_timers(self) -> List[Tuple[str, Callable, str or datetime.timedelta or None]]:
+    def get_timers(self) -> List[Timer]:
 
         return self.timers
 

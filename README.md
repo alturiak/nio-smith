@@ -125,7 +125,7 @@ The class used by all plugins, providing the following methods. See `sampleplugi
     - an optional list of rooms the hook is valid for
 - `add_timer`: define
     - the method to be called (currently once every ~30s whenever a sync event is received)
-    - the frequency, in whcih the method is to be called, either as
+    - the frequency, in which the method is to be called, either as
         - datetime.timedelta or
         - str: "weekly", "daily", "hourly"
 - `store_data`: persistently store data for later use
@@ -197,6 +197,9 @@ method for sending formatted messages to a room and `send_typing` which does the
 
 Custom error types for the bot. Currently there's only one special type that's
 defined for when a error is found while the config file is being processed.
+
+#### `timer.py`
+Timers are used to by plugins to call recurring methods. 
 
 #### `sample.config.yaml`
 
