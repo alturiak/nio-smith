@@ -13,7 +13,9 @@ def setup():
     plugin.add_config("room_id", None, is_required=False)
     plugin.add_command("series", series, "Get a list of currently tracked series", room_id=[plugin.read_config("room_id")])
     plugin.add_command("upcoming", upcoming, "Get a list of upcoming episodes from sonarr's calendar", room_id=[plugin.read_config("room_id")])
-    plugin.add_timer(episodes_today, frequency="daily")
+    plugin.add_command("today", today, "Get a list of today's episodes", room_id=[plugin.read_config("room_id")])
+    plugin.add_timer(episodes_today, "daily")
+    plugin.add_timer(update_episodes_today, frequency=datetime.timedelta(minutes=5))
 
 
 async def series(command):
@@ -91,6 +93,27 @@ async def upcoming(command):
         await plugin.react(command.client, command.room.room_id, command.event.event_id, "❌")
 
 
+async def build_episodes_today() -> str:
+    """
+    Get the list of today's episodes and nicely format them to a message, displaying episodes and download status
+    :return: (str) the message listing the episodes
+    """
+
+    if episodes := await get_calendar_episodes(1):
+        message: str = ""
+        for episode in episodes:
+            if episode['hasFile']:
+                message += f"<font color=\"green\">"
+            else:
+                message += f"<font color=\"red\">"
+            message += f"{str(episode['series']['title'])} {str(episode['seasonNumber'])}x{str(episode['episodeNumber'])} {str(episode['title'])}</font>  \n"
+
+        if message != "":
+            return f"**Episodes expected today:**  \n{message}"
+        else:
+            return ""
+
+
 async def episodes_today(client):
     """
     Get the list of episodes for the current day and post them to the configured room
@@ -98,13 +121,40 @@ async def episodes_today(client):
     :return: -
     """
 
-    if episodes := await get_calendar_episodes(1):
-        message: str = ""
-        for episode in episodes:
-            message += f"{str(episode['series']['title'])} {str(episode['seasonNumber'])}x{str(episode['episodeNumber'])} {str(episode['title'])}  \n"
+    message: str = await build_episodes_today()
+    if message != "":
+        # store message-id and message for editing the message later
+        event_id = await plugin.message(client, plugin.read_config("room_id"), message)
+        plugin.store_data("today_message", (event_id, message))
 
-        if message != "":
-            message = f"**Episodes expected today:**  \n{message}"
-            await plugin.message(client, plugin.read_config("room_id"), message)
+
+async def update_episodes_today(client):
+    """
+    Check the list of current episodes for successful downloads and update the message accordingly
+    :param client:
+    :return:
+    """
+
+    message: str = await build_episodes_today()
+
+    if message != "" and message != plugin.read_data("today_message")[1]:
+        # store message-id and message for editing the message later
+        await plugin.replace(client, plugin.read_config("room_id"), plugin.read_data("today_message")[0], message)
+        plugin.store_data("today_message", (plugin.read_data("today_message")[0], message))
+
+
+async def today(command):
+    """
+    Get the list of episodes for the current day and post them to the configured room
+    :param command:
+    :return: -
+    """
+
+    message: str = await build_episodes_today()
+
+    if message != "":
+        event_id: str = await plugin.reply(command, message)
+        plugin.store_data("today_message", (event_id, message))
+
 
 setup()
