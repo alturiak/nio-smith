@@ -2,6 +2,7 @@ from nio import AsyncClient, UnknownEvent
 from plugin import Plugin
 import logging
 import datetime
+from asyncio import sleep
 logger = logging.getLogger(__name__)
 
 plugin = Plugin("sampleplugin", "General", "Just a simple sample.")
@@ -19,6 +20,7 @@ def setup():
     plugin.add_command("sample_link_user", sample_link_user, "Given a displayname, try to produce a userlink")
     plugin.add_command("sample_reaction_test", sample_reaction_test, "Post a message and record reactions to this message")
     plugin.add_command("sample_react", sample_react, "Post reactions to a command")
+    plugin.add_command("sample_replace", sample_replace, "Post a message and edit it afterwards")
     plugin.add_hook("m.reaction", hook_reactions)
 
     """The following part demonstrates defining a configuration value to be expected in the plugin's configuration file and reading the value
@@ -132,6 +134,18 @@ async def sample_react(command):
     if len(command.args) == 0:
         await plugin.react(command.client, command.room.room_id, command.event.event_id, "Hello")
         await plugin.react(command.client, command.room.room_id, command.event.event_id, "👋")
+
+
+async def sample_replace(command):
+    """
+    Posts a message and edits if after three seconds.
+    :param command: (Command) the command issued to the bot
+    :return: -
+    """
+
+    message_id: str = await plugin.reply(command, f"<font color=\"red\">This is a test message</font>")
+    await sleep(3)
+    await plugin.replace(command.client, command.room.room_id, message_id, f"<font color=\"green\">This is a edited test message</font>")
 
 
 async def hook_reactions(client: AsyncClient, room_id: str, event: UnknownEvent):

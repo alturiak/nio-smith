@@ -79,6 +79,36 @@ async def send_reaction(client, room_id, event_id: str, reaction: str):
     await client.room_send(room_id, "m.reaction", content, ignore_unverified_devices=True)
 
 
+async def send_replace(client, room_id: str, event_id: str, message: str) -> str:
+    """
+    Send a replacement message (edit a previous message)
+    :param client: (nio.AsyncClient) The client to communicate to matrix with
+    :param room_id: (str) room_id to send the edit to (is this actually being used?)
+    :param event_id: (str) event_id to react to
+    :param message: (str) the new message body
+    :return: (str) the event-id of the new room-event
+    """
+
+    content = {
+        "m.new_content": {
+            "msgtype": "m.text",
+            "format": "org.matrix.custom.html",
+            "body": message,
+            "formatted_body": markdown(message)
+        },
+        "m.relates_to": {
+            "rel_type": "m.replace",
+            "event_id": event_id
+        },
+        "msgtype": "m.text",
+        "format": "org.matrix.custom.html",
+        "body": message,
+        "formatted_body": markdown(message)
+    }
+
+    return await client.room_send(room_id, "m.room.message", content, ignore_unverified_devices=True)
+
+
 async def send_typing(client, room_id, message, notice=False, markdown_convert=True):
     """DEPRECATED by plugin.message(): Send text to a room after displaying a typing notification for .2s
     Args:

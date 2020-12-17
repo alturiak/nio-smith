@@ -77,7 +77,7 @@ class PluginLoader:
             for new_timer in plugin.get_timers():
                 for stored_timer in stored_timers:
                     if stored_timer.name == new_timer.name:
-                        logger.debug(f"Updated existing timer {stored_timer.name}")
+                        logger.debug(f"Updated existing timer {stored_timer.name} {stored_timer.last_execution}")
                         self.timers.append(Timer(new_timer.name, new_timer.method, new_timer.frequency, stored_timer.last_execution))
                         break
                 else:

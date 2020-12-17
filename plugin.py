@@ -4,7 +4,7 @@ import pickle
 from typing import List, Any, Dict, Callable, Union, Hashable, Tuple
 import datetime
 import yaml
-from chat_functions import send_text_to_room, send_reaction
+from chat_functions import send_text_to_room, send_reaction, send_replace
 from asyncio import sleep
 import logging
 from nio import AsyncClient, JoinedMembersResponse, RoomMember, RoomSendResponse
@@ -281,6 +281,18 @@ class Plugin:
         """
 
         await send_reaction(client, room_id, event_id, reaction)
+
+    async def replace(self, client, room_id: str, event_id: str, message: str):
+        """
+        Edit a message
+        :param client: (nio.AsyncClient) The client to communicate to matrix with
+        :param room_id: (str) room_id to send the reaction to (is this actually being used?)
+        :param event_id: (str) event_id to edit
+        :param message: (str) the new message
+        :return:
+        """
+
+        await send_replace(client, room_id, event_id, message)
 
     async def is_user_in_room(self, command, display_name: str, strictness: str = "loose", fuzziness: int = 75) -> RoomMember or None:
         """

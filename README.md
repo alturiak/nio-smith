@@ -33,6 +33,7 @@ Currently included plugins consist mostly of pretty silly, mostly semi-useful st
 - ✔ send reactions to specific messages
 - ✔ add multiple commands (with required power levels)
 - ✔ track their sent messages
+- ✔ replace (edit) their sent messages 
 - ✔ hook into to received room-messages
 - ✔ hook into to received reactions
 - ✔ register methods for recurring execution (roughly once every 30s)
@@ -134,6 +135,7 @@ The class used by all plugins, providing the following methods. See `sampleplugi
 - `reply`: reply to a command with a message
 - `reply_notice`: reply to a command with a notice
 - `react`: react to a specific event
+- `replace`: replace (edit) a previous message 
 - `message`: send a message to a room
 - `notice`: send a notice to a room
 - `is_user_in_room`: checks if a given displayname is a member of the current room
