@@ -203,8 +203,12 @@ class PluginLoader:
 
             # check all timers for execution
             for timer in self.get_timers():
-                if await timer.trigger(client):
-                    timers_triggered = True
+                try:
+                    if await timer.trigger(client):
+                        logger.debug(f"Timer {timer.name} triggered")
+                        timers_triggered = True
+                except Exception as err:
+                    logger.critical(f"Plugin failed to catch exception caused by timer {timer.name}: {err}")
 
             if timers_triggered:
                 # write all timers to file
