@@ -2,7 +2,7 @@ import logging
 from asyncio import sleep
 
 from nio import (
-    SendRetryError, RoomSendResponse
+    SendRetryError, RoomSendResponse, Event, RoomGetEventResponse
 )
 from markdown import markdown
 
@@ -79,17 +79,23 @@ async def send_reaction(client, room_id, event_id: str, reaction: str):
     await client.room_send(room_id, "m.reaction", content, ignore_unverified_devices=True)
 
 
-async def send_replace(client, room_id: str, event_id: str, message: str) -> str:
+async def send_replace(client, room_id: str, event_id: str, message: str) -> str or None:
     """
-    Send a replacement message (edit a previous message)
+    Send a replacement message (edit a previous message).
+    Gets the event from the server first and compares old content against new content. Only if the content differs, will the m.replace event be sent
     :param client: (nio.AsyncClient) The client to communicate to matrix with
-    :param room_id: (str) room_id to send the edit to (is this actually being used?)
+    :param room_id: (str) room_id to send the edit to
     :param event_id: (str) event_id to react to
     :param message: (str) the new message body
-    :return: (str) the event-id of the new room-event
+    :return:    (str) the event-id of the new room-event, if the original event has been replaced or
+                None, if the event has not been edited
     """
 
-    content = {
+    original_response: RoomGetEventResponse = await client.room_get_event(room_id, event_id)
+    original_event: Event = original_response.event
+    original_content = original_event.source["content"]
+
+    new_content = {
         "m.new_content": {
             "msgtype": "m.text",
             "format": "org.matrix.custom.html",
@@ -106,7 +112,11 @@ async def send_replace(client, room_id: str, event_id: str, message: str) -> str
         "formatted_body": markdown(message)
     }
 
-    return await client.room_send(room_id, "m.room.message", content, ignore_unverified_devices=True)
+    # check if there are any differences in body or formatted_body before actually sending the m.replace-event
+    if new_content["body"] != original_content["body"] or new_content["formatted_body"] != original_content["formatted_body"]:
+        return await client.room_send(room_id, "m.room.message", new_content, ignore_unverified_devices=True)
+    else:
+        return None
 
 
 async def send_typing(client, room_id, message, notice=False, markdown_convert=True):

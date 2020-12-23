@@ -282,17 +282,18 @@ class Plugin:
 
         await send_reaction(client, room_id, event_id, reaction)
 
-    async def replace(self, client, room_id: str, event_id: str, message: str):
+    async def replace(self, client, room_id: str, event_id: str, message: str) -> str or None:
         """
-        Edit a message
+        Edits an event. send_replace() will check if the new content actualy differs before really sending the replacement
         :param client: (nio.AsyncClient) The client to communicate to matrix with
-        :param room_id: (str) room_id to send the reaction to (is this actually being used?)
+        :param room_id: (str) room_id of the original event
         :param event_id: (str) event_id to edit
         :param message: (str) the new message
-        :return:
+        :return:    (str) the event-id of the new room-event, if the original event has been replaced or
+                    None, if the event has not been edited
         """
 
-        await send_replace(client, room_id, event_id, message)
+        return await send_replace(client, room_id, event_id, message)
 
     async def is_user_in_room(self, command, display_name: str, strictness: str = "loose", fuzziness: int = 75) -> RoomMember or None:
         """
