@@ -229,6 +229,7 @@ class PluginLoader:
 
         try:
             return pickle.load(open(self.timers_filepath, "rb"))
-        except FileNotFoundError as err:
+        except (FileNotFoundError, AttributeError) as err:
+            # TODO: this (AttributeError) resets the stored last execution times for ALL timers of the plugin if the method of a stored timer has been renamed
             logger.warning(f"Failed loading last timers execution from {self.timers_filepath}: {err}")
             return []
