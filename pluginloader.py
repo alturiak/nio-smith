@@ -84,7 +84,7 @@ class PluginLoader:
                     logger.debug(f"Added new timer: {new_timer.name}")
 
             """load the plugin's saved data"""
-            plugin.plugin_data = plugin.load_data()
+            plugin.plugin_data = plugin._load_data_from_file()
 
             """Display details about the loaded plugins, this does nothing else"""
             logger.info(f"Loaded plugin {plugin.name}:")

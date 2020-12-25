@@ -161,7 +161,7 @@ async def hook_reactions(client: AsyncClient, room_id: str, event: UnknownEvent)
     tracked_message: str = plugin.read_data("tracked_message")
     reaction: str = event.source['content']['m.relates_to']['key']
 
-    if relates_to == tracked_message:
+    if tracked_message is not None and relates_to == tracked_message:
         await plugin.notice(client, room_id, f"Reaction received to event {relates_to} received: {reaction}")
 
 

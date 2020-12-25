@@ -73,9 +73,9 @@ class Quote:
         """
 
         try:
-            self.id = max(plugin.read_data("quotes").keys())+1
+            self.id: str = str(max(list(map(int, plugin.read_data("quotes").keys())))+1)
         except KeyError:
-            self.id = 1
+            self.id: str = "1"
 
         """id of the quote, automatically set to currently highest id + 1"""
         self.type: str = quote_type
@@ -257,16 +257,16 @@ class Quote:
 
 class TrackedQuote:
 
-    def __init__(self, event_id: str, quote_id: int, timestamp: float = time.time()):
+    def __init__(self, event_id: str, quote_id: str, timestamp: float = time.time()):
         """
         A tracked quote, consisting of event, quote and timestamp to allow for tracking reactions
         :param event_id: the event_id of the message used by the bot to post the quote
         :param quote_id: the id of the quote
         :param timestamp: the timestamp of when the quote was posted to allow removing outdated event_ids
         """
-        self.event_id = event_id
-        self.quote_id = quote_id
-        self.timestamp = timestamp
+        self.event_id: str = event_id
+        self.quote_id: str = quote_id
+        self.timestamp: float = timestamp
 
     async def is_expired(self, max_age: float):
         """
@@ -291,7 +291,7 @@ async def quote_command(command):
     """
 
     """Load all active (quote.deleted == False) quotes"""
-    quotes: Dict[int, Quote]
+    quotes: Dict[str, Quote]
     try:
         quotes = plugin.read_data("quotes")
         # TODO: check if this needs fixing
@@ -310,8 +310,7 @@ async def quote_command(command):
 
     elif len(command.args) == 1 and command.args[0].isdigit():
         """specific quote requested by id"""
-
-        if quote_object := await find_quote_by_id(quotes, int(command.args[0])):
+        if quote_object := await find_quote_by_id(quotes, str(command.args[0])):
             await post_quote(command, quote_object)
         else:
             await plugin.reply_notice(command, f"Quote {command.args[0]} not found")
@@ -375,7 +374,7 @@ async def post_quote(command, quote_object: Quote, match_index: int = -1, total_
         plugin.store_data("tracked_quotes", [TrackedQuote(event_id, quote_object.id)])
 
 
-async def find_quote_by_search_term(quotes: Dict[int, Quote], terms: List[str], match_id: int = 0) -> Tuple[Quote, int, int] or None:
+async def find_quote_by_search_term(quotes: Dict[str, Quote], terms: List[str], match_id: int = 0) -> Tuple[Quote, int, int] or None:
     """
     Search for a matching quote by search terms
     :param quotes: Dict of quotes
@@ -404,7 +403,7 @@ async def find_quote_by_search_term(quotes: Dict[int, Quote], terms: List[str], 
         return None
 
 
-async def find_quote_by_id(quotes: Dict[int, Quote], quote_id: int) -> Quote or None:
+async def find_quote_by_id(quotes: Dict[str, Quote], quote_id: str) -> Quote or None:
     """
     Find a quote by its id
     :param quotes: The dict containing all current quotes
@@ -418,7 +417,7 @@ async def find_quote_by_id(quotes: Dict[int, Quote], quote_id: int) -> Quote or 
         return None
 
 
-async def find_quote_by_attributes(quotes: Dict[int, Quote], attribute: str, values: List[str]) -> Quote or None:
+async def find_quote_by_attributes(quotes: Dict[str, Quote], attribute: str, values: List[str]) -> Quote or None:
     """
     Find a quote by its attributes
     :param quotes: The dict containing all current quotes
@@ -465,7 +464,7 @@ async def quote_replace_command(command):
 
     if len(command.args) > 2 and re.match(r'\d+', command.args[0]) and int(command.args[0]) in plugin.read_data("quotes").keys():
         old_quote_text: str = await plugin.read_data("quotes")[int(command.args[0])].display_text(command)
-        quote: Quote = await quote_add_or_replace(command, int(command.args[0]))
+        quote: Quote = await quote_add_or_replace(command, str(command.args[0]))
         await plugin.reply_notice(command, f"Quote {quote.id} replaced  \n"
                                            f"**Old:**  \n"
                                            f"{old_quote_text}  \n\n"
@@ -475,7 +474,7 @@ async def quote_replace_command(command):
         await plugin.reply_notice(command, "Usage: quote_replace <quote_id> <quote_text>")
 
 
-async def quote_add_or_replace(command, quote_id: int = 0) -> Quote or None:
+async def quote_add_or_replace(command, quote_id: str = "0") -> Quote or None:
     """
 
     :param command:
@@ -483,7 +482,7 @@ async def quote_add_or_replace(command, quote_id: int = 0) -> Quote or None:
     :return: added quote_object or None
     """
 
-    quotes: Dict[int, Quote]
+    quotes: Dict[str, Quote]
     try:
         quotes = plugin.read_data("quotes")
     except KeyError:
@@ -507,7 +506,7 @@ async def quote_add_or_replace(command, quote_id: int = 0) -> Quote or None:
         # assume matrix c&p where nickname and actual message are on two separate lines
         # strip command name
         lines: List[str] = command.command.split(' ', 1)[1].split('\n')
-        if quote_id != 0:
+        if quote_id != "0":
             # strip quote from nickname
             lines[0] = lines[0].strip(f"{str(quote_id)} ")
         index: int = 0
@@ -532,7 +531,7 @@ async def quote_add_or_replace(command, quote_id: int = 0) -> Quote or None:
         quotes[quote_id].lines = new_quote.lines
         quotes[quote_id].text = new_quote.text
         plugin.store_data("quotes", quotes)
-        return quotes[quote_id]
+        return quotes[str(quote_id)]
 
 
 async def quote_delete_command(command):
@@ -542,7 +541,7 @@ async def quote_delete_command(command):
     :return:
     """
 
-    quotes: Dict[int, Quote]
+    quotes: Dict[str, Quote]
     try:
         quotes = plugin.read_data("quotes")
     except KeyError:
@@ -552,7 +551,7 @@ async def quote_delete_command(command):
         await plugin.reply_notice(command, f"Usage: quote_delete <quote_id>")
 
     elif len(command.args) == 1 and command.args[0].isdigit():
-        quote_id: int = int(command.args[0])
+        quote_id: str = str(command.args[0])
         try:
             if not quotes[quote_id].deleted:
                 quotes[quote_id].deleted = True
@@ -571,7 +570,7 @@ async def quote_restore_command(command):
     :return:
     """
 
-    quotes: Dict[int, Quote]
+    quotes: Dict[str, Quote]
     try:
         quotes = plugin.read_data("quotes")
     except KeyError:
@@ -581,7 +580,7 @@ async def quote_restore_command(command):
         await plugin.reply_notice(command, f"Usage: quote_restore <quote_id>")
 
     elif len(command.args) == 1 and command.args[0].isdigit():
-        quote_id: int = int(command.args[0])
+        quote_id: str = str(command.args[0])
         try:
             if quotes[quote_id].deleted:
                 quotes[quote_id].deleted = False
@@ -616,19 +615,19 @@ async def quote_stats_command(command):
     :return:
     """
 
-    quotes: Dict[int, Quote]
+    quotes: Dict[str, Quote]
     try:
         quotes = plugin.read_data("quotes")
     except KeyError:
         quotes = {}
 
     quote_count: int = len(quotes)
-    quote_max: int = max(quotes.keys())
-    quote_nicks: Dict[str, List[int]] = {}
-    quote_shortest: Tuple[int, int] = (0, maxsize)
-    quote_longest: Tuple[int, int] = (0, 0)
-    quote_max_reactions: Tuple[int, int] = (0, 0)
-    quote_highest_rank: Tuple[int, int] = (0, 0)
+    quote_max: int = max(list(map(int, quotes.keys())))
+    quote_nicks: Dict[str, List[str]] = {}
+    quote_shortest: Tuple[str, int] = ("0", maxsize)
+    quote_longest: Tuple[str, int] = ("0", 0)
+    quote_max_reactions: Tuple[str, int] = ("0", 0)
+    quote_highest_rank: Tuple[str, int] = ("0", 0)
 
     if len(command.args) == 1 and command.args[0] == "full":
         full_output: bool = True
@@ -692,7 +691,7 @@ async def quote_add_reaction(client: AsyncClient, room_id: str, event: UnknownEv
     :return:
     """
 
-    quotes: Dict[int, Quote]
+    quotes: Dict[str, Quote]
     try:
         quotes = plugin.read_data("quotes")
     except KeyError:
@@ -706,14 +705,14 @@ async def quote_add_reaction(client: AsyncClient, room_id: str, event: UnknownEv
 
     relates_to: str = event.source['content']['m.relates_to']['event_id']
     reaction: str = event.source['content']['m.relates_to']['key']
-    quote_id: int = -1
+    quote_id: str = "-1"
 
     for tracked_quote in tracked_quotes:
         if relates_to == tracked_quote.event_id:
-            quote_id = tracked_quote.quote_id
+            quote_id = str(tracked_quote.quote_id)
             break
 
-    if quote_id != -1:
+    if quote_id != "-1":
         quote_object: Quote = await find_quote_by_id(quotes, quote_id)
         # strip " <int>" from reactions to avoid tracking clicks on self-posted reactions
         reaction = re.sub(r"\s\d+", "", reaction)
@@ -728,7 +727,7 @@ async def upgrade_quotes(command):
     :return:
     """
 
-    quotes: Dict[int, Quote]
+    quotes: Dict[str, Quote]
     try:
         quotes = plugin.read_data("quotes")
 

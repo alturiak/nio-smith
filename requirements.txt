@@ -1,9 +1,10 @@
-aiohttp
-nio
-humanize
-googletrans
-requests
-fuzzywuzzy
+aiohttp~=3.7.3
+nio~=3.4.2
+humanize~=3.1.0
+googletrans~=3.0.0
+requests~=2.25.0
+fuzzywuzzy~=0.18.0
 matrix-nio[e2e]>=0.14.1
 Markdown>=3.1.1
 PyYAML>=5.1.2
+jsonpickle~=1.4.2

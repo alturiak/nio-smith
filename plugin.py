@@ -1,7 +1,7 @@
 import os.path
 from os import remove, path
 import pickle
-from typing import List, Any, Dict, Callable, Union, Hashable, Tuple
+from typing import List, Any, Dict, Callable, Union, Hashable
 import datetime
 import yaml
 from chat_functions import send_text_to_room, send_reaction, send_replace
@@ -10,6 +10,7 @@ import logging
 from nio import AsyncClient, JoinedMembersResponse, RoomMember, RoomSendResponse
 from timer import Timer
 from fuzzywuzzy import fuzz
+import jsonpickle
 logger = logging.getLogger(__name__)
 
 
@@ -30,11 +31,16 @@ class Plugin:
         self.rooms: List[str] = []
 
         if path.isdir(f"plugins/{self.name}"):
-            self.plugin_data_filename: str = f"plugins/{self.name}/{self.name}.pkl"
-            self.config_items_filename: str = f"plugins/{self.name}/{self.name}.yaml"
+            self.is_directory_based: bool = True
+            self.basepath: str = f"plugins/{self.name}/{self.name}"
         else:
-            self.plugin_data_filename: str = f"plugins/{self.name}.pkl"
-            self.config_items_filename: str = f"plugins/{self.name}.yaml"
+            self.is_directory_based: bool = False
+            self.basepath: str = f"plugins/{self.name}"
+
+        self.plugin_data_filename: str = f"{self.basepath}.pkl"
+        self.plugin_dataj_filename: str = f"{self.basepath}.json"
+        self.config_items_filename: str = f"{self.basepath}.yaml"
+
         self.plugin_data: Dict[str, Any] = {}
         self.config_items: Dict[str, Any] = {}
         self.configuration: Union[Dict[Hashable, Any], list, None] = self.__load_config()
@@ -140,7 +146,7 @@ class Plugin:
         """
 
         self.plugin_data[name] = data
-        return self.__save_data()
+        return self.__save_data_to_file()
 
     def read_data(self, name: str) -> Any:
         """
@@ -152,7 +158,7 @@ class Plugin:
         if name in self.plugin_data:
             return self.plugin_data[name]
         else:
-            raise KeyError
+            return None
 
     def clear_data(self, name: str) -> bool:
         """
@@ -164,41 +170,120 @@ class Plugin:
 
         if name in self.plugin_data:
             del self.plugin_data[name]
-            return self.__save_data()
+            return self.__save_data_to_file()
         else:
             return False
 
-    def load_data(self) -> Any:
+    def __load_pickle_data_from_file(self, filename: str) -> Dict[str, Any]:
+        """
+        Load data from a pickle-file
+        :param filename: filename to load data from
+        :return: loaded data
+        """
+
+        file = open(filename, "rb")
+        data = pickle.load(file)
+        file.close()
+        return data
+
+    def __load_json_data_from_file(self, filename: str) -> Dict[str, Any]:
+        """
+        Load data from a json-file
+        :param filename: filename to load data from
+        :return: loaded data
+        """
+
+        file = open(filename, "r")
+        json_data: str = file.read()
+        data = jsonpickle.decode(json_data)
+
+        return data
+
+    def _load_data_from_file(self) -> Dict[str, Any]:
         """
         Load plugin_data from file
         :return: Data read from file to be loaded into self.plugin_data
         """
 
+        plugin_data_from_json: Dict[str, Any] = {}
+        plugin_data_from_pickle: Dict[str, Any] = {}
+
         try:
-            return pickle.load(open(self.plugin_data_filename, "rb"))
+            if os.path.isfile(self.plugin_dataj_filename):
+                # local json data found
+                plugin_data_from_json = self.__load_json_data_from_file(self.plugin_dataj_filename)
+                if os.path.isfile(self.plugin_data_filename):
+                    logger.warning(f"Data for {self.name} read from {self.plugin_dataj_filename}, but {self.plugin_data_filename} still exists. After "
+                                   f"verifying, that {self.name} is running correctly, please remove {self.plugin_data_filename}")
 
-        except FileNotFoundError:
-            logger.debug(f"File {self.plugin_data_filename} not found, plugin_data will be empty")
-            return {}
-
+            elif os.path.isfile(self.plugin_data_filename):
+                # local pickle-data found
+                logger.warning(f"Reading data for {self.name} from pickle. This should only happen once. Data will be stored in new format.")
+                plugin_data_from_pickle = self.__load_pickle_data_from_file(self.plugin_data_filename)
+            else:
+                pass
+                # TODO: load abandoned data
         except Exception as err:
-            logger.critical(f"Could not load plugin_data from {self.plugin_data_filename}: {err}")
+            logger.critical(f"Could not load plugin_data for {self.name}: {err}")
             return {}
 
-    def __save_data(self) -> bool:
+        if plugin_data_from_pickle != {} and not os.path.isfile(self.plugin_dataj_filename):
+            logger.warning(f"Converting data for {self.name} to {self.plugin_dataj_filename}. This should only happen once.")
+            logger.warning(f"You may remove {self.plugin_data_filename} now, it is no longer being used.")
+            self.__save_data_to_json_file(plugin_data_from_pickle, self.plugin_dataj_filename)
+
+        if plugin_data_from_pickle != {}:
+            return plugin_data_from_pickle
+        elif plugin_data_from_json != {}:
+            return plugin_data_from_json
+        else:
+            return {}
+
+    def __save_data_to_pickle_file(self, data: Dict[str, Any], filename: str):
+        """
+        Save data to a pickle-file
+        :param data: data to save
+        :param filename: filename to save the data to
+        :return:    True, if data stored successfully
+                    False, otherwise
+        """
+        try:
+            pickle.dump(data, open(filename, "wb"))
+            return True
+        except Exception as err:
+            logger.critical(f"Could not write plugin_data to {self.plugin_data_filename}: {err}")
+            return False
+
+    def __save_data_to_json_file(self, data: Dict[str, Any], filename: str):
+        """
+        Save data to a json file
+        :param data: data to save
+        :param filename: filename to save the data to
+        :return:    True, if data stored successfully
+                    False, otherwise
+        """
+
+        try:
+            json_data = jsonpickle.encode(data)
+            file = open(filename, "w")
+            file.write(json_data)
+            file.close()
+            return True
+        except Exception as err:
+            logger.critical(f"Could not write plugin_data to {self.plugin_data_filename}: {err}")
+            return False
+
+    def __save_data_to_file(self) -> bool:
         """
         Save modified plugin_data to disk
-        :return:
+        :return:    True, if data stored successfully
+                    False, otherwise
         """
 
         if self.plugin_data != {}:
             """there is actual data to save"""
-            try:
-                pickle.dump(self.plugin_data, open(self.plugin_data_filename, "wb"))
-                return True
-            except Exception as err:
-                logger.critical(f"Could not write plugin_data to {self.plugin_data_filename}: {err}")
-                return False
+            return self.__save_data_to_json_file(self.plugin_data, self.plugin_dataj_filename)
+
         else:
             """no data to save, remove file"""
             if os.path.isfile(self.plugin_data_filename):
