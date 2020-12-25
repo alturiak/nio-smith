@@ -5,28 +5,28 @@
 
 from plugin import Plugin, PluginCommand, PluginHook
 from timer import Timer
-
 from sys import modules
 from re import match
 from time import time
 import operator
 import pickle
-import datetime
 from typing import List, Dict
-
+import glob
+from os.path import dirname, basename, isfile, join, isdir
+import importlib
+from fuzzywuzzy import fuzz
 import logging
 logger = logging.getLogger(__name__)
 
-from fuzzywuzzy import fuzz
-
-
 # import all plugins
-try:
-    from plugins import *
-except ImportError as err:
-    logger.critical(f"Error importing plugin: {err.name}: {err}")
-except KeyError as err:
-    logger.critical(f"Error importing plugin: {err}")
+module_all = glob.glob(join(dirname(__file__), "plugins/*"))
+module_dirs: List[str] = [basename(d) for d in module_all if isdir(d) and not d.endswith('__pycache__')]
+module_files: List[str] = [basename(f)[:-3] for f in module_all if isfile(f) and f.endswith('.py') and not f.endswith('__init__.py')]
+
+for module in module_dirs:
+    globals()[module] = importlib.import_module(f"plugins.{module}.{module}")
+for module in module_files:
+    globals()[module] = importlib.import_module(f"plugins.{module}")
 
 
 class PluginLoader:
@@ -44,11 +44,9 @@ class PluginLoader:
         stored_timers: List[Timer] = self.__load_timers()
 
         for key in modules.keys():
-            if match("^plugins\.\w*", key):
-                # TODO: this needs to catch exceptions
-                found_plugin: Plugin = modules[key].plugin
-                if isinstance(found_plugin, Plugin):
-                    self.__plugin_list[found_plugin.name] = found_plugin
+            if match(r"^plugins\.\w*(\.\w*)?", key):
+                if hasattr(modules[key], "plugin") and isinstance(modules[key].plugin, Plugin):
+                    self.__plugin_list[modules[key].plugin.name] = modules[key].plugin
 
         for plugin in self.__plugin_list.values():
 

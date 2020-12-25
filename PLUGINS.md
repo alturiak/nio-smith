@@ -18,6 +18,7 @@
 
 ## Plugins can
 - ✔ use (almost) arbitrary python-code
+- ✔ be supplied as single `.py`-file or directory
 - ✔ send room-messages
 - ✔ send reactions to specific messages
 - ✔ add multiple commands (with required power levels)
@@ -33,10 +34,11 @@
     - day or
     - hour
 - ❌ hook into other room-events
+- ❌ be moved from single-file to directory while retaining existing data
 
 ## Plugins must
 - ✔ use async
-- ✔ instantiate `Plugin`
+- ✔ instantiate `Plugin` as `plugin`
 - ❌ use `time.sleep()` - please use `asyncio.sleep()` instead
 
 ## Plugins should

@@ -29,10 +29,13 @@ class Plugin:
         self.timers: List[Timer] = []
         self.rooms: List[str] = []
 
-        self.plugin_data_filename: str = f"plugins/{self.name}.pkl"
+        if path.isdir(f"plugins/{self.name}"):
+            self.plugin_data_filename: str = f"plugins/{self.name}/{self.name}.pkl"
+            self.config_items_filename: str = f"plugins/{self.name}/{self.name}.yaml"
+        else:
+            self.plugin_data_filename: str = f"plugins/{self.name}.pkl"
+            self.config_items_filename: str = f"plugins/{self.name}.yaml"
         self.plugin_data: Dict[str, Any] = {}
-
-        self.config_items_filename: str = f"plugins/{self.name}.yaml"
         self.config_items: Dict[str, Any] = {}
         self.configuration: Union[Dict[Hashable, Any], list, None] = self.__load_config()
 
@@ -413,7 +416,7 @@ class Plugin:
     def __load_config(self) -> Union[Dict[Hashable, Any], list, None] or None:
         """
         Load the plugins configuration from a .yaml-file. The filename needs to match the plugins name
-        e.g. the configuration for sampleplugin has to be provided in sampleplugin.yaml
+        e.g. the configuration for sample has to be provided in sample.yaml
         :return:    result of yaml.safe_load, if the config file has been successfully read
                     None, if there was an error reading the configuration
         """

@@ -27,7 +27,7 @@ Currently included plugins consist mostly of pretty silly, mostly semi-useful st
 - ❌ dynamic plugin-loading (at runtime)
 - ❌ user-management
 
-See [plugins/README.md](plugins/README.md) for further details on plugin capabilities.
+See [PLUGINS.md](PLUGINS.md) for further details on plugin capabilities.
 
 ## Requirements
 - python 3.8 or later
@@ -35,7 +35,7 @@ See [plugins/README.md](plugins/README.md) for further details on plugin capabil
 - [matrix-nio](https://matrix-nio.readthedocs.io/en/latest/nio.html) with end-to-end-encryption enabled
 - [fuzzywuzzy](https://github.com/seatgeek/fuzzywuzzy) for fuzzy command matching and nick linking (yes, it's worth it)
 
-See [plugins/README.md](plugins/README.md) for further details on additional plugin requirements.
+See [PLUGINS.md](PLUGINS.md) for further details on additional plugin requirements.
 
 
 ## Setup
@@ -72,7 +72,7 @@ should work though.
 
 #### `plugin.py`
 
-The class used by all plugins, providing plugins with interface methods as described in [plugins/README.md](plugins/README.md)
+The class used by all plugins, providing plugins with interface methods as described in [PLUGINS.md](PLUGINS.md)
 
 #### `pluginloader.py`
 

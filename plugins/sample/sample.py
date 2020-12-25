@@ -5,7 +5,7 @@ import datetime
 from asyncio import sleep
 logger = logging.getLogger(__name__)
 
-plugin = Plugin("sampleplugin", "General", "Just a simple sample.")
+plugin = Plugin("sample", "General", "Just a simple sample.")
 
 # Change this to true to actually enable the dummy timers for demo purposes
 timers_enabled: bool = False
