@@ -186,15 +186,18 @@ class Plugin:
         file.close()
         return data
 
-    def __load_json_data_from_file(self, filename: str) -> Dict[str, Any]:
+    def __load_json_data_from_file(self, filename: str, convert: bool = False) -> Dict[str, Any]:
         """
         Load data from a json-file
         :param filename: filename to load data from
+        :param convert: If data needs to be converted from single-file to directory-based
         :return: loaded data
         """
 
         file = open(filename, "r")
         json_data: str = file.read()
+        if convert and f"\"py/object\": \"plugins.{self.name}.{self.name}." not in json_data:
+            json_data = json_data.replace(f"\"py/object\": \"plugins.{self.name}.", f"\"py/object\": \"plugins.{self.name}.{self.name}.")
         data = jsonpickle.decode(json_data)
 
         return data
@@ -207,11 +210,12 @@ class Plugin:
 
         plugin_data_from_json: Dict[str, Any] = {}
         plugin_data_from_pickle: Dict[str, Any] = {}
+        abandoned_data: bool = False
 
         try:
             if os.path.isfile(self.plugin_dataj_filename):
                 # local json data found
-                plugin_data_from_json = self.__load_json_data_from_file(self.plugin_dataj_filename)
+                plugin_data_from_json = self.__load_json_data_from_file(self.plugin_dataj_filename, convert=True)
                 if os.path.isfile(self.plugin_data_filename):
                     logger.warning(f"Data for {self.name} read from {self.plugin_dataj_filename}, but {self.plugin_data_filename} still exists. After "
                                    f"verifying, that {self.name} is running correctly, please remove {self.plugin_data_filename}")
@@ -220,17 +224,29 @@ class Plugin:
                 # local pickle-data found
                 logger.warning(f"Reading data for {self.name} from pickle. This should only happen once. Data will be stored in new format.")
                 plugin_data_from_pickle = self.__load_pickle_data_from_file(self.plugin_data_filename)
+
             else:
-                pass
-                # TODO: load abandoned data
+                # no local data found, check for abandoned data
+                if self.is_directory_based:
+                    abandoned_json_file: str = f"plugins/{self.name}.json"
+                    if os.path.isfile(abandoned_json_file):
+                        abandoned_data = True
+                        logger.warning(f"Loading abandoned data for {self.name} from {abandoned_json_file}. This should only happen once.")
+                        plugin_data_from_json = self.__load_json_data_from_file(abandoned_json_file, convert=True)
+
         except Exception as err:
             logger.critical(f"Could not load plugin_data for {self.name}: {err}")
             return {}
 
+        if abandoned_data:
+            if 'abandoned_json_file' in locals() and os.path.isfile(abandoned_json_file):
+                logger.warning(f"You may remove {abandoned_json_file} now, it is no longer being used.")
+            self.__save_data_to_json_file(plugin_data_from_json, self.plugin_dataj_filename)
+
         if plugin_data_from_pickle != {} and not os.path.isfile(self.plugin_dataj_filename):
             logger.warning(f"Converting data for {self.name} to {self.plugin_dataj_filename}. This should only happen once.")
-            logger.warning(f"You may remove {self.plugin_data_filename} now, it is no longer being used.")
-            self.__save_data_to_json_file(plugin_data_from_pickle, self.plugin_dataj_filename)
+            if os.path.isfile(self.plugin_data_filename):
+                logger.warning(f"You may remove {self.plugin_data_filename} now, it is no longer being used.")
 
         if plugin_data_from_pickle != {}:
             return plugin_data_from_pickle
