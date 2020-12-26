@@ -15,7 +15,7 @@ Currently included plugins consist mostly of pretty silly, mostly semi-useful st
 
 ## Breaking Changes
 ## Current
-With ffc6acb07125c8b3324b2cf237fa5905686fff5c, the backend to store plugin data has changed from pickle files to json.
+With https://github.com/alturiak/nio-smith/commit/ffc6acb07125c8b3324b2cf237fa5905686fff5c, the backend to store plugin data has changed from pickle files to json.
 Please make sure you have `jsonpickle` installed (update requirements, e.g. `pip install -r requirements.txt`).
 One limitation of the new storage format is that you will not be able to store `Dict`s that use `int` as key since 
 they will be loaded as `str` from now on. The old `.pkl`-file will be preserved. Please make sure, your plugins work 
@@ -24,7 +24,7 @@ with the new storage-backend before deleting it.
 ### Upcoming
 Plugins will be moved to a directory-based structure soon, e.g. `plugins/sample/sample.py` instead of 
 `plugins/sample.py` and will live in their own repository afterwards. The bot must have run at least once with 
-ffc6acb07125c8b3324b2cf237fa5905686fff5c or newer before migrating plugins to their directories.
+https://github.com/alturiak/nio-smith/commit/ffc6acb07125c8b3324b2cf237fa5905686fff5c or newer before migrating plugins to their directories.
 
 ## Features
 - ✔ transparent end-to-end encryption (EE2E)
