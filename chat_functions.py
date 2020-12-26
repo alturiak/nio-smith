@@ -1,5 +1,7 @@
 import logging
 from asyncio import sleep
+from io import StringIO
+from html.parser import HTMLParser
 
 from nio import (
     SendRetryError, RoomSendResponse, Event, RoomGetEventResponse
@@ -7,6 +9,28 @@ from nio import (
 from markdown import markdown
 
 logger = logging.getLogger(__name__)
+
+
+class MLStripper(HTMLParser):
+
+    def __init__(self):
+        super().__init__()
+        self.reset()
+        self.strict = False
+        self.convert_charrefs = True
+        self.text = StringIO()
+
+    def handle_data(self, d):
+        self.text.write(d)
+
+    def get_data(self):
+        return self.text.getvalue()
+
+
+def strip_tags(html):
+    s = MLStripper()
+    s.feed(html)
+    return s.get_data()
 
 
 async def send_text_to_room(
@@ -37,7 +61,7 @@ async def send_text_to_room(
     content = {
         "msgtype": msgtype,
         "format": "org.matrix.custom.html",
-        "body": message,
+        "body": strip_tags(message),
     }
 
     if markdown_convert:
@@ -99,7 +123,7 @@ async def send_replace(client, room_id: str, event_id: str, message: str) -> str
         "m.new_content": {
             "msgtype": "m.text",
             "format": "org.matrix.custom.html",
-            "body": message,
+            "body": strip_tags(message),
             "formatted_body": markdown(message)
         },
         "m.relates_to": {
@@ -108,7 +132,7 @@ async def send_replace(client, room_id: str, event_id: str, message: str) -> str
         },
         "msgtype": "m.text",
         "format": "org.matrix.custom.html",
-        "body": message,
+        "body": strip_tags(message),
         "formatted_body": markdown(message)
     }
 
