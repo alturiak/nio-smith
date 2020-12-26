@@ -214,8 +214,8 @@ class Plugin:
 
         try:
             if os.path.isfile(self.plugin_dataj_filename):
-                # local json data found
-                plugin_data_from_json = self.__load_json_data_from_file(self.plugin_dataj_filename, convert=True)
+                # local json data found, convert if needed
+                plugin_data_from_json = self.__load_json_data_from_file(self.plugin_dataj_filename, self.is_directory_based)
                 if os.path.isfile(self.plugin_data_filename):
                     logger.warning(f"Data for {self.name} read from {self.plugin_dataj_filename}, but {self.plugin_data_filename} still exists. After "
                                    f"verifying, that {self.name} is running correctly, please remove {self.plugin_data_filename}")

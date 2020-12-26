@@ -300,7 +300,7 @@ async def quote_command(command):
         await plugin.reply_notice(command, "Error: no quotes stored")
         return False
 
-    quote_id: int
+    quote_id: str
     quote_object: Quote
 
     if len(command.args) == 0:
