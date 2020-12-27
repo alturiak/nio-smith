@@ -5,7 +5,7 @@ import dateparser
 import datetime
 from shlex import split
 
-plugin = Plugin("dates", "General", "Stores dates and birthdays, post reminders")
+plugin = Plugin("dates", "General", "Stores dates and birthdays, posts reminders")
 
 
 def setup():
