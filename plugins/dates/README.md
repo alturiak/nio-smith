@@ -1,9 +1,9 @@
 Plugin: dates
 ===
-Add dates-plugin to store dates and birthdays
+Add dates-plugin to store dates and birthdays. All entries and posted reminders room-specific.
 
-The plugin allows storing dates and birthdays, accepting almost any common format (and language) to enter the date.
-See [dateparser](https://pypi.org/project/dateparser/) for details.
+The plugin allows storing dates and birthdays, accepting almost any common format (and language) to enter the date.  
+See [dateparser](https://pypi.org/project/dateparser/) for details.  
 This adds dateparser to the requirements.
 
 ## Commands

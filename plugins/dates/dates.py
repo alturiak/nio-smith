@@ -12,7 +12,7 @@ def setup():
     plugin.add_command("date_add", date_add, "Add a date or birthday")
     plugin.add_command("date_del", date_del, "Delete a date or birthday", power_level=50)
     plugin.add_command("date_show", date_show, "Display details of a specific date")
-    plugin.add_timer(current_dates)
+    plugin.add_timer(current_dates, frequency="daily")
 
 
 class StoreDate:
