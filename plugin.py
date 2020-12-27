@@ -422,7 +422,7 @@ class Plugin:
             for room_member in room_members.members:
 
                 if strictness == "strict":
-                    if room_member.display_name.lower() == display_name.lower():
+                    if room_member.display_name == display_name:
                         return room_member
 
                 else:
@@ -462,6 +462,25 @@ class Plugin:
         user: RoomMember
         if user := await self.is_user_in_room(command, display_name, strictness, fuzziness):
             return f"<a href=\"https://matrix.to/#/{user.user_id}\">{user.display_name}</a>"
+        else:
+            return None
+
+    async def get_mx_user_id(self, command, display_name: str, strictness="loose") -> str or None:
+        """
+        Given a displayname and a command, returns a mx user id
+        :param command:
+        :param display_name: displayname of the user
+        :param strictness: how strict to match the nickname
+                            strict: exact match
+                            loose: case-insensitive match (default)
+                            fuzzy: fuzzy matching
+        :return:    string with the user_id if found
+                    None otherwise
+        """
+
+        user: RoomMember
+        if user := await self.is_user_in_room(command, display_name, strictness=strictness):
+            return user.user_id
         else:
             return None
 
