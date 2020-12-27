@@ -13,7 +13,7 @@ Dates consisting of multiple words must be enclosed in quotes.
 Example: `date_add test tomorrow`  
 Example: `date_add test "in 28 days" "28 days later"`  
 Example: `date_add new_year 2021-01-01 "A new year"`  
-Example: `date_add start_of_unixtime "01.01.1970 00:00:00" The dawn of time"`  
+Example: `date_add start_of_unixtime "01.01.1970 00:00:00" The dawn of time`  
 
 
 ### date_del
