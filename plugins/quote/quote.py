@@ -131,7 +131,7 @@ class Quote:
                 nick: str
                 nick_link: str
                 for nick in nick_list:
-                    if nick_link := await plugin.link_user(command, nick, strictness="fuzzy", fuzziness=55):
+                    if nick_link := await plugin.link_user(command.client, command.room.room_id, nick, strictness="fuzzy", fuzziness=55):
                         quote_text = quote_text.replace(f"&lt;{nick}&gt;", nick_link)
 
         else:
@@ -141,7 +141,7 @@ class Quote:
                     message: str = line.message.replace("<", "&lt;").replace(">", "&gt;").replace("`", "&#96;").replace("*", '\\*').replace("_", '\\_')
                     if plugin.read_data("nick_links"):
                         nick_link: str
-                        if nick_link := await plugin.link_user(command, line.nick, strictness="fuzzy", fuzziness=80):
+                        if nick_link := await plugin.link_user(command.client, command.room.room_id, line.nick, strictness="fuzzy", fuzziness=80):
                             quote_text += f"{nick_link} {message}  \n"
                         else:
                             nick: str = line.nick.replace("`", "&#96;").replace("_", '\\_')

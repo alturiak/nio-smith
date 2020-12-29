@@ -1,6 +1,6 @@
 # -*- coding: utf8 -*-
 from plugin import Plugin
-from typing import Dict, List, Tuple
+from typing import Dict, List
 import dateparser
 import datetime
 from shlex import split
@@ -119,16 +119,16 @@ async def date_add(command):
     if dates is None:
         dates: Dict[str, StoreDate] = {}
 
-    if await plugin.is_user_in_room(command, name, strictness="strict"):
+    if await plugin.is_user_in_room(command.client, command.room.room_id, name, strictness="strict"):
         # add a birthday
-        store_date: StoreDate = StoreDate(await plugin.get_mx_user_id(command, name),
+        store_date: StoreDate = StoreDate(await plugin.get_mx_user_id(command.client, command.room.room_id, name),
                                           date,
                                           command.room.room_id,
                                           date_type="birthday",
                                           description=name)
 
         if store_date.id in dates.keys():
-            await plugin.reply_notice(command, f"Birthday for {await plugin.get_mx_user_id(command, name)} already stored as "
+            await plugin.reply_notice(command, f"Birthday for {await plugin.get_mx_user_id(command.client, command.room.room_id, name)} already stored as "
                                                f"{dates[store_date.id].date}, overwriting.")
 
         dates[store_date.id] = store_date
@@ -164,8 +164,8 @@ async def date_del(command):
         return
 
     name: str = command.args[0]
-    if await plugin.is_user_in_room(command, name):
-        name = await plugin.get_mx_user_id(command, name)
+    if await plugin.is_user_in_room(command.client, command.room.room_id, name):
+        name = await plugin.get_mx_user_id(command.client, command.room.room_id, name)
 
     date_id: str = generate_date_id(command.room.room_id, name)
 
@@ -194,8 +194,8 @@ async def date_show(command):
         return
 
     name: str = command.args[0]
-    if await plugin.is_user_in_room(command, name):
-        name: str = await plugin.get_mx_user_id(command, name)
+    if await plugin.is_user_in_room(command.client, command.room.room_id, name):
+        name: str = await plugin.get_mx_user_id(command.client, command.room.room_id, name)
 
     date_id: str = generate_date_id(command.room.room_id, name)
     dates: Dict[str, StoreDate] = plugin.read_data("stored_dates")
@@ -229,8 +229,24 @@ async def current_dates(client):
     for store_date in dates.values():
         if store_date.is_today():
             if store_date.date_type == "birthday":
-                await plugin.message(client, store_date.mx_room, f"🎉🎉🎉 It's {store_date.description}'s birthday! 🎉🎉🎉  \n"
-                                                                 f"This calls for a celebration in @room")
+                user_link: str or None
+                if (user_link := await plugin.link_user(client, store_date.mx_room, store_date.description)) is not None:
+                    react_to: str = await plugin.message(client, store_date.mx_room, f"🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉  \n"
+                                                                                     f"Everyone, it's {user_link}'s birthday!  \n"
+                                                                                     f"This calls for a celebration in @room  \n"
+                                                                                     f"🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉  \n")
+                    await plugin.react(client, store_date.mx_room, react_to, "🎁")
+                    await plugin.react(client, store_date.mx_room, react_to, "🍻")
+                    await plugin.react(client, store_date.mx_room, react_to, "🥂")
+                    await plugin.react(client, store_date.mx_room, react_to, "✨")
+                    await plugin.react(client, store_date.mx_room, react_to, "🎈")
+                    await plugin.react(client, store_date.mx_room, react_to, "🎊")
+
+                else:
+                    await plugin.message(client, store_date.mx_room, f"🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉  \n"
+                                                                     f"Everyone, it's {store_date.description}'s birthday!  \n"
+                                                                     f"This calls for a celebration in @room  \n"
+                                                                     f"🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉  \n")
 
             elif store_date.date_type == "date:":
                 await plugin.message(client, store_date.mx_room, f"Reminder: {store_date.name} is today!  \n"
