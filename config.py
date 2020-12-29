@@ -63,7 +63,7 @@ class Config(object):
         self.device_name = self._get_cfg(["matrix", "device_name"], default="nio-template")
         self.homeserver_url = self._get_cfg(["matrix", "homeserver_url"], required=True)
         self.enable_encryption = self._get_cfg(["matrix", "enable_encryption"], default=False)
-        self.botmasters = self._get_cfg(["matrix", "botmasters"], required=True)
+        self.botmasters = self._get_cfg(["matrix", "botmasters"], required=False, default=[])
 
         self.command_prefix = self._get_cfg(["command_prefix"], default="!c ")
 
