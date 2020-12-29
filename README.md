@@ -10,7 +10,7 @@ It's based on the lovely [nio-template](https://github.com/anoadragon453/nio-tem
 Be advised: the bot (and it's name ;-) is a work in progress, but basic functionality exists. Huge or small rewrites of
  any part of the project may or may not happen soon(ish).
 
-Please see [BREAKING.md](BREAKING.md) for a list of breaking changes.
+Please see [docs/BREAKING.md](docs/BREAKING.md) for a list of breaking changes.
  
 Currently included plugins consist mostly of pretty silly, mostly semi-useful stuff we used on IRC. PRs and
 [feedback](https://matrix.to/#/#nio-smith:pack.rocks) welcome. :-)
@@ -29,7 +29,7 @@ Currently included plugins consist mostly of pretty silly, mostly semi-useful st
 - ❌ dynamic plugin-loading (at runtime)
 - ❌ user-management
 
-See [PLUGINS.md](PLUGINS.md) for further details on plugin capabilities.
+See [docs/PLUGINS.md](docs/PLUGINS.md) for further details on plugin capabilities.
 
 ## Requirements
 - python 3.8 or later
@@ -37,11 +37,11 @@ See [PLUGINS.md](PLUGINS.md) for further details on plugin capabilities.
 - [matrix-nio](https://matrix-nio.readthedocs.io/en/latest/nio.html) with end-to-end-encryption enabled
 - [fuzzywuzzy](https://github.com/seatgeek/fuzzywuzzy) for fuzzy command matching and nick linking (yes, it's worth it)
 
-See [PLUGINS.md](PLUGINS.md) for further details on additional plugin requirements.
+See [docs/PLUGINS.md](docs/PLUGINS.md) for further details on additional plugin requirements.
 
 
 ## Setup
-[SETUP.md](SETUP.md) contains a short guide on getting you started with the bot.
+[docs/SETUP.md](docs/SETUP.md) contains a short guide on getting you started with the bot.
 
 ## Project Structure
-Please see [STRUCTURE.md](STRUCTURE.md) for a description of the project structure and included files.
+Please see [docs/STRUCTURE.md](docs/STRUCTURE.md) for a description of the project structure and included files.

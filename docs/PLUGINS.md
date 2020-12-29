@@ -1,6 +1,6 @@
 # Plugins
 ## Included Plugins
-- `dates`: Stores dates and birthdays, posts reminders ([README.md](plugins/dates/README.md))
+- `dates`: Stores dates and birthdays, posts reminders ([README.md](../plugins/dates/README.md))
 - `echo`: echoes back text following the command.
 - `help`: lists all available plugins. If called with a plugin as parameter, lists all available commands
 - `meter`: accurately measures someones somethingness
