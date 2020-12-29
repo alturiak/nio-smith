@@ -1,8 +1,8 @@
 from plugin import Plugin, PluginCommand
-from chat_functions import send_text_to_room
+from core.chat_functions import send_text_to_room
 from re import match
 
-from typing import List, Tuple, Dict
+from typing import List, Tuple
 
 
 def build_sorted_text_output(headline: str, content: List[Tuple[str, str, int]]) -> str:

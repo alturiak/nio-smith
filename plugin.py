@@ -4,11 +4,11 @@ import pickle
 from typing import List, Any, Dict, Callable, Union, Hashable
 import datetime
 import yaml
-from chat_functions import send_text_to_room, send_reaction, send_replace
+from core.chat_functions import send_text_to_room, send_reaction, send_replace
 from asyncio import sleep
 import logging
 from nio import AsyncClient, JoinedMembersResponse, RoomMember, RoomSendResponse
-from timer import Timer
+from core.timer import Timer
 from fuzzywuzzy import fuzz
 import jsonpickle
 logger = logging.getLogger(__name__)

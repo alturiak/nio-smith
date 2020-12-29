@@ -1,4 +1,4 @@
-from chat_functions import send_typing, send_text_to_room
+from core.chat_functions import send_typing, send_text_to_room
 from typing import Dict, List
 from plugin import Plugin
 import random

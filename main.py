@@ -11,14 +11,14 @@ from nio import (
     RoomMessageText,
     InviteEvent,
     LocalProtocolError, LoginError, UnknownEvent)
-from callbacks import Callbacks
-from config import Config
-from storage import Storage
+from core.callbacks import Callbacks
+from core.config import Config
+from core.storage import Storage
 from aiohttp.client_exceptions import (
     ServerDisconnectedError,
     ClientConnectionError)
 
-from pluginloader import PluginLoader
+from core.pluginloader import PluginLoader
 
 logger = logging.getLogger(__name__)
 client: AsyncClient
