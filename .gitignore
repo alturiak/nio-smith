@@ -28,4 +28,4 @@ plugins/*/*.json
 *.log
 
 # other stuff
-plugins/sabnzbdapi.py
+plugins/sabnzbdapi/sabnzbdapi.py
