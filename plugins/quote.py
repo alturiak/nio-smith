@@ -523,7 +523,7 @@ async def quote_add_or_replace(command, quote_id: str = "0") -> Quote or None:
         quote_text = quote_text.rstrip(' | ')
         new_quote = Quote("local", text=quote_text, mxroom=command.room.room_id, lines=quote_lines)
 
-    if quote_id == 0:
+    if quote_id == "0":
         quotes[new_quote.id] = new_quote
         plugin.store_data("quotes", quotes)
         return quotes[new_quote.id]
