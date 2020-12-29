@@ -21,6 +21,8 @@ plugins/*.yaml
 
 # Plugin data
 plugins/*.pkl
+plugins/*.json
+plugins/*/*.json
 
 # Log files
 *.log
