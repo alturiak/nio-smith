@@ -1,12 +1,12 @@
-from bot_commands import Command
+from core.bot_commands import Command
 from nio import (
     JoinError, MatrixRoom, UnknownEvent,
 )
-from message_responses import Message
+from core.message_responses import Message
 
 import logging
 
-from pluginloader import PluginLoader
+from core.pluginloader import PluginLoader
 
 logger = logging.getLogger(__name__)
 

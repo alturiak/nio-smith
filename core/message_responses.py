@@ -2,7 +2,7 @@ import logging
 
 from nio import RoomMessageText
 
-from pluginloader import PluginLoader
+from core.pluginloader import PluginLoader
 
 logger = logging.getLogger(__name__)
 

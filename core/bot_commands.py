@@ -1,6 +1,6 @@
 from nio import RoomMessageText, AsyncClient, MatrixRoom
-from pluginloader import PluginLoader
-from chat_functions import send_text_to_room
+from core.pluginloader import PluginLoader
+from core.chat_functions import send_text_to_room
 
 
 class Command(object):
