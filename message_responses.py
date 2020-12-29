@@ -1,5 +1,7 @@
-from chat_functions import send_text_to_room
 import logging
+
+from nio import RoomMessageText
+
 from pluginloader import PluginLoader
 
 logger = logging.getLogger(__name__)
@@ -28,9 +30,9 @@ class Message(object):
         self.config = config
         self.message_content = message_content
         self.room = room
-        self.event = event
+        self.event: RoomMessageText = event
         self.plugin_loader: PluginLoader = plugin_loader
 
     async def process(self):
 
-        await self.plugin_loader.run_hooks(self.client, "m.room.message", self.room, self.message_content)
+        await self.plugin_loader.run_hooks(self.client, "m.room.message", self.room, self.event)
