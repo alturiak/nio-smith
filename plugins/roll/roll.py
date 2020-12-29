@@ -5,7 +5,7 @@ __author__ = "Dingo"
 
 from plugin import Plugin
 import random
-from chat_functions import send_typing
+from core.chat_functions import send_typing
 
 
 async def roll(command):

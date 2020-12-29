@@ -1,6 +1,6 @@
 # -*- coding: utf8 -*-
 from plugin import Plugin
-from chat_functions import send_text_to_room
+from core.chat_functions import send_text_to_room
 from nio import AsyncClient, RoomMessageText
 
 import os.path

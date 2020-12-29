@@ -1,5 +1,5 @@
 from plugin import Plugin
-from chat_functions import send_typing
+from core.chat_functions import send_typing
 import random
 
 
