@@ -1,4 +1,6 @@
 # -*- coding: utf8 -*-
+from nio import AsyncClient, RoomMessageText
+
 from plugin import Plugin
 from typing import Dict, List
 import dateparser
@@ -13,6 +15,7 @@ def setup():
     plugin.add_command("date_del", date_del, "Delete a date or birthday", power_level=50)
     plugin.add_command("date_show", date_show, "Display details of a specific date")
     plugin.add_timer(current_dates, frequency="daily")
+    plugin.add_hook("m.room.message", birthday_tada)
 
 
 class StoreDate:
@@ -40,7 +43,7 @@ class StoreDate:
         self.mx_room: str = mx_room
         self.id: str = generate_date_id(mx_room, name)
 
-    def is_today(self) -> bool:
+    async def is_today(self) -> bool:
         """
         Check if the date is happening today
         :return:
@@ -55,6 +58,24 @@ class StoreDate:
 
         elif self.date_type == "birthday":
             return self.date.day == datetime.datetime.today().day and self.date.month == datetime.datetime.today().month
+
+    async def is_birthday_person(self, room_id: str, display_name: str = "", mx_user: str = "") -> bool:
+        """
+        Checks if a given display_name or mx_user-id are currently having their birthday in room
+        :param room_id:
+        :param display_name:
+        :param mx_user:
+        :return:
+        """
+
+        if display_name == "" and mx_user == "":
+            return False
+
+        if self.date_type == "birthday" and self.mx_room == room_id:
+            if self.description == display_name or self.name == mx_user:
+                return await self.is_today()
+
+        return False
 
 
 def generate_date_id(mx_room: str, name: str) -> str:
@@ -226,9 +247,14 @@ async def current_dates(client):
 
     store_date: StoreDate
 
+    birthday_rooms_today: List[str] = []
+
     for store_date in dates.values():
-        if store_date.is_today():
+        if await store_date.is_today():
             if store_date.date_type == "birthday":
+                if store_date.mx_room not in birthday_rooms_today:
+                    birthday_rooms_today.append(store_date.mx_room)
+
                 user_link: str or None
                 if (user_link := await plugin.link_user(client, store_date.mx_room, store_date.description)) is not None:
                     react_to: str = await plugin.message(client, store_date.mx_room, f"🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉  \n"
@@ -252,5 +278,52 @@ async def current_dates(client):
                 await plugin.message(client, store_date.mx_room, f"Reminder: {store_date.name} is today!  \n"
                                                                  f"Date: {store_date.date}  \n"
                                                                  f"Description: {store_date.description}")
+
+    # store if there is any birthday today to take some load off birthday_tada
+    plugin.store_data("birthday_rooms_today", birthday_rooms_today)
+
+
+async def birthday_tada(client: AsyncClient, room_id: str, event: RoomMessageText):
+    """
+    Post a :tada: message when birthday person posts a message
+    or someone mentions birthday person, not more than once every hour.
+    :param client:
+    :param room_id:
+    :param event:
+    :return:
+    """
+
+    # check if there is any birthday today
+    if plugin.read_data("birthday_rooms_today") is not None and room_id not in plugin.read_data("birthday_rooms_today"):
+        return
+
+    # check if at least one hour has passed since last tada in the current room
+    last_tada_dict: Dict[str, datetime.datetime] or None = plugin.read_data("last_tada")
+    if last_tada_dict is not None:
+        last_tada: datetime.datetime or None = last_tada_dict.get(room_id)
+        if last_tada is not None and last_tada > datetime.datetime.now() - datetime.timedelta(hours=1):
+            return
+
+    # check if there are actual dates stores
+    dates: Dict[str, StoreDate] = plugin.read_data("stored_dates")
+    if dates is None:
+        return
+
+    store_date: StoreDate
+    for store_date in dates.values():
+        if await store_date.is_birthday_person(room_id, mx_user=event.sender):
+            # sender is birthday person
+            await plugin.message(client, room_id, "🎉")
+            plugin.store_data("last_tada", {room_id: datetime.datetime.now()})
+            break
+
+        elif store_date.date_type == "birthday":
+            if (event.body is not None and store_date.description in event.body) or \
+                    (event.formatted_body is not None and store_date.name in event.formatted_body):
+
+                # birthday person is mentioned
+                await plugin.message(client, room_id, "🎉")
+                plugin.store_data("last_tada", {room_id: datetime.datetime.now()})
+                break
 
 setup()
