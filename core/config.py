@@ -4,7 +4,7 @@ import os
 import yaml
 import sys
 from typing import List, Any
-from errors import ConfigError
+from core.errors import ConfigError
 
 logger = logging.getLogger()
 
