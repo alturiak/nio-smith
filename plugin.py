@@ -399,10 +399,11 @@ class Plugin:
 
         return await send_replace(client, room_id, event_id, message)
 
-    async def is_user_in_room(self, command, display_name: str, strictness: str = "loose", fuzziness: int = 75) -> RoomMember or None:
+    async def is_user_in_room(self, client: AsyncClient, room_id: str, display_name: str, strictness: str = "loose", fuzziness: int = 75) -> RoomMember or None:
         """
         Try to determine if a diven displayname is currently a member of the room
-        :param command:
+        :param client: AsyncClient
+        :param room_id: id of the room to check for a user
         :param display_name: displayname of the user
         :param strictness: how strict to match the nickname
                             strict: exact match
@@ -413,9 +414,7 @@ class Plugin:
                     None otherwise
         """
 
-        client: AsyncClient = command.client
-        room_members: JoinedMembersResponse = await client.joined_members(command.room.room_id)
-
+        room_members: JoinedMembersResponse = await client.joined_members(room_id)
         room_member: RoomMember
 
         if strictness == "strict" or strictness == "loose":
@@ -445,10 +444,11 @@ class Plugin:
             else:
                 return None
 
-    async def link_user(self, command, display_name: str, strictness: str = "loose", fuzziness: int = 75) -> str or None:
+    async def link_user(self, client: AsyncClient, room_id: str, display_name: str, strictness: str = "loose", fuzziness: int = 75) -> str or None:
         """
         Given a displayname and a command, returns a userlink
-        :param command:
+        :param client: AsyncClient
+        :param room_id: id of the room
         :param display_name: displayname of the user
         :param strictness: how strict to match the nickname
                             strict: exact match
@@ -460,26 +460,28 @@ class Plugin:
         """
 
         user: RoomMember
-        if user := await self.is_user_in_room(command, display_name, strictness, fuzziness):
+        if user := await self.is_user_in_room(client, room_id, display_name, strictness=strictness, fuzziness=fuzziness):
             return f"<a href=\"https://matrix.to/#/{user.user_id}\">{user.display_name}</a>"
         else:
             return None
 
-    async def get_mx_user_id(self, command, display_name: str, strictness="loose") -> str or None:
+    async def get_mx_user_id(self, client: AsyncClient, room_id: str, display_name: str, strictness="loose", fuzziness: int = 75) -> str or None:
         """
         Given a displayname and a command, returns a mx user id
-        :param command:
+        :param client:
+        :param room_id:
         :param display_name: displayname of the user
         :param strictness: how strict to match the nickname
                             strict: exact match
                             loose: case-insensitive match (default)
                             fuzzy: fuzzy matching
+        :param fuzziness: if strictness == fuzzy, fuzziness determines the required percentage for a match
         :return:    string with the user_id if found
                     None otherwise
         """
 
         user: RoomMember
-        if user := await self.is_user_in_room(command, display_name, strictness=strictness):
+        if user := await self.is_user_in_room(client, room_id, display_name, strictness=strictness, fuzziness=fuzziness):
             return user.user_id
         else:
             return None

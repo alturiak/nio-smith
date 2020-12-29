@@ -101,7 +101,7 @@ async def sample_link_user(command):
 
     if len(command.args) == 1:
         user_link: str
-        if user_link := await plugin.link_user(command, command.args[0]):
+        if user_link := await plugin.link_user(command.client, command.room.room_id, command.args[0]):
             await plugin.reply(command, f"Requested Displayname: {command.args[0]}, User Link: {user_link}")
         else:
             await plugin.reply_notice(command, f"No user found for {command.args[0]}")

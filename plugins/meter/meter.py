@@ -87,7 +87,7 @@ async def meter(command):
     try:
         # try to build a userlink, if possible
         nick: str
-        if not (nick := await plugin.link_user(command, command.args[0])):
+        if not (nick := await plugin.link_user(command.client, command.room.room_id, command.args[0])):
             nick = command.args[0]
 
         condition: str = " ".join(command.args[1:])
