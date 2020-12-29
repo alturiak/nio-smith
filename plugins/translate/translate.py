@@ -1,7 +1,7 @@
 # -*- coding: utf8 -*-
 from plugin import Plugin
 from chat_functions import send_text_to_room
-from nio import AsyncClient
+from nio import AsyncClient, RoomMessageText
 
 import os.path
 import pickle
@@ -89,7 +89,7 @@ async def switch(command):
                 await send_text_to_room(command.client, command.room.room_id, message, notice=False)
 
 
-async def translate(client: AsyncClient, room_id: str, message: str):
+async def translate(client: AsyncClient, room_id: str, event: RoomMessageText):
 
     try:
         roomsdb = pickle.load(open(roomsfile, "rb"))
@@ -98,7 +98,7 @@ async def translate(client: AsyncClient, room_id: str, message: str):
 
     if room_id in allowed_rooms and room_id in roomsdb.keys():
         # Remove special characters before translation
-        message = sub('[^A-z0-9\-\.\?!:\sÄäÜüÖö]+', '', message)
+        message = sub('[^A-z0-9\-\.\?!:\sÄäÜüÖö]+', '', event.body)
         trans = googletrans.Translator()
         logger.debug(f"Detecting language for message: {message}")
         message_source_lang = trans.detect(message).lang
