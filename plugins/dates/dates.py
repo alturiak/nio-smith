@@ -317,7 +317,7 @@ async def birthday_tada(client: AsyncClient, room_id: str, event: RoomMessageTex
             plugin.store_data("last_tada", {room_id: datetime.datetime.now()})
             break
 
-        elif store_date.date_type == "birthday":
+        elif store_date.date_type == "birthday" and store_date.mx_room == room_id:
             if (event.body is not None and store_date.description in event.body) or \
                     (event.formatted_body is not None and store_date.name in event.formatted_body):
 
