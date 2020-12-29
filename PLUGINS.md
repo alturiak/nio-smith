@@ -13,14 +13,15 @@
 - `spruch`: famous quotes from even more famous people (german, sorry)
 - `translate`: provides near-realtime translations of all room-messages via Google Translate
 
-## Included plugin 3rd party requirements
+## Included plugins' 3rd party requirements
+- `dates`: [dateparser](https://pypi.org/project/dateparser/) to allow for almost arbitrary input format of dates
 - `sonarr`: [requests](https://pypi.org/project/requests/) to query sonarr's API
 - `translate`: [googletrans](https://pypi.org/project/googletrans/) to provide language detection and translation
 
 ## Plugins can
 - ✔ use (almost) arbitrary python-code
-- ✔ be supplied as single `.py`-file or inside their own directory
-  - (either `plugins/sample.py` OR `plugins/sample/sample.py`)
+- ✔ be supplied as single `.py`-file or inside their own directory (either `plugins/sample.py` OR 
+  `plugins/sample/sample.py`). From [v0.0.2](https://github.com/alturiak/nio-smith/releases/tag/v0.0.2) on, use of directory-based plugins is encouraged.
 - ✔ send room-messages
 - ✔ send reactions to specific messages
 - ✔ add multiple commands (with required power levels)
@@ -50,11 +51,18 @@
 - ✔ use [type hints](https://docs.python.org/3/library/typing.html)
 - ✔ adhere to [PEP 8](https://www.python.org/dev/peps/pep-0008/) (except for
 [maximum-line-length](https://www.python.org/dev/peps/pep-0008/#maximum-line-length) - anything up to 160 is fine by
- me) 
+ me)
+- ✔ contain a README.md in their directory for a detailed description about
+    - their intended use,
+    - usage of commands and
+    - additional requirements.
   
 
 ## Plugin Interface
 The class `Plugin` is used by all plugins, providing the following methods. See `sampleplugin.py` for examples.
+Please be advised that the plugin interface is about to
+[change](https://github.com/alturiak/nio-smith/blob/master/BREAKING.md#simplify-plugins-interface) in future releases.
+
 - `add_command`: define
     - a command word,
     - the method called when the command is encountered,
@@ -82,6 +90,7 @@ The class `Plugin` is used by all plugins, providing the following methods. See 
 - `notice`: send a notice to a room
 - `is_user_in_room`: checks if a given displayname is a member of the current room
 - `link_user`: given a displayname, returns a link to the user (rendered as userpill in [Element](https://element.io))
+- `get_mx_user_id`: given a displayname and a command, returns a mx user id
 - `add_config`: define
     - a config_item to look for in `<plugin_name>.yaml`
     - an optional default_value
