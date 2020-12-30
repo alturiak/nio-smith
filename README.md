@@ -3,17 +3,13 @@ Nio Smith
 [![#nio-smith](https://img.shields.io/matrix/nio-smith:matrix.org?color=blue&label=%23nio-smith)](https://matrix.to/#/!rdBDrHapAsYdvmgGMP:pack.rocks?via=pack.rocks)
 
 A modular bot for [@matrix-org](https://github.com/matrix-org), written in python using
-[matrix-nio](https://matrix-nio.readthedocs.io/en/latest/nio.html), supporting end-to-end-encryption out of the box.
-It's based on the lovely [nio-template](https://github.com/anoadragon453/nio-template) and tries to incorporate most
- of [@anoadragon453](https://github.com/anoadragon453) 's improvements.
+[matrix-nio](https://matrix-nio.readthedocs.io/en/latest/nio.html), supporting end-to-end-encryption out of the box.  
+It's based on the lovely [nio-template](https://github.com/anoadragon453/nio-template) by [@anoadragon453](https://github.com/anoadragon453)
 
-Be advised: the bot (and it's name ;-) is a work in progress, but basic functionality exists. Huge or small rewrites of
- any part of the project may or may not happen soon(ish).
+Pull Requests and [feedback](https://matrix.to/#/#nio-smith:pack.rocks) welcome. :-)
 
-Please see [docs/BREAKING.md](docs/BREAKING.md) for a list of breaking changes.
- 
-Currently included plugins consist mostly of pretty silly, mostly semi-useful stuff we used on IRC. PRs and
-[feedback](https://matrix.to/#/#nio-smith:pack.rocks) welcome. :-)
+## Plugins
+See [docs/PLUGINS.md](docs/PLUGINS.md) for further details on plugin capabilities.
 
 ## Features
 - ✔ transparent end-to-end encryption (EE2E)
@@ -29,7 +25,8 @@ Currently included plugins consist mostly of pretty silly, mostly semi-useful st
 - ❌ dynamic plugin-loading (at runtime)
 - ❌ user-management
 
-See [docs/PLUGINS.md](docs/PLUGINS.md) for further details on plugin capabilities.
+## Setup
+[docs/SETUP.md](docs/SETUP.md) contains a short guide on getting you started with the bot.
 
 ## Requirements
 - python 3.8 or later
@@ -39,9 +36,8 @@ See [docs/PLUGINS.md](docs/PLUGINS.md) for further details on plugin capabilitie
 
 See [docs/PLUGINS.md](docs/PLUGINS.md) for further details on additional plugin requirements.
 
-
-## Setup
-[docs/SETUP.md](docs/SETUP.md) contains a short guide on getting you started with the bot.
+## Breaking changes
+Please see [docs/BREAKING.md](docs/BREAKING.md) for a list of breaking changes.
 
 ## Project Structure
 Please see [docs/STRUCTURE.md](docs/STRUCTURE.md) for a description of the project structure and included files.
