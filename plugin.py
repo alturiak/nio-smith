@@ -145,8 +145,11 @@ class Plugin:
                     False, if data could not be stored
         """
 
-        self.plugin_data[name] = data
-        return self.__save_data_to_file()
+        if data != self.plugin_data.get(name):
+            self.plugin_data[name] = data
+            return self.__save_data_to_file()
+        else:
+            return True
 
     def read_data(self, name: str) -> Any:
         """
