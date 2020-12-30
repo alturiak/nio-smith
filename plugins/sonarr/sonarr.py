@@ -14,7 +14,7 @@ def setup():
     """
     plugin.add_config("api_base", is_required=True)
     plugin.add_config("api_key", is_required=True)
-    plugin.add_config("room_id", None, is_required=False)
+    plugin.add_config("room_id", is_required=True)
 
     plugin.add_command("series", series, "Get a list of currently tracked series", room_id=[plugin.read_config("room_id")])
     plugin.add_command("upcoming", upcoming, "Get a list of upcoming episodes from sonarr's calendar", room_id=[plugin.read_config("room_id")])
