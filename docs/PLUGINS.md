@@ -37,7 +37,6 @@
     - day or
     - hour
 - ❌ not hook into other room-events
-- ❌ not be moved from single-file to directory while retaining existing data
 
 ## Plugins must
 - ✔ use async
