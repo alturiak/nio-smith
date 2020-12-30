@@ -145,7 +145,13 @@ async def sample_replace(command):
 
     message_id: str = await plugin.reply(command, f"<font color=\"red\">This is a test message</font>")
     await sleep(3)
-    await plugin.replace(command.client, command.room.room_id, message_id, f"<font color=\"green\">This is a edited test message</font>")
+
+    # this should actually edit the message ...
+    await plugin.replace(command.client, command.room.room_id, message_id, f"<font color=\"green\">This is an edited test message</font>")
+    await sleep(3)
+
+    # ... this should not
+    await plugin.replace(command.client, command.room.room_id, message_id, f"<font color=\"green\">This is an edited test message</font>")
 
 
 async def hook_reactions(client: AsyncClient, room_id: str, event: UnknownEvent):
