@@ -12,7 +12,7 @@ import operator
 import pickle
 from typing import List, Dict
 import glob
-from os.path import dirname, basename, isfile, join, isdir
+from os.path import basename, isfile, isdir
 import importlib
 from fuzzywuzzy import fuzz
 import logging
@@ -26,6 +26,7 @@ module_files: List[str] = [basename(f)[:-3] for f in module_all if isfile(f) and
 for module in module_dirs:
     globals()[module] = importlib.import_module(f"plugins.{module}.{module}")
 for module in module_files:
+    logger.warning(f"DEPRECATION WARNING: Single-file plugin {module} detected. This will not be loaded from 0.2.0 onwards.")
     globals()[module] = importlib.import_module(f"plugins.{module}")
 
 

@@ -20,15 +20,15 @@
 
 ## Plugins can
 - ✔ use (almost) arbitrary python-code
-- ✔ be supplied as single `.py`-file or inside their own directory (either `plugins/sample.py` OR 
-  `plugins/sample/sample.py`). From [v0.0.2](https://github.com/alturiak/nio-smith/releases/tag/v0.0.2) on, use of directory-based plugins is encouraged.
+- ✔ be supplied
+  - inside their own directory (e.g. `plugins/sample/sample.py`) (encouraged since [v0.0.2](https://github.com/alturiak/nio-smith/releases/tag/v0.0.2))
+  - as a single file (e.g. `plugins/sample.py`) (deprecated with [v0.1.0](https://github.com/alturiak/nio-smith/releases/tag/v0.1.0))
 - ✔ send room-messages
-- ✔ send reactions to specific messages
-- ✔ add multiple commands (with required power levels)
-- ✔ track their sent messages
-- ✔ replace (edit) their sent messages 
+- ✔ replace (edit) their sent messages
 - ✔ hook into to received room-messages
+- ✔ send reactions to specific messages
 - ✔ hook into to received reactions
+- ✔ add multiple commands (with required power levels) 
 - ✔ limit commands to certain rooms
 - ✔ use built-in persistent storage
 - ✔ automatically be supplied with config-values from plugin-specific config-files at startup
@@ -36,12 +36,15 @@
     - week,
     - day or
     - hour
-- ❌ not hook into other room-events
+- ❌ not hook into other room-events (yet)
 
 ## Plugins must
 - ✔ use async
 - ✔ instantiate `Plugin` as `plugin`
-- ✔ be uniquely named and use the plugin-name as file-name (`plugins/sample.py` OR `plugins/sample/sample.py`)
+- ✔ be uniquely named and use this name as
+  - directory-name (`plugins/sample/`)
+  - file-name (`plugins/sample/sample.py`)
+  - plugin-name when instantiating `Plugin`: `plugin = Plugin("sample", "General", "Just a simple sample.")`
 - ❌ not use `time.sleep()` - please use `asyncio.sleep()` instead
 
 ## Plugins should
