@@ -1,0 +1,2 @@
+dateparser~=1.0.0
+humanize~=3.1.0

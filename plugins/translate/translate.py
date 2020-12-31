@@ -4,7 +4,6 @@ from nio import AsyncClient, RoomMessageText
 from re import sub
 from typing import List, Dict
 import logging
-from asyncio import sleep
 
 logger = logging.getLogger(__name__)
 try:
