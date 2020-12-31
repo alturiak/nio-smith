@@ -462,16 +462,16 @@ async def quote_replace_command(command):
     :return:
     """
 
-    if len(command.args) > 2 and re.match(r'\d+', command.args[0]) and int(command.args[0]) in plugin.read_data("quotes").keys():
-        old_quote_text: str = await plugin.read_data("quotes")[int(command.args[0])].display_text(command)
-        quote: Quote = await quote_add_or_replace(command, str(command.args[0]))
+    if len(command.args) > 2 and re.match(r'\d+', command.args[0]) and command.args[0] in plugin.read_data("quotes").keys():
+        old_quote_text: str = await plugin.read_data("quotes")[command.args[0]].display_text(command)
+        quote: Quote = await quote_add_or_replace(command, command.args[0])
         await plugin.reply_notice(command, f"Quote {quote.id} replaced  \n"
                                            f"**Old:**  \n"
                                            f"{old_quote_text}  \n\n"
                                            f"**New:**  \n"
                                            f"{await quote.display_text(command)}")
     else:
-        await plugin.reply_notice(command, "Usage: quote_replace <quote_id> <quote_text>")
+        await plugin.reply_notice(command, "Usage: `quote_replace <quote_id> <quote_text>`")
 
 
 async def quote_add_or_replace(command, quote_id: str = "0") -> Quote or None:
