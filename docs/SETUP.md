@@ -6,7 +6,7 @@ Clone the repository to a path of your choice, e.g. `nio-smith`:
 If you're looking for a more stable experience, it's recommended to check out the latest tag:
 ```
 mkdir nio-smith
-git clone --branch v0.0.2 https://github.com/alturiak/nio-smith.git nio-smith
+git clone --branch v0.0.3 https://github.com/alturiak/nio-smith.git nio-smith
 ```
 
 If you really want the latest development commits, e.g. to submit PRs, check out HEAD:
@@ -78,12 +78,12 @@ By default, the bot will run with the config file at `./config.yaml`.
 If you've checked out a tag in step 1, switch to the latest tag.
 ```
 git fetch
-git checkout v0.0.2
+git checkout v0.0.3
 ```
 
 If you've checked out HEAD, just do
 ```
-git fetch
+git pull
 ```
 
 Proceed with running as usual.
