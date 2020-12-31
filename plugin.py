@@ -137,7 +137,7 @@ class Plugin:
 
         return self.timers
 
-    def store_data(self, name: str, data: Any) -> bool:
+    async def store_data(self, name: str, data: Any) -> bool:
         """
         Store data in plugins/<pluginname>.dill
         :param name: Name of the data to store, used as a reference to retrieve it later
@@ -148,11 +148,11 @@ class Plugin:
 
         if data != self.plugin_data.get(name):
             self.plugin_data[name] = data
-            return self.__save_data_to_file()
+            return await self.__save_data_to_file()
         else:
             return True
 
-    def read_data(self, name: str) -> Any:
+    async def read_data(self, name: str) -> Any:
         """
         Read data from self.plugin_data
         :param name: Name of the data to be retrieved
@@ -164,7 +164,7 @@ class Plugin:
         else:
             return None
 
-    def clear_data(self, name: str) -> bool:
+    async def clear_data(self, name: str) -> bool:
         """
         Clear a specific field in self.plugin_data
         :param name: name of the field to be cleared
@@ -174,11 +174,11 @@ class Plugin:
 
         if name in self.plugin_data:
             del self.plugin_data[name]
-            return self.__save_data_to_file()
+            return await self.__save_data_to_file()
         else:
             return False
 
-    def __load_pickle_data_from_file(self, filename: str) -> Dict[str, Any]:
+    async def __load_pickle_data_from_file(self, filename: str) -> Dict[str, Any]:
         """
         Load data from a pickle-file
         :param filename: filename to load data from
@@ -190,7 +190,7 @@ class Plugin:
         file.close()
         return data
 
-    def __load_json_data_from_file(self, filename: str, convert: bool = False) -> Dict[str, Any]:
+    async def __load_json_data_from_file(self, filename: str, convert: bool = False) -> Dict[str, Any]:
         """
         Load data from a json-file
         :param filename: filename to load data from
@@ -206,7 +206,7 @@ class Plugin:
 
         return data
 
-    def _load_data_from_file(self) -> Dict[str, Any]:
+    async def _load_data_from_file(self) -> Dict[str, Any]:
         """
         Load plugin_data from file
         :return: Data read from file to be loaded into self.plugin_data
@@ -219,7 +219,7 @@ class Plugin:
         try:
             if os.path.isfile(self.plugin_dataj_filename):
                 # local json data found, convert if needed
-                plugin_data_from_json = self.__load_json_data_from_file(self.plugin_dataj_filename, self.is_directory_based)
+                plugin_data_from_json = await self.__load_json_data_from_file(self.plugin_dataj_filename, self.is_directory_based)
                 if os.path.isfile(self.plugin_data_filename):
                     logger.warning(f"Data for {self.name} read from {self.plugin_dataj_filename}, but {self.plugin_data_filename} still exists. After "
                                    f"verifying, that {self.name} is running correctly, please remove {self.plugin_data_filename}")
@@ -227,7 +227,7 @@ class Plugin:
             elif os.path.isfile(self.plugin_data_filename):
                 # local pickle-data found
                 logger.warning(f"Reading data for {self.name} from pickle. This should only happen once. Data will be stored in new format.")
-                plugin_data_from_pickle = self.__load_pickle_data_from_file(self.plugin_data_filename)
+                plugin_data_from_pickle = await self.__load_pickle_data_from_file(self.plugin_data_filename)
 
             else:
                 # no local data found, check for abandoned data
@@ -236,7 +236,7 @@ class Plugin:
                     if os.path.isfile(abandoned_json_file):
                         abandoned_data = True
                         logger.warning(f"Loading abandoned data for {self.name} from {abandoned_json_file}. This should only happen once.")
-                        plugin_data_from_json = self.__load_json_data_from_file(abandoned_json_file, convert=True)
+                        plugin_data_from_json = await self.__load_json_data_from_file(abandoned_json_file, convert=True)
 
         except Exception as err:
             logger.critical(f"Could not load plugin_data for {self.name}: {err}")
@@ -245,7 +245,7 @@ class Plugin:
         if abandoned_data:
             if 'abandoned_json_file' in locals() and os.path.isfile(abandoned_json_file):
                 logger.warning(f"You may remove {abandoned_json_file} now, it is no longer being used.")
-            self.__save_data_to_json_file(plugin_data_from_json, self.plugin_dataj_filename)
+            await self.__save_data_to_json_file(plugin_data_from_json, self.plugin_dataj_filename)
 
         if plugin_data_from_pickle != {} and not os.path.isfile(self.plugin_dataj_filename):
             logger.warning(f"Converting data for {self.name} to {self.plugin_dataj_filename}. This should only happen once.")
@@ -259,7 +259,7 @@ class Plugin:
         else:
             return {}
 
-    def __save_data_to_pickle_file(self, data: Dict[str, Any], filename: str):
+    async def __save_data_to_pickle_file(self, data: Dict[str, Any], filename: str):
         """
         Save data to a pickle-file
         :param data: data to save
@@ -274,7 +274,7 @@ class Plugin:
             logger.critical(f"Could not write plugin_data to {self.plugin_data_filename}: {err}")
             return False
 
-    def __save_data_to_json_file(self, data: Dict[str, Any], filename: str):
+    async def __save_data_to_json_file(self, data: Dict[str, Any], filename: str):
         """
         Save data to a json file
         :param data: data to save
@@ -293,7 +293,7 @@ class Plugin:
             logger.critical(f"Could not write plugin_data to {self.plugin_data_filename}: {err}")
             return False
 
-    def __save_data_to_file(self) -> bool:
+    async def __save_data_to_file(self) -> bool:
         """
         Save modified plugin_data to disk
         :return:    True, if data stored successfully
@@ -302,9 +302,10 @@ class Plugin:
 
         if self.plugin_data != {}:
             """there is actual data to save"""
-            return self.__save_data_to_json_file(self.plugin_data, self.plugin_dataj_filename)
+            return await self.__save_data_to_json_file(self.plugin_data, self.plugin_dataj_filename)
 
         else:
+            logger.debug("No data to save, remove datafiles")
             """no data to save, remove file"""
             if os.path.isfile(self.plugin_data_filename):
                 try:
@@ -312,6 +313,14 @@ class Plugin:
                     return True
                 except Exception as err:
                     logger.critical(f"Could not remove file {self.plugin_data_filename}: {err}")
+                    return False
+
+            if os.path.isfile(self.plugin_dataj_filename):
+                try:
+                    remove(self.plugin_dataj_filename)
+                    return True
+                except Exception as err:
+                    logger.critical(f"Could not remove file {self.plugin_dataj_filename}: {err}")
                     return False
 
     async def message(self, client, room_id, message: str, delay: int = 0) -> str or None:

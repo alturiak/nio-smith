@@ -166,8 +166,8 @@ async def current_episodes_command(command):
 
     if message != "":
         event_id: str = await plugin.reply(command, message)
-        plugin.store_data("today_message", event_id)
-        plugin.store_data("today_message_text", message)
+        await plugin.store_data("today_message", event_id)
+        await plugin.store_data("today_message_text", message)
     else:
         await plugin.reply_notice(command, "No episodes today, try `upcoming`")
 
@@ -183,8 +183,8 @@ async def current_episodes_timer(client):
     if message != "":
         # store event_id for later editing
         event_id = await plugin.message(client, plugin.read_config("room_id"), message)
-        plugin.store_data("today_message", event_id)
-        plugin.store_data("today_message_text", message)
+        await plugin.store_data("today_message", event_id)
+        await plugin.store_data("today_message_text", message)
 
 
 async def update_current_episodes(client):
@@ -195,9 +195,9 @@ async def update_current_episodes(client):
     """
 
     message: str = await build_today_and_yesterday_list()
-    if message != "" and message != plugin.read_data("today_message_text"):
-        await plugin.replace(client, plugin.read_config("room_id"), plugin.read_data("today_message"), message)
-        plugin.store_data("today_message_text", message)
+    if message != "" and message != await plugin.read_data("today_message_text"):
+        await plugin.replace(client, plugin.read_config("room_id"), await plugin.read_data("today_message"), message)
+        await plugin.store_data("today_message_text", message)
 
 
 setup()

@@ -136,7 +136,7 @@ async def date_add(command):
         await plugin.react(command.client, command.room.room_id, command.event.event_id, "❌")
         return
 
-    dates: Dict[str, StoreDate] = plugin.read_data("stored_dates")
+    dates: Dict[str, StoreDate] = await plugin.read_data("stored_dates")
     if dates is None:
         dates: Dict[str, StoreDate] = {}
 
@@ -153,7 +153,7 @@ async def date_add(command):
                                                f"{dates[store_date.id].date}, overwriting.")
 
         dates[store_date.id] = store_date
-        plugin.store_data("stored_dates", dates)
+        await plugin.store_data("stored_dates", dates)
         await plugin.react(command.client, command.room.room_id, command.event.event_id, "✅")
 
     else:
@@ -169,7 +169,7 @@ async def date_add(command):
                                                f"Description: {dates[store_date.id].description}")
         else:
             dates[store_date.id] = store_date
-            plugin.store_data("stored_dates", dates)
+            await plugin.store_data("stored_dates", dates)
             await plugin.react(command.client, command.room.room_id, command.event.event_id, "✅")
 
 
@@ -190,7 +190,7 @@ async def date_del(command):
 
     date_id: str = generate_date_id(command.room.room_id, name)
 
-    dates: Dict[str, StoreDate] = plugin.read_data("stored_dates")
+    dates: Dict[str, StoreDate] = await plugin.read_data("stored_dates")
     if dates is None:
         dates: Dict[str, StoreDate] = {}
 
@@ -199,7 +199,7 @@ async def date_del(command):
         await plugin.react(command.client, command.room.room_id, command.event.event_id, "✅")
     else:
         await plugin.react(command.client, command.room.room_id, command.event.event_id, "❌")
-    plugin.store_data("stored_dates", dates)
+    await plugin.store_data("stored_dates", dates)
 
 
 async def date_show(command):
@@ -219,7 +219,7 @@ async def date_show(command):
         name: str = await plugin.get_mx_user_id(command.client, command.room.room_id, name)
 
     date_id: str = generate_date_id(command.room.room_id, name)
-    dates: Dict[str, StoreDate] = plugin.read_data("stored_dates")
+    dates: Dict[str, StoreDate] = await plugin.read_data("stored_dates")
 
     if dates is None:
         dates: Dict[str, StoreDate] = {}
@@ -241,7 +241,7 @@ async def current_dates(client):
     :return:
     """
 
-    dates: Dict[str, StoreDate] = plugin.read_data("stored_dates")
+    dates: Dict[str, StoreDate] = await plugin.read_data("stored_dates")
     if dates is None:
         dates: Dict[str, StoreDate] = {}
 
@@ -280,7 +280,7 @@ async def current_dates(client):
                                                                  f"Description: {store_date.description}")
 
     # store if there is any birthday today to take some load off birthday_tada
-    plugin.store_data("birthday_rooms_today", birthday_rooms_today)
+    await plugin.store_data("birthday_rooms_today", birthday_rooms_today)
 
 
 async def birthday_tada(client: AsyncClient, room_id: str, event: RoomMessageText):
@@ -294,18 +294,18 @@ async def birthday_tada(client: AsyncClient, room_id: str, event: RoomMessageTex
     """
 
     # check if there is any birthday today
-    if plugin.read_data("birthday_rooms_today") is not None and room_id not in plugin.read_data("birthday_rooms_today"):
+    if await plugin.read_data("birthday_rooms_today") is not None and room_id not in await plugin.read_data("birthday_rooms_today"):
         return
 
     # check if at least one hour has passed since last tada in the current room
-    last_tada_dict: Dict[str, datetime.datetime] or None = plugin.read_data("last_tada")
+    last_tada_dict: Dict[str, datetime.datetime] or None = await plugin.read_data("last_tada")
     if last_tada_dict is not None:
         last_tada: datetime.datetime or None = last_tada_dict.get(room_id)
         if last_tada is not None and last_tada > datetime.datetime.now() - datetime.timedelta(hours=1):
             return
 
     # check if there are actual dates stores
-    dates: Dict[str, StoreDate] = plugin.read_data("stored_dates")
+    dates: Dict[str, StoreDate] = await plugin.read_data("stored_dates")
     if dates is None:
         return
 
@@ -314,7 +314,7 @@ async def birthday_tada(client: AsyncClient, room_id: str, event: RoomMessageTex
         if await store_date.is_birthday_person(room_id, mx_user=event.sender):
             # sender is birthday person
             await plugin.message(client, room_id, "🎉")
-            plugin.store_data("last_tada", {room_id: datetime.datetime.now()})
+            await plugin.store_data("last_tada", {room_id: datetime.datetime.now()})
             break
 
         elif store_date.date_type == "birthday" and store_date.mx_room == room_id:
@@ -323,7 +323,7 @@ async def birthday_tada(client: AsyncClient, room_id: str, event: RoomMessageTex
 
                 # birthday person is mentioned
                 await plugin.message(client, room_id, "🎉")
-                plugin.store_data("last_tada", {room_id: datetime.datetime.now()})
+                await plugin.store_data("last_tada", {room_id: datetime.datetime.now()})
                 break
 
 setup()

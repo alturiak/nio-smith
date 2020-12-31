@@ -7,6 +7,7 @@ import random
 import re
 from shlex import split
 from sys import maxsize
+import asyncio
 
 import logging
 logger = logging.getLogger(__name__)
@@ -18,7 +19,7 @@ current_version: int = 2
 plugin = Plugin("quote", "General", "Store (more or less) funny quotes and access them randomly or by search term")
 
 
-def setup():
+async def setup():
     """
     Register commands and hooks
     :return:
@@ -59,6 +60,7 @@ class Quote:
                  user: str = "", mxuser: str = "",
                  date: float = time.time(),
                  lines: List[QuoteLine] = [],
+                 quote_id: str = ""
                  ):
         """
         A textual quote and all its parameters
@@ -72,11 +74,7 @@ class Quote:
         :param lines: text of the quote in separate lines
         """
 
-        try:
-            self.id: str = str(max(list(map(int, plugin.read_data("quotes").keys())))+1)
-        except KeyError:
-            self.id: str = "1"
-
+        self.id = quote_id
         """id of the quote, automatically set to currently highest id + 1"""
         self.type: str = quote_type
         self.text: str = text
@@ -100,6 +98,12 @@ class Quote:
 
         self.members: List[str] = []
         """List of people participating in the quote"""
+
+    async def set_id(self) -> str:
+
+        quote_id = str(max(list(map(int, (await plugin.read_data("quotes")).keys()))) + 1)
+        self.id = quote_id
+        return quote_id
 
     async def display_text(self, command) -> str:
         """
@@ -127,7 +131,7 @@ class Quote:
             quote_text = quote_text.replace(" | ", "  \n")
 
             """optionally replace nicknames by userlinks"""
-            if plugin.read_data("nick_links"):
+            if await plugin.read_data("nick_links"):
                 nick: str
                 nick_link: str
                 for nick in nick_list:
@@ -139,7 +143,7 @@ class Quote:
             for line in self.lines:
                 if line.message_type == "message" or line.message_type == "action":
                     message: str = line.message.replace("<", "&lt;").replace(">", "&gt;").replace("`", "&#96;").replace("*", '\\*').replace("_", '\\_')
-                    if plugin.read_data("nick_links"):
+                    if await plugin.read_data("nick_links"):
                         nick_link: str
                         if nick_link := await plugin.link_user(command.client, command.room.room_id, line.nick, strictness="fuzzy", fuzziness=80):
                             quote_text += f"{nick_link} {message}  \n"
@@ -293,7 +297,7 @@ async def quote_command(command):
     """Load all active (quote.deleted == False) quotes"""
     quotes: Dict[str, Quote]
     try:
-        quotes = plugin.read_data("quotes")
+        quotes = await plugin.read_data("quotes")
         # TODO: check if this needs fixing
         quotes = dict(filter(lambda item: not item[1].deleted, quotes.items()))
     except KeyError:
@@ -364,14 +368,14 @@ async def post_quote(command, quote_object: Quote, match_index: int = -1, total_
     """store the event id of the message to allow for tracking reactions to the last 100 posted quotes"""
     tracked_quotes: List[TrackedQuote]
     try:
-        tracked_quotes = plugin.read_data("tracked_quotes")
+        tracked_quotes = await plugin.read_data("tracked_quotes")
         while len(tracked_quotes) > 100:
             tracked_quotes.pop()
         tracked_quote = TrackedQuote(event_id, quote_object.id)
         tracked_quotes.insert(0, tracked_quote)
-        plugin.store_data("tracked_quotes", tracked_quotes)
+        await plugin.store_data("tracked_quotes", tracked_quotes)
     except KeyError:
-        plugin.store_data("tracked_quotes", [TrackedQuote(event_id, quote_object.id)])
+        await plugin.store_data("tracked_quotes", [TrackedQuote(event_id, quote_object.id)])
 
 
 async def find_quote_by_search_term(quotes: Dict[str, Quote], terms: List[str], match_id: int = 0) -> Tuple[Quote, int, int] or None:
@@ -462,16 +466,16 @@ async def quote_replace_command(command):
     :return:
     """
 
-    if len(command.args) > 2 and re.match(r'\d+', command.args[0]) and command.args[0] in plugin.read_data("quotes").keys():
-        old_quote_text: str = await plugin.read_data("quotes")[command.args[0]].display_text(command)
-        quote: Quote = await quote_add_or_replace(command, command.args[0])
+    if len(command.args) > 2 and re.match(r'\d+', command.args[0]) and int(command.args[0]) in (await plugin.read_data("quotes")).keys():
+        old_quote_text: str = await plugin.read_data("quotes")[int(command.args[0])].display_text(command)
+        quote: Quote = await quote_add_or_replace(command, str(command.args[0]))
         await plugin.reply_notice(command, f"Quote {quote.id} replaced  \n"
                                            f"**Old:**  \n"
                                            f"{old_quote_text}  \n\n"
                                            f"**New:**  \n"
                                            f"{await quote.display_text(command)}")
     else:
-        await plugin.reply_notice(command, "Usage: `quote_replace <quote_id> <quote_text>`")
+        await plugin.reply_notice(command, "Usage: quote_replace <quote_id> <quote_text>")
 
 
 async def quote_add_or_replace(command, quote_id: str = "0") -> Quote or None:
@@ -484,7 +488,7 @@ async def quote_add_or_replace(command, quote_id: str = "0") -> Quote or None:
 
     quotes: Dict[str, Quote]
     try:
-        quotes = plugin.read_data("quotes")
+        quotes = await plugin.read_data("quotes")
     except KeyError:
         quotes = {}
 
@@ -500,6 +504,7 @@ async def quote_add_or_replace(command, quote_id: str = "0") -> Quote or None:
         else:
             quote_text = " ".join(command.args)
         new_quote: Quote = Quote("local", text=quote_text, mxroom=command.room.room_id)
+        await new_quote.set_id()
         new_quote.convert_string_to_quote_lines()
 
     else:
@@ -522,15 +527,16 @@ async def quote_add_or_replace(command, quote_id: str = "0") -> Quote or None:
                 index += 2
         quote_text = quote_text.rstrip(' | ')
         new_quote = Quote("local", text=quote_text, mxroom=command.room.room_id, lines=quote_lines)
+        await new_quote.set_id()
 
     if quote_id == "0":
         quotes[new_quote.id] = new_quote
-        plugin.store_data("quotes", quotes)
+        await plugin.store_data("quotes", quotes)
         return quotes[new_quote.id]
     else:
         quotes[quote_id].lines = new_quote.lines
         quotes[quote_id].text = new_quote.text
-        plugin.store_data("quotes", quotes)
+        await plugin.store_data("quotes", quotes)
         return quotes[str(quote_id)]
 
 
@@ -543,7 +549,7 @@ async def quote_delete_command(command):
 
     quotes: Dict[str, Quote]
     try:
-        quotes = plugin.read_data("quotes")
+        quotes = await plugin.read_data("quotes")
     except KeyError:
         quotes = {}
 
@@ -555,7 +561,7 @@ async def quote_delete_command(command):
         try:
             if not quotes[quote_id].deleted:
                 quotes[quote_id].deleted = True
-                plugin.store_data("quotes", quotes)
+                await plugin.store_data("quotes", quotes)
                 await plugin.reply_notice(command, f"Quote {quote_id} deleted")
         except KeyError:
             await plugin.reply_notice(command, f"Quote {quote_id} not found")
@@ -572,7 +578,7 @@ async def quote_restore_command(command):
 
     quotes: Dict[str, Quote]
     try:
-        quotes = plugin.read_data("quotes")
+        quotes = await plugin.read_data("quotes")
     except KeyError:
         quotes = {}
 
@@ -584,7 +590,7 @@ async def quote_restore_command(command):
         try:
             if quotes[quote_id].deleted:
                 quotes[quote_id].deleted = False
-                plugin.store_data("quotes", quotes)
+                await plugin.store_data("quotes", quotes)
                 await plugin.reply_notice(command, f"Quote {quote_id} restored")
         except KeyError:
             await plugin.reply_notice(command, f"Quote {quote_id} not found")
@@ -600,12 +606,12 @@ async def quote_links_command(command):
     """
 
     try:
-        plugin.store_data("nick_links", not plugin.read_data("nick_links"))
+        await plugin.store_data("nick_links", not await plugin.read_data("nick_links"))
 
     except KeyError:
-        plugin.store_data("nick_links", False)
+        await plugin.store_data("nick_links", False)
 
-    await plugin.reply_notice(command, f"Nick linking {plugin.read_data('nick_links')}")
+    await plugin.reply_notice(command, f"Nick linking {await plugin.read_data('nick_links')}")
 
 
 async def quote_stats_command(command):
@@ -617,7 +623,7 @@ async def quote_stats_command(command):
 
     quotes: Dict[str, Quote]
     try:
-        quotes = plugin.read_data("quotes")
+        quotes = await plugin.read_data("quotes")
     except KeyError:
         quotes = {}
 
@@ -693,13 +699,13 @@ async def quote_add_reaction(client: AsyncClient, room_id: str, event: UnknownEv
 
     quotes: Dict[str, Quote]
     try:
-        quotes = plugin.read_data("quotes")
+        quotes = await plugin.read_data("quotes")
     except KeyError:
         quotes = {}
 
     tracked_quotes: List[TrackedQuote]
     try:
-        tracked_quotes = plugin.read_data("tracked_quotes")
+        tracked_quotes = await plugin.read_data("tracked_quotes")
     except KeyError:
         return
 
@@ -718,7 +724,7 @@ async def quote_add_reaction(client: AsyncClient, room_id: str, event: UnknownEv
         reaction = re.sub(r"\s\d+", "", reaction)
         await quote_object.quote_add_reaction(reaction)
         quotes[quote_id] = quote_object
-        plugin.store_data("quotes", quotes)
+        await plugin.store_data("quotes", quotes)
 
 
 async def upgrade_quotes(command):
@@ -729,7 +735,7 @@ async def upgrade_quotes(command):
 
     quotes: Dict[str, Quote]
     try:
-        quotes = plugin.read_data("quotes")
+        quotes = await plugin.read_data("quotes")
 
     except KeyError:
         quotes = {}
@@ -744,10 +750,10 @@ async def upgrade_quotes(command):
                 upgraded_quotes += 1
 
     if upgrade_successful:
-        plugin.store_data("quotes", quotes)
-        plugin.store_data("store_version", current_version)
+        await plugin.store_data("quotes", quotes)
+        await plugin.store_data("store_version", current_version)
         await plugin.reply_notice(command, f"Success: upgraded {upgraded_quotes} of {len(quotes)} Quotes to Version {current_version}")
     else:
         await plugin.reply_notice(command, f"Error: upgraded {upgraded_quotes} of {len(quotes)} Quotes to Version {current_version}")
 
-setup()
+asyncio.get_event_loop().run_until_complete(setup())

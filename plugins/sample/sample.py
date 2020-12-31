@@ -57,7 +57,7 @@ async def sample_store(command):
         logger.debug(f"sample_store called with {command.args}")
         message: str = " ".join(command.args)
         sample: Sample = Sample(message)
-        if plugin.store_data("sample", sample):
+        if await plugin.store_data("sample", sample):
             await plugin.reply_notice(command, f"Message \"{message}\" stored successfully")
         else:
             await plugin.reply_notice(command, "Could not store message")
@@ -73,7 +73,7 @@ async def sample_read(command):
     """
 
     try:
-        sample: Sample = plugin.read_data("sample")
+        sample: Sample = await plugin.read_data("sample")
         await plugin.reply(command, f"Message: {sample.message}", 200)
     except KeyError:
         await plugin.reply_notice(command, "Message could not be loaded")
@@ -86,7 +86,7 @@ async def sample_clear(command):
     :return:
     """
 
-    if plugin.clear_data("sample"):
+    if await plugin.clear_data("sample"):
         await plugin.reply_notice(command, "Message cleared")
     else:
         await plugin.reply_notice(command, "Could not clear message as no message was stored")
@@ -118,7 +118,7 @@ async def sample_reaction_test(command):
     if len(command.args) == 0:
         event_id: str = await plugin.reply(command, f"Reactions to this message will be tracked and posted back to the room")
         await plugin.reply_notice(command, f"Tracking Event ID {event_id}")
-        plugin.store_data("tracked_message", event_id)
+        await plugin.store_data("tracked_message", event_id)
 
     else:
         await plugin.reply_notice(command, "Usage: sample_reaction_test")
@@ -164,7 +164,7 @@ async def hook_reactions(client: AsyncClient, room_id: str, event: UnknownEvent)
     """
 
     relates_to: str = event.source['content']['m.relates_to']['event_id']
-    tracked_message: str = plugin.read_data("tracked_message")
+    tracked_message: str = await plugin.read_data("tracked_message")
     reaction: str = event.source['content']['m.relates_to']['key']
 
     if tracked_message is not None and relates_to == tracked_message:

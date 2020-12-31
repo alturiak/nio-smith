@@ -1,29 +1,38 @@
 # -*- coding: utf8 -*-
 from plugin import Plugin
-from core.chat_functions import send_text_to_room
 from nio import AsyncClient, RoomMessageText
-
-import os.path
-import pickle
 from re import sub
-
-from typing import List
-
+from typing import List, Dict
 import logging
-logger = logging.getLogger(__name__)
+from asyncio import sleep
 
+logger = logging.getLogger(__name__)
 try:
     import googletrans
 except ImportError as err:
     logger.fatal(f"Module {err.name} not found")
     raise ImportError(name="translate")
 
-allowed_rooms: List = ["!hIWWJKHWQMUcrVPRqW:pack.rocks", "!iAxDarGKqYCIKvNSgu:pack.rocks"]
-default_source: List = ['any']
-default_dest: str = 'en'
-default_bidirectional: bool = False
-roomsfile: str = os.path.join(os.path.dirname(__file__), os.path.basename(__file__)[:-3] + ".pickle")
-power_level: int = 50
+plugin = Plugin("translate", "General", "Provide near-realtime translations of all room-messages via Google Translate")
+
+
+def setup():
+
+    plugin.add_config("allowed_rooms", [], is_required=False)
+    # minimum power level to activate translation
+    plugin.add_config("min_power_level", 50, is_required=False)
+    # default source language to translate messages from, if not specified when using !translate
+    plugin.add_config("default_source", ['any'], is_required=False)
+    # default destination language to translate messages from, if not specified when using !translate
+    plugin.add_config("default_dest", 'en', is_required=False)
+    # default value, if bidirectional translation is to be used, if not specified when using !translate
+    plugin.add_config("default_bidirectional", False, is_required=False)
+
+    plugin.add_command("translate", switch, "`translate [[bi] source_lang... dest_lang]` - translate text from one or more source_lang to dest_lang",
+                       room_id=plugin.read_config("allowed_rooms"),
+                       power_level=plugin.read_config("min_power_level"))
+    plugin.add_hook("m.room.message", translate_message, room_id=plugin.read_config("allowed_rooms"))
+
 
 """
 roomsdb = {
@@ -37,24 +46,24 @@ roomsdb = {
 
 
 async def switch(command):
-    """Switch translation for room-messages on or off
-
-    Args:
-        command (bot_commands.Command): Command used to trigger this method
-
+    """
+    Enable or disable translations
+    :param command:
+    :return:
     """
 
-    try:
-        roomsdb: dict = pickle.load(open(roomsfile, "rb"))
-        enabled_rooms_list: list = roomsdb.keys()
-    except FileNotFoundError:
-        roomsdb: dict = {}
-        enabled_rooms_list: list = []
+    rooms_db: Dict[str, Dict[str, any]] = {}
+    enabled_rooms: List[str] = []
+
+    if await plugin.read_data("rooms_db"):
+        rooms_db = await plugin.read_data("rooms_db")
+        enabled_rooms = list(rooms_db.keys())
 
     if len(command.args) == 0:
-        source_langs: list = default_source
-        dest_lang: str = default_dest
-        bidirectional: bool = default_bidirectional
+        source_langs: List[str] = plugin.read_config("default_source")
+        dest_lang: str = plugin.read_config("default_dest")
+        bidirectional: bool = plugin.read_config("default_bidirectional")
+
     else:
         try:
             if command.args[0] == 'bi':
@@ -66,58 +75,76 @@ async def switch(command):
                 source_langs = command.args[:-1]
                 dest_lang = command.args[-1]
         except IndexError:
-            await send_text_to_room(command.client, command.room.room_id, "Syntax: `!translate [[bi] source_lang... dest_lang]`")
+            await plugin.reply_notice(command, "Syntax: `!translate [[bi] source_lang... dest_lang]`")
             return False
 
-    if command.room.room_id in enabled_rooms_list:
-        del roomsdb[command.room.room_id]
-        pickle.dump(roomsdb, (open(roomsfile, "wb")))
-        await send_text_to_room(command.client, command.room.room_id, "Translations disabled", notice=False)
-    elif command.room.room_id in allowed_rooms:
-        if dest_lang in googletrans.LANGUAGES.keys():
-            if source_langs == ['any'] or all(elem in googletrans.LANGUAGES.keys() for elem in source_langs):
-                roomsdb[command.room.room_id] = {"source_langs": source_langs, "dest_lang": dest_lang, "bidirectional": bidirectional}
-                pickle.dump(roomsdb, (open(roomsfile, "wb")))
+    if command.room.room_id in enabled_rooms:
+        del rooms_db[command.room.room_id]
+        await plugin.store_data("rooms_db", rooms_db)
+        await plugin.reply_notice(command, "Translations disabled")
 
-                if bidirectional:
-                    message = "Bidirectional translations (" + source_langs[0] + "<=>" + dest_lang + ") enabled - " \
-                                                                                                     "**ATTENTION**: *ALL* future messages in this room will be sent to Google"
-                else:
-                    source_langs_str = str(source_langs)
-                    message = "Unidirectional translations (" + source_langs_str + "=>" + dest_lang + ") enabled - " \
-                                                                                                      "**ATTENTION**: *ALL* future messages in this room will be sent to Google"
-                await send_text_to_room(command.client, command.room.room_id, message, notice=False)
+    elif plugin.read_config("allowed_rooms") == [] or command.room.room_id in plugin.read_config("allowed_rooms"):
+        if dest_lang in googletrans.LANGUAGES.keys() and source_langs == ['any'] or all(elem in googletrans.LANGUAGES.keys() for elem in source_langs):
+            rooms_db[command.room.room_id] = {"source_langs": source_langs, "dest_lang": dest_lang, "bidirectional": bidirectional}
+            await plugin.store_data("rooms_db", rooms_db)
 
+            if bidirectional:
+                message = f"Bidirectional translations ({source_langs[0]}<=>{dest_lang}) enabled.  \n"
 
-async def translate(client: AsyncClient, room_id: str, event: RoomMessageText):
+            else:
+                message = f"Unidirectional translations ({str(source_langs)}=>{dest_lang}) enabled.  \n"
 
-    try:
-        roomsdb = pickle.load(open(roomsfile, "rb"))
-    except FileNotFoundError:
-        roomsdb = {}
-
-    if room_id in allowed_rooms and room_id in roomsdb.keys():
-        # Remove special characters before translation
-        message = sub('[^A-z0-9\-\.\?!:\sÄäÜüÖö]+', '', event.body)
-        trans = googletrans.Translator()
-        logger.debug(f"Detecting language for message: {message}")
-        message_source_lang = trans.detect(message).lang
-        if roomsdb[room_id]["bidirectional"]:
-            languages = [roomsdb[room_id]["source_langs"][0], roomsdb[room_id["dest_lang"]]]
-            if message_source_lang in languages:
-                # there has to be a simpler way, but my brain is tired
-                dest_lang = set(languages).difference([message_source_lang])
-                if len(dest_lang) == 1:
-                    dest_lang = dest_lang.pop()
-                    translated = trans.translate(message, dest=dest_lang).text
-                    await send_text_to_room(client, room_id, translated)
+            message += f"**ATTENTION**: *ALL* future messages in this room will be sent to Google Translate until disabled again."
+            await plugin.reply_notice(command, message)
         else:
-            if message_source_lang != roomsdb[room_id]["dest_lang"] and (roomsdb[room_id]["source_langs"] == ['any'] or message_source_lang in roomsdb[room_id]["source_langs"]):
-                translated = trans.translate(message, dest=roomsdb[room_id]["dest_lang"]).text
-                await send_text_to_room(client, room_id, translated)
+            await plugin.reply_notice(command, f"Invalid language specified.")
 
 
-plugin = Plugin("translate", "General", "Provide near-realtime translations of all room-messages via Google Translate")
-plugin.add_command("translate", switch, "`translate [[bi] source_lang... dest_lang]` - translate text from "
-                                        "one or more source_lang to dest_lang", room_id=allowed_rooms, power_level=power_level)
-plugin.add_hook("m.room.message", translate, room_id=allowed_rooms)
+async def translate_message(client: AsyncClient, room_id: str, event: RoomMessageText):
+    """
+    Translate a received message is translation is active on room and language message matches defined source-languages
+    :param client:
+    :param room_id:
+    :param event:
+    :return:
+    """
+
+    rooms_db: Dict[str, Dict[str, any]] = {}
+    enabled_rooms: List[str] = []
+
+    if await plugin.read_data("rooms_db"):
+        rooms_db = await plugin.read_data("rooms_db")
+        enabled_rooms = list(rooms_db.keys())
+
+    if room_id in enabled_rooms and (plugin.read_config("allowed_rooms") == "" or room_id in plugin.read_config("allowed_rooms")):
+        # Remove special characters before translation
+        message = sub(r'[^A-z0-9\-\.\?!:\sÄäÜüÖö]+', '', event.body)
+        trans = googletrans.Translator()
+
+        try:
+            logger.debug(f"Detecting language for message: {message}")
+            message_source_lang: str = trans.detect(message).lang
+
+        except Exception:
+            del rooms_db[room_id]
+            await plugin.store_data("rooms_db", rooms_db)
+            await plugin.notice(client, room_id, "Error in backend translation module. Translations disabled.")
+            return
+
+        if rooms_db[room_id]["bidirectional"]:
+            languages: List[str] = [rooms_db[room_id]["source_langs"][0], rooms_db[room_id["dest_lang"]]]
+
+            if message_source_lang in languages:
+                languages.remove(message_source_lang)
+                dest_lang = languages[0]
+                translated = trans.translate(message, dest=dest_lang).text
+                await plugin.notice(client, room_id, translated)
+
+        else:
+            if message_source_lang != rooms_db[room_id]["dest_lang"] and \
+                    (rooms_db[room_id]["source_langs"] == ['any'] or message_source_lang in rooms_db[room_id]["source_langs"]):
+                translated = trans.translate(message, dest=rooms_db[room_id]["dest_lang"]).text
+                await plugin.notice(client, room_id, translated)
+
+
+setup()

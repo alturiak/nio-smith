@@ -16,6 +16,8 @@ from os.path import basename, isfile, isdir
 import importlib
 from fuzzywuzzy import fuzz
 import logging
+import traceback
+
 logger = logging.getLogger(__name__)
 
 # import all plugins
@@ -84,9 +86,6 @@ class PluginLoader:
                     self.timers.append(new_timer)
                     logger.debug(f"Added new timer: {new_timer.name}")
 
-            """load the plugin's saved data"""
-            plugin.plugin_data = plugin._load_data_from_file()
-
             """Display details about the loaded plugins, this does nothing else"""
             logger.info(f"Loaded plugin {plugin.name}:")
             if plugin.get_commands() != {}:
@@ -98,6 +97,11 @@ class PluginLoader:
                 for timer in plugin.get_timers():
                     timers.append(timer.name)
                 logger.info(f"  Timers:   {', '.join(timers)}")
+
+    async def load_plugin_data(self):
+
+        for plugin in self.__plugin_list.values():
+            plugin.plugin_data = await plugin._load_data_from_file()
 
     def get_plugins(self) -> Dict[str, Plugin]:
 
@@ -163,7 +167,8 @@ class PluginLoader:
                     try:
                         await self.commands[run_command].method(command)
                     except Exception as err:
-                        logger.critical(f"Plugin failed to catch exception caused by {command_start}: {err}")
+                        logger.critical(f"Plugin failed to catch exception caused by {command_start}:")
+                        traceback.print_exc()
                     return 0
                 else:
                     return 2
@@ -173,16 +178,18 @@ class PluginLoader:
     async def run_hooks(self, client, event_type: str, room, event):
 
         if event_type in self.hooks.keys():
-            event_hooks: List[PluginHook] = self.hooks[event_type]
 
+            event_hooks: List[PluginHook] = self.hooks[event_type]
             event_hook: PluginHook
+
             for event_hook in event_hooks:
                 if event_hook.room_id is None or room.room_id in event_hook.room_id:
                     # Make sure, exceptions raised by plugins do not kill the bot
                     try:
                         await event_hook.method(client, room.room_id, event)
                     except Exception as err:
-                        logger.critical(f"Plugin failed to catch exception caused by hook {event_hook.method} on {room} for {event}: {err}")
+                        logger.critical(f"Plugin failed to catch exception caused by hook {event_hook.method} on {room} for {event}:")
+                        traceback.print_exc()
 
     async def run_timers(self, client, timestamp: float, filepath: str) -> float:
 

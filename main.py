@@ -71,6 +71,7 @@ async def main():
     # instantiate the pluginLoader
     timers_filepath = config.timers_filepath
     plugin_loader = PluginLoader(timers_filepath)
+    await plugin_loader.load_plugin_data()
 
     # Set up event callbacks
     callbacks = Callbacks(client, store, config, plugin_loader)
