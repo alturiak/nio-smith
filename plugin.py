@@ -10,6 +10,7 @@ import logging
 from nio import AsyncClient, JoinedMembersResponse, RoomMember, RoomSendResponse
 from core.timer import Timer
 from fuzzywuzzy import fuzz
+import copy
 import jsonpickle
 logger = logging.getLogger(__name__)
 
@@ -159,7 +160,7 @@ class Plugin:
         """
 
         if name in self.plugin_data:
-            return self.plugin_data[name]
+            return copy.copy(self.plugin_data[name])
         else:
             return None
 
