@@ -2,7 +2,6 @@ from core.bot_commands import Command
 from nio import (
     JoinError, MatrixRoom, UnknownEvent,
 )
-from core.message_responses import Message
 
 import logging
 
@@ -56,9 +55,7 @@ class Callbacks(object):
             # Process as message if in a public room without command prefix
             has_command_prefix = split_message.startswith(self.command_prefix)
             if not has_command_prefix and not room.is_group:
-                # General message listener
-                message = Message(self.client, self.store, self.config, split_message, room, event, self.plugin_loader)
-                await message.process()
+                await self.plugin_loader.run_hooks(self.client, "m.room.message", room, event)
                 continue
 
             # Otherwise if this is in a 1-1 with the bot or features a command prefix,

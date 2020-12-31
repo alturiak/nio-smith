@@ -67,17 +67,6 @@ Otherwise the bot can't function.
 Custom error types for the bot. Currently there's only one special type that's
 defined for when a error is found while the config file is being processed.
 
-#### `core/message_responses.py`
-
-Where responses to messages that are posted in a room (but not necessarily
-directed at the bot) used to be specified. `callbacks.py` will listen for messages in
-rooms the bot is in, and upon receiving one will create a new `Message` object
-(which contains the message text, amongst other things) and calls `process()`
-on it, which can send a message to the room as it sees fit.
-
-Currently runs hooks for "m.room.message" registered by plugins, used e.g. by the `translate`-plugin to provide a
- translation for received room-messages. 
-
 #### `core/pluginloader.py`
 
 Handles dynamic (at startup) loading of any plugins in the `plugins`-directory.
