@@ -160,7 +160,7 @@ class Plugin:
         """
 
         if name in self.plugin_data:
-            return copy.copy(self.plugin_data[name])
+            return copy.deepcopy(self.plugin_data[name])
         else:
             return None
 
