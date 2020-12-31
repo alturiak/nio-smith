@@ -3,7 +3,7 @@ from nio import AsyncClient, RoomMessageText
 
 from plugin import Plugin
 from typing import Dict, List
-import dateparser
+from dateparser import parse
 import datetime
 from shlex import split
 
@@ -124,7 +124,7 @@ async def date_add(command):
         await reply_usage_message(command)
         return
 
-    date: datetime.datetime or None = dateparser.parse(args[0])
+    date: datetime.datetime or None = parse(args[0])
 
     if len(args) > 1:
         description: str = " ".join(args[1:])
