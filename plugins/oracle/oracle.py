@@ -1,5 +1,4 @@
 from plugin import Plugin
-from core.chat_functions import send_typing
 import random
 
 
@@ -45,7 +44,7 @@ async def oracle(command):
         "Die Zeit wird es zeigen.",
     )
     message = "**Antwort:** " + random.choice(oracles)
-    await send_typing(command.client, command.room.room_id, message)
+    await plugin.reply(command, message, delay=200)
 
 
 plugin = Plugin("oracle", "General", "Plugin to provide a simple, randomized !oracle")
