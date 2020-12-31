@@ -1,5 +1,4 @@
 from plugin import Plugin, PluginCommand
-from core.chat_functions import send_text_to_room
 from re import match
 
 from typing import List, Tuple
@@ -76,7 +75,7 @@ async def print_help(command):
         # too many arguments or invalid plugin-name
         help_text = "try `help` ;-)"
 
-    await send_text_to_room(command.client, current_room_id, help_text)
+    await plugin.reply_notice(command, help_text)
 
 
 plugin = Plugin("help", "General", "Provide helpful help")

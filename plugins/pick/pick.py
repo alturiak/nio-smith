@@ -6,7 +6,6 @@ __author__ = "Dingo"
 from plugin import Plugin
 import re
 import random
-from core.chat_functions import send_typing
 
 
 async def pick(command):
@@ -115,7 +114,7 @@ async def pick(command):
     else:
         return None
 
-    await send_typing(command.client, command.room.room_id, msg)
+    await plugin.reply(command, msg, delay=200)
 
 plugin = Plugin("pick", "General", "Plugin to provide a simple, randomized !pick")
 plugin.add_command("pick", pick, "aids you in those really important life decisions")
