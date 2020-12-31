@@ -3,9 +3,15 @@ from nio import AsyncClient, RoomMessageText
 
 from plugin import Plugin
 from typing import Dict, List
-from dateparser import parse
 import datetime
 from shlex import split
+import logging
+logger = logging.getLogger(__name__)
+try:
+    from dateparser import parse
+except ImportError as err:
+    logger.fatal(f"Module {err.name} not found")
+    raise ImportError(name="dates")
 
 plugin = Plugin("dates", "General", "Stores dates and birthdays, posts reminders")
 

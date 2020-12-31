@@ -1,8 +1,15 @@
 # -*- coding: utf8 -*-
 from plugin import Plugin
-import requests
-import humanize
 import datetime
+import logging
+
+logger = logging.getLogger(__name__)
+try:
+    import requests
+    import humanize
+except ImportError as err:
+    logger.fatal(f"Module {err.name} not found")
+    raise ImportError(name="sonarr")
 
 plugin = Plugin("sonarr", "TV-Shows", "Provides commands to query sonarr's API")
 
