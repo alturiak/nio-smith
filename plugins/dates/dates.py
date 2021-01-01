@@ -65,23 +65,20 @@ class StoreDate:
         elif self.date_type == "birthday":
             return self.date.day == datetime.datetime.today().day and self.date.month == datetime.datetime.today().month
 
-    async def is_birthday_person(self, room_id: str, display_name: str = "", mx_user: str = "") -> bool:
+    async def is_birthday_person(self, room_id: str, plaintext: str or None = "", formatted: str or None = "") -> bool:
         """
-        Checks if a given display_name or mx_user-id are currently having their birthday in room
+        Checks if a given plaintext or formatted text contain a birthday person
         :param room_id:
-        :param display_name:
-        :param mx_user:
+        :param plaintext:
+        :param formatted:
         :return:
         """
 
-        if display_name == "" and mx_user == "":
+        if not plaintext and not formatted:
             return False
 
-        if self.date_type == "birthday" and self.mx_room == room_id:
-            if self.description == display_name or self.name == mx_user:
-                return await self.is_today()
-
-        return False
+        if await self.is_today() and self.date_type == "birthday" and self.mx_room == room_id:
+            return self.description in plaintext or self.name in formatted
 
 
 def generate_date_id(mx_room: str, name: str) -> str:
@@ -254,6 +251,7 @@ async def current_dates(client):
     store_date: StoreDate
 
     birthday_rooms_today: List[str] = []
+    await plugin.clear_data("last_tada")
 
     for store_date in dates.values():
         if await store_date.is_today():
@@ -317,19 +315,13 @@ async def birthday_tada(client: AsyncClient, room_id: str, event: RoomMessageTex
 
     store_date: StoreDate
     for store_date in dates.values():
-        if await store_date.is_birthday_person(room_id, mx_user=event.sender):
-            # sender is birthday person
+
+        if await store_date.is_birthday_person(room_id, formatted=event.sender) or \
+                await store_date.is_birthday_person(room_id, plaintext=event.body, formatted=event.formatted_body):
+
+            # sender is birthday person or birthday person is mentioned
             await plugin.message(client, room_id, "🎉")
             await plugin.store_data("last_tada", {room_id: datetime.datetime.now()})
             break
-
-        elif store_date.date_type == "birthday" and store_date.mx_room == room_id:
-            if (event.body is not None and store_date.description in event.body) or \
-                    (event.formatted_body is not None and store_date.name in event.formatted_body):
-
-                # birthday person is mentioned
-                await plugin.message(client, room_id, "🎉")
-                await plugin.store_data("last_tada", {room_id: datetime.datetime.now()})
-                break
 
 setup()
