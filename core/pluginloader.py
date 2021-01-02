@@ -26,10 +26,17 @@ module_dirs: List[str] = [basename(d) for d in module_all if isdir(d) and not d.
 module_files: List[str] = [basename(f)[:-3] for f in module_all if isfile(f) and f.endswith('.py') and not f.endswith('__init__.py')]
 
 for module in module_dirs:
-    globals()[module] = importlib.import_module(f"plugins.{module}.{module}")
+    try:
+        globals()[module] = importlib.import_module(f"plugins.{module}.{module}")
+    except ModuleNotFoundError:
+        logger.error(f"Error importing {module}. Please check requirements: {traceback.format_exc(limit=1)}")
+
 for module in module_files:
-    logger.warning(f"DEPRECATION WARNING: Single-file plugin {module} detected. This will not be loaded from 0.2.0 onwards.")
-    globals()[module] = importlib.import_module(f"plugins.{module}")
+    try:
+        logger.warning(f"DEPRECATION WARNING: Single-file plugin {module} detected. This will not be loaded from 0.2.0 onwards.")
+        globals()[module] = importlib.import_module(f"plugins.{module}")
+    except ModuleNotFoundError:
+        logger.error(f"Error importing {module}. Please check requirements: {traceback.format_exc(limit=1)}")
 
 
 class PluginLoader:
@@ -235,7 +242,7 @@ class PluginLoader:
 
         try:
             return pickle.load(open(self.timers_filepath, "rb"))
-        except (FileNotFoundError, AttributeError) as err:
+        except (FileNotFoundError, AttributeError, ModuleNotFoundError) as err:
             # TODO: this (AttributeError) resets the stored last execution times for ALL timers of the plugin if the method of a stored timer has been renamed
             logger.warning(f"Failed loading last timers execution from {self.timers_filepath}: {err}")
             return []

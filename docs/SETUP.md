@@ -43,6 +43,11 @@ Install python dependencies:
 pip install -r requirements.txt
 ```
 
+To install all plugin requirements (specified in each plugin's `requirements.txt`), you may optionally run:
+```
+find . -iname requirements.txt -exec pip install -r {} \;
+```
+
 ## Configuration
 
 Copy the sample configuration file to a new `config.yaml` file.
@@ -86,4 +91,6 @@ If you've checked out HEAD, just do
 git pull
 ```
 
-Proceed with running as usual.
+In case of changed requirements, repeat "Install Python dependencies".
+
+Proceed with "Running" as usual.

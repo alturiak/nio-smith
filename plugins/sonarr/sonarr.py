@@ -2,15 +2,10 @@
 from plugin import Plugin
 import datetime
 import logging
+import requests
+from humanize import naturalsize
 
 logger = logging.getLogger(__name__)
-try:
-    import requests
-    import humanize
-except ImportError as err:
-    logger.fatal(f"Module {err.name} not found")
-    raise ImportError(name="sonarr")
-
 plugin = Plugin("sonarr", "TV-Shows", "Provides commands to query sonarr's API")
 
 
@@ -57,7 +52,7 @@ async def series(command):
             cols = [f"<a href=\"https://www.imdb.com/title/{show['imdbId']}\">{show['title']}</a>",
                     f"{str(show['seasonCount'])}",
                     f"{str(show['episodeCount'])}",
-                    f"{str(humanize.naturalsize(show['sizeOnDisk']))}",
+                    f"{str(naturalsize(show['sizeOnDisk']))}",
                     f"{str(show['status'])}",
                     f"{str(show['ratings']['value'])}"]
             message = message + "<tr>"

@@ -15,7 +15,9 @@
 
 ## Included plugins' 3rd party requirements
 - `dates`: [dateparser](https://pypi.org/project/dateparser/) to allow for almost arbitrary input format of dates
-- `sonarr`: [requests](https://pypi.org/project/requests/) to query sonarr's API
+- `sonarr`:
+  - [requests](https://pypi.org/project/requests/) to query sonarr's API
+  - [humanize](https://pypi.org/project/humanize/)
 - `translate`: [googletrans](https://pypi.org/project/googletrans/) to provide language detection and translation
 
 ## Plugins can
@@ -48,8 +50,7 @@
 - ❌ not use `time.sleep()` - please use `asyncio.sleep()` instead
 
 ## Plugins should
-- ✔ raise `ImportError`s with meaningful messages for missing 3rd-party modules
-- ✔ handle any other exceptions themselves
+- ✔ handle exceptions themselves (they will eventually be caught by the bot, but will produce error logs)
 - ✔ use [type hints](https://docs.python.org/3/library/typing.html)
 - ✔ adhere to [PEP 8](https://www.python.org/dev/peps/pep-0008/) (except for
 [maximum-line-length](https://www.python.org/dev/peps/pep-0008/#maximum-line-length) - anything up to 160 is fine by
