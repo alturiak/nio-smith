@@ -4,14 +4,9 @@ from nio import AsyncClient, RoomMessageText
 from re import sub
 from typing import List, Dict
 import logging
+import googletrans
 
 logger = logging.getLogger(__name__)
-try:
-    import googletrans
-except ImportError as err:
-    logger.fatal(f"Module {err.name} not found")
-    raise ImportError(name="translate")
-
 plugin = Plugin("translate", "General", "Provide near-realtime translations of all room-messages via Google Translate")
 
 

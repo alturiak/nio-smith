@@ -6,13 +6,9 @@ from typing import Dict, List
 import datetime
 from shlex import split
 import logging
-logger = logging.getLogger(__name__)
-try:
-    from dateparser import parse
-except ImportError as err:
-    logger.fatal(f"Module {err.name} not found")
-    raise ImportError(name="dates")
+from dateparser import parse
 
+logger = logging.getLogger(__name__)
 plugin = Plugin("dates", "General", "Stores dates and birthdays, posts reminders")
 
 
