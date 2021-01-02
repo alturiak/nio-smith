@@ -1,9 +1,12 @@
 Nio Smith
 ===
-[![#nio-smith](https://img.shields.io/matrix/nio-smith:matrix.org?color=blue&label=%23nio-smith)](https://matrix.to/#/!rdBDrHapAsYdvmgGMP:pack.rocks?via=pack.rocks)
+[![Built with matrix-nio](https://img.shields.io/badge/built%20with-matrix--nio-brightgreen)](https://github.com/poljar/matrix-nio)
+[![#nio-smith](https://img.shields.io/matrix/nio-smith:matrix.org?color=blue&label=Join%20%23nio-smith)](https://matrix.to/#/!rdBDrHapAsYdvmgGMP:pack.rocks?via=pack.rocks)
 
-A modular bot for [@matrix-org](https://github.com/matrix-org), written in python using
-[matrix-nio](https://matrix-nio.readthedocs.io/en/latest/nio.html), supporting end-to-end-encryption out of the box.  
+A plugin-based bot for [@matrix-org](https://github.com/matrix-org),  
+written in python using
+[matrix-nio](https://matrix-nio.readthedocs.io/en/latest/nio.html),  
+supporting end-to-end-encryption out of the box.  
 It's based on the lovely [nio-template](https://github.com/anoadragon453/nio-template) by [@anoadragon453](https://github.com/anoadragon453)
 
 Pull Requests and [feedback](https://matrix.to/#/#nio-smith:pack.rocks) welcome. :-)
