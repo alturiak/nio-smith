@@ -1,6 +1,6 @@
 from core.bot_commands import Command
 from nio import (
-    JoinError, MatrixRoom, UnknownEvent,
+    JoinError, MatrixRoom, UnknownEvent, InviteEvent, RoomMessageText
 )
 
 import logging
@@ -27,7 +27,7 @@ class Callbacks(object):
         self.command_prefix = config.command_prefix
         self.plugin_loader: PluginLoader = plugin_loader
 
-    async def message(self, room, event):
+    async def message(self, room: MatrixRoom, event: RoomMessageText):
         """Callback for when a message event is received
 
         Args:
@@ -50,7 +50,6 @@ class Callbacks(object):
 
         # process each line as separate message to check for commands
         messages = msg.split("\n\n")
-
         for split_message in messages:
             # Process as message if in a public room without command prefix
             has_command_prefix = split_message.startswith(self.command_prefix)
@@ -85,19 +84,26 @@ class Callbacks(object):
         if event.type == "m.reaction":
             await self.plugin_loader.run_hooks(self.client, event.type, room, event)
 
-    async def invite(self, room, event):
+    async def invite(self, room: MatrixRoom, event: InviteEvent):
         """Callback for when an invite is received. Join the room specified in the invite"""
-        logger.debug(f"Got invite to {room.room_id} from {event.sender}.")
+        logger.info(f"Got invite to {room.room_id} from {event.sender}.")
 
-        if self.config.botmasters == [] or event.sender in self.config.botmasters:
-            # Attempt to join 3 times before giving up
-            for attempt in range(3):
-                result = await self.client.join(room.room_id)
-                if type(result) == JoinError:
-                    logger.error(
-                        f"Error joining room {room.room_id} (attempt %d): %s",
-                        attempt, result.message,
-                    )
-                else:
-                    logger.info(f"Joined {room.room_id}")
-                    break
+        # Only join when inviter is botmaster, botmasters are empty or room is DM
+        if self.config.botmasters == [] or event.sender in self.config.botmasters or room.is_group:
+
+            result = await self.client.join(room.room_id)
+            if type(result) == JoinError:
+                logger.error(f"Error joining room {room.room_id}: {result.message}")
+            else:
+                logger.info(f"Joined {room.room_id}")
+
+            # room.is_group is not reliable before joining, verify:
+            if not room.is_group or room.member_count > 2:
+                # room is not a DM, check if we have been invited by botmaster or botmasters empty
+                if not self.config.botmasters == [] and event.sender not in self.config.botmasters:
+                    logger.warning(f"Leaving {room.display_name} ({room.room_id}) due to unauthorised invite.")
+                    await self.client.room_leave(room.room_id)
+
+        else:
+            logger.warning(f"Rejecting invite to {room.display_name} ({room.room_id}) due to unauthorised invite.")
+            await self.client.room_leave(room.room_id)
