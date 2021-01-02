@@ -2,7 +2,7 @@
     Imports all plugins from plugins subdirectory
 
 """
-
+from core.chat_functions import send_text_to_room
 from plugin import Plugin, PluginCommand, PluginHook
 from core.timer import Timer
 from sys import modules
@@ -178,6 +178,7 @@ class PluginLoader:
                         traceback.print_exc()
                     return 0
                 else:
+                    await send_text_to_room(command.client, command.room.room_id, f"Required power level for command {command[0]} not met")
                     return 2
             else:
                 return 1
@@ -199,7 +200,6 @@ class PluginLoader:
                         traceback.print_exc()
 
     async def run_timers(self, client, timestamp: float, filepath: str) -> float:
-
         """
         Checks all timers if their execution is due and executes them
         :param client:
