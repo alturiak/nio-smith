@@ -1,5 +1,4 @@
 aiohttp~=3.7.3
-nio~=3.4.2
 fuzzywuzzy~=0.18.0
 matrix-nio[e2e]>=0.15.2
 Markdown>=3.1.1
