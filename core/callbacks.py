@@ -67,8 +67,8 @@ class Callbacks(object):
                 split_message = split_message.lstrip()
 
             if split_message != "":
-                command = Command(self.client, self.store, self.config, split_message, room, event, self.plugin_loader)
-                await command.process()
+                command = Command(self.client, self.store, self.config, split_message, room, event)
+                await self.plugin_loader.run_command(command)
 
     async def event_unknown(self, room: MatrixRoom, event: UnknownEvent):
         """
