@@ -1,0 +1,52 @@
+from nio import AsyncClient, MatrixRoom
+from plugin import Plugin
+
+plugin = Plugin("manage_bot", "General", "Provide functions to manage the bot from an admin-room")
+
+
+def setup():
+    plugin.add_config("manage_bot_room", default_value=[], is_required=False)
+    plugin.add_command("bot_rooms_list", bot_rooms_list, "Displays a list of rooms the bot is in", [plugin.read_config("manage_bot_room")])
+    plugin.add_command("bot_rooms_cleanup", bot_rooms_cleanup, "Leave rooms the bot is alone in", [plugin.read_config("manage_bot_room")])
+
+
+async def bot_rooms_list(command):
+    """
+    Display name, room_id and member count of all rooms the bot is in.
+    Display a list of members of rooms with only two members (e.g. DMs with the bot)
+    :param command:
+    :return:
+    """
+
+    client: AsyncClient = command.client
+    room: MatrixRoom
+    message: str = ""
+    # sort rooms by display_name
+    rooms = {k: v for k, v in sorted(client.rooms.items(), key=lambda item: item[1].display_name)}
+
+    for room in rooms.values():
+        message += f"`{room.display_name}` ({room.room_id}): {room.member_count}  \n"
+        if room.member_count == 2:
+            message += f"{room.users}  \n"
+    await plugin.reply(command, message)
+
+
+async def bot_rooms_cleanup(command):
+    """
+    Make the bot leave all rooms that the bot is the only user in
+    :param command:
+    :return:
+    """
+
+    client: AsyncClient = command.client
+    room: MatrixRoom
+    message: str = ""
+    for room in client.rooms.values():
+        if room.member_count < 2:
+            message += f"Leaving {room.display_name} ({room.room_id})  \n"
+            await client.room_leave(room.room_id)
+
+    await plugin.reply(command, message)
+
+
+setup()
