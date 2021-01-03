@@ -7,7 +7,7 @@ import yaml
 from core.chat_functions import send_text_to_room, send_reaction, send_replace
 from asyncio import sleep
 import logging
-from nio import AsyncClient, JoinedMembersResponse, RoomMember, RoomSendResponse
+from nio import AsyncClient, JoinedMembersResponse, RoomMember, RoomSendResponse, RoomSendError
 from core.timer import Timer
 from fuzzywuzzy import fuzz
 import copy
@@ -341,10 +341,10 @@ class Plugin:
             await sleep(float(delay/1000))
             await client.room_typing(room_id, typing_state=False)
 
-        event_response: RoomSendResponse
+        event_response: RoomSendResponse or RoomSendError
         event_response = await send_text_to_room(client, room_id, message, notice=False)
 
-        if event_response:
+        if isinstance(event_response, RoomSendResponse):
             return event_response.event_id
         else:
             return None
