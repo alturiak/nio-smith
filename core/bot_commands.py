@@ -2,7 +2,7 @@ from nio import RoomMessageText, AsyncClient, MatrixRoom
 
 
 class Command(object):
-    def __init__(self, client, store, config, command, room, event):
+    def __init__(self, client, store, config, command, room, event, plugin_loader):
         """A command made by a user
 
         Args:
@@ -25,3 +25,4 @@ class Command(object):
         self.room: MatrixRoom = room
         self.event: RoomMessageText = event
         self.args = self.command.split()[1:]
+        self.plugin_loader = plugin_loader
