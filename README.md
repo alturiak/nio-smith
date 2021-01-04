@@ -15,7 +15,7 @@ Pull Requests and [feedback](https://matrix.to/#/#nio-smith:pack.rocks) welcome.
 See [docs/PLUGINS.md](docs/PLUGINS.md) for further details on plugin capabilities.
 
 ## Features
-- ✔ transparent end-to-end encryption (EE2E)
+- ✔ transparent end-to-end encryption (E2EE)
 - ✔ configurable command-prefix
 - ✔ fuzzy command matching (for the autocorrect-victims among us)
 - ✔ dynamic plugin-loading (on startup), just place your plugin in the `plugins`-directory
