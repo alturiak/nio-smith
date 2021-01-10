@@ -222,6 +222,7 @@ class PluginLoader:
                         timers_triggered = True
                 except Exception as err:
                     logger.critical(f"Plugin failed to catch exception caused by timer {timer.name}: {err}")
+                    traceback.print_exc()
 
             if timers_triggered:
                 # write all timers to file
