@@ -70,11 +70,8 @@ class StoreDate:
         :return:
         """
 
-        if not plaintext and not formatted:
-            return False
-
         if await self.is_today() and self.date_type == "birthday" and self.mx_room == room_id:
-            return self.description in plaintext or self.name in formatted
+            return (plaintext and self.description.lower() in plaintext.lower()) or (formatted and self.name.lower() in formatted.lower())
 
 
 def generate_date_id(mx_room: str, name: str) -> str:
@@ -257,22 +254,16 @@ async def current_dates(client):
 
                 user_link: str or None
                 if (user_link := await plugin.link_user(client, store_date.mx_room, store_date.description)) is not None:
-                    react_to: str = await plugin.message(client, store_date.mx_room, f"🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉  \n"
-                                                                                     f"Everyone, it's {user_link}'s birthday!  \n"
-                                                                                     f"This calls for a celebration in @room  \n"
-                                                                                     f"🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉  \n")
-                    await plugin.react(client, store_date.mx_room, react_to, "🎁")
-                    await plugin.react(client, store_date.mx_room, react_to, "🍻")
-                    await plugin.react(client, store_date.mx_room, react_to, "🥂")
-                    await plugin.react(client, store_date.mx_room, react_to, "✨")
-                    await plugin.react(client, store_date.mx_room, react_to, "🎈")
-                    await plugin.react(client, store_date.mx_room, react_to, "🎊")
-
+                    message_id: str = await plugin.message(client, store_date.mx_room, f"🎉 @room, it's {user_link}'s birthday! 🎉  \n")
                 else:
-                    await plugin.message(client, store_date.mx_room, f"🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉  \n"
-                                                                     f"Everyone, it's {store_date.description}'s birthday!  \n"
-                                                                     f"This calls for a celebration in @room  \n"
-                                                                     f"🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉  \n")
+                    message_id: str = await plugin.message(client, store_date.mx_room, f"🎉 @room, it's {store_date.description}'s birthday! 🎉  \n")
+
+                await plugin.react(client, store_date.mx_room, message_id, "🎁")
+                await plugin.react(client, store_date.mx_room, message_id, "🍻")
+                await plugin.react(client, store_date.mx_room, message_id, "🥂")
+                await plugin.react(client, store_date.mx_room, message_id, "✨")
+                await plugin.react(client, store_date.mx_room, message_id, "🎈")
+                await plugin.react(client, store_date.mx_room, message_id, "🎊")
 
             elif store_date.date_type == "date:":
                 await plugin.message(client, store_date.mx_room, f"Reminder: {store_date.name} is today!  \n"
