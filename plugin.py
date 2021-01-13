@@ -399,7 +399,7 @@ class Plugin:
 
         await send_reaction(client, room_id, event_id, reaction)
 
-    async def replace(self, client, room_id: str, event_id: str, message: str) -> str or None:
+    async def replace(self, client: AsyncClient, room_id: str, event_id: str, message: str) -> str or None:
         """
         Edits an event. send_replace() will check if the new content actualy differs before really sending the replacement
         :param client: (nio.AsyncClient) The client to communicate to matrix with
@@ -411,6 +411,24 @@ class Plugin:
         """
 
         return await send_replace(client, room_id, event_id, message)
+
+    async def message_redact(self, client: AsyncClient, room_id: str, event_id: str, reason: str = ""):
+        """
+        Redact an event
+        :param client: (nio.AsyncClient) The client to communicate to matrix with
+        :param room_id: (str) room_id to send the redaction to
+        :param event_id: (str) event_id to redact
+        :param reason: (str) optional reason for the redaction
+        :return:
+        """
+
+        await client.room_redact(room_id, event_id, reason)
+
+    async def message_delete(self, client: AsyncClient, room_id: str, event_id: str, reason: str = ""):
+        """
+        Alias for message_redact
+        """
+        await self.message_redact(client, room_id, event_id, reason)
 
     async def is_user_in_room(self, client: AsyncClient, room_id: str, display_name: str, strictness: str = "loose", fuzziness: int = 75) -> RoomMember or None:
         """
