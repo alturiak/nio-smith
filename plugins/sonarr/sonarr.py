@@ -1,4 +1,9 @@
 # -*- coding: utf8 -*-
+from typing import Dict, List
+
+from nio import AsyncClient
+
+from core.bot_commands import Command
 from plugin import Plugin
 import datetime
 import logging
@@ -19,11 +24,10 @@ def setup():
     plugin.add_config("room_id", is_required=True)
 
     plugin.add_command("series", series, "Get a list of currently tracked series", room_id=[plugin.read_config("room_id")])
-    plugin.add_command("upcoming", upcoming, "Get a list of upcoming episodes from sonarr's calendar", room_id=[plugin.read_config("room_id")])
-    plugin.add_command("today", current_episodes_command, "Get a list of today's episodes", room_id=[plugin.read_config("room_id")])
+    plugin.add_command("episodes", current_episodes, "Post a new message that is tracking episodes", room_id=[plugin.read_config("room_id")])
 
-    # initially post current episodes at the start of the day
-    plugin.add_timer(current_episodes_timer, "daily")
+    # initially post current episodes at the start of the week
+    plugin.add_timer(current_episodes, frequency="weekly")
     # check for updates to the episodes' status and update the message accordingly
     plugin.add_timer(update_current_episodes, frequency=datetime.timedelta(minutes=5))
 
@@ -66,19 +70,27 @@ async def series(command):
         await plugin.reply_notice(command, f"Response Code: {str(shows.status_code)}")
 
 
-async def get_calendar_episodes(limit: int) -> list or None:
+async def current_week_dates() -> (str, str):
     """
-    Get a list of episodes from the calendar for <limit> days in the future or past
-    :param limit: days in the future to fetch calendar entries
-    :return: list of episodes (https://github.com/Sonarr/Sonarr/wiki/Calendar)
+    Return start date of current week and start date of next week to allow for retrieving episodes for the current week
+    :return: start date and end date of the current week
     """
 
-    if limit < 0:
-        start_date = datetime.date.isoformat(datetime.date.today() - datetime.timedelta(days=-limit))
-        end_date = datetime.date.isoformat(datetime.date.today())
-    else:
-        start_date = datetime.date.isoformat(datetime.date.today())
-        end_date = datetime.date.isoformat(datetime.date.today() + datetime.timedelta(days=limit+1))
+    weekday: int = datetime.date.today().weekday()
+    week_start: str = datetime.date.isoformat(datetime.date.today() - datetime.timedelta(days=weekday))
+    week_end: str = datetime.date.isoformat(datetime.date.today() + datetime.timedelta(days=7-weekday))
+
+    return week_start, week_end
+
+
+async def get_calendar_episodes(start_date: str, end_date: str) -> list or None:
+    """
+    Get a list of episodes from the calendar between start_date and end_date
+    :param start_date: start_date to get episodes for in datetime.date.isoformat
+    :param end_date: end_date to get episodes for in datetime.date.isoformat
+    :return: list of episodes (https://github.com/Sonarr/Sonarr/wiki/Calendar), sorted by airdate
+    """
+
     api_path = "/calendar"
     api_parameters = {"apikey": plugin.read_config("api_key"),
                       "start": start_date,
@@ -93,95 +105,68 @@ async def get_calendar_episodes(limit: int) -> list or None:
         return None
 
 
-async def upcoming(command):
+async def compose_upcoming(start_date: str, end_date: str) -> str:
     """
-    Get the list of episodes for the next seven days and post them to the room
-    :param command: Command-object
-    :return: -
-    """
-
-    if episodes := await get_calendar_episodes(7):
-        message: str = ""
-        for episode in episodes:
-            message += f"{str(episode['airDateUtc'])} {str(episode['series']['title'])} {str(episode['seasonNumber'])}x{str(episode['episodeNumber'])} " \
-                       f"{str(episode['title'])}  \n"
-
-        if message != "":
-            message = f"**Upcoming episodes in the next 7 days:**  \n{message}"
-            await plugin.reply(command, message)
-
-    else:
-        await plugin.react(command.client, command.room.room_id, command.event.event_id, "❌")
-
-
-async def build_episodes_list(limit: int) -> str:
-    """
-    Get the list of episodes as defined by limit and nicely format them to a message, displaying episodes and download status
-    :param limit: days in the future to fetch calendar entries
-    :return: the message listing the episodes, "" if no episodes found
+    Get the list of episodes between start_date and end_date and format them as a list, grouped by day, highlighting current day and file-status of episodes
+    :param start_date: start_date to get episodes for in datetime.date.isoformat
+    :param end_date: end_date to get episodes for in datetime.date.isoformat
+    :return: formatted message
     """
 
-    if episodes := await get_calendar_episodes(limit):
-        message: str = ""
+    message: str = "#### Episodes expected this week  \n"
+
+    if episodes := await get_calendar_episodes(start_date, end_date):
+
+        episodes_by_day: Dict[str, List[any]] = {}
 
         for episode in episodes:
-            if episode['hasFile']:
-                status_color = "green"
+
+            day: str = datetime.datetime.fromisoformat(episode['airDateUtc'].rstrip('Z')).strftime('%A')
+            if day not in episodes_by_day.keys():
+                episodes_by_day[day] = [episode]
             else:
-                status_color = "red"
-            message += f"<font color=\"{status_color}\">{str(episode['series']['title'])} " \
-                       f"{(str(episode['seasonNumber'])).zfill(2)}x{(str(episode['episodeNumber'])).zfill(2)} " \
-                       f"{str(episode['title'])}</font>  \n"
+                episodes_by_day.get(day).append(episode)
 
-        return message
-    else:
-        return ""
+        for day, episode_list in episodes_by_day.items():
+            if day == datetime.datetime.today().strftime('%A'):
+                message += f"**<font color=\"orange\">{day}</font>**  \n"
+            else:
+                message += f"**{day}**  \n"
+
+            for episode in episode_list:
+
+                format_begin: str = ""
+                format_end: str = ""
+
+                if episode['hasFile']:
+                    format_begin = "<font color=\"green\">"
+                    format_end = "</font>"
+                elif datetime.datetime.fromisoformat(episode['airDateUtc'].rstrip('Z')) < datetime.datetime.now():
+                    # airdate is in the past, mark file missing
+                    format_begin = "<font color=\"red\">"
+                    format_end = "</font>"
+
+                message += f"{format_begin}{str(episode['series']['title'])} " \
+                           f"S{str(episode['seasonNumber']).zfill(2)}E{str(episode['episodeNumber']).zfill(2)} " \
+                           f"{str(episode['title'])}{format_end}  \n"
+    return message
 
 
-async def build_today_and_yesterday_list() -> str:
+async def current_episodes(command_client: Command or AsyncClient):
     """
-    Get today's and yesterday's episodes and list them in a message, if there are any episodes for today
-    :return: the message listign the episodes, "" if no episodes found
-    """
-
-    today_episodes: str = await build_episodes_list(0)
-    if today_episodes != "":
-        yesterday_episodes: str = await build_episodes_list(-1)
-
-        if yesterday_episodes != "":
-            return f"**Yesterday's episodes**  \n{yesterday_episodes}  \n  \n" \
-                   f"**Today's episodes**  \n{today_episodes}"
-        else:
-            return f"**Today's episodes**  \n{today_episodes}"
-    else:
-        return ""
-
-
-async def current_episodes_command(command):
-    """
-    Get the list of episodes for the current day and last day and post them to the configured room
-    :param command: Command-object
+    Get the list of episodes for the current week and post them to the configured room
+    :param command_client: Command or AsyncClient, depending on whether the method has been called by a command or a timer
     :return: -
     """
 
-    message: str = await build_today_and_yesterday_list()
-
-    if message != "":
-        event_id: str = await plugin.reply(command, message)
-        await plugin.store_data("today_message", event_id)
-        await plugin.store_data("today_message_text", message)
+    if isinstance(command_client, AsyncClient):
+        client = command_client
     else:
-        await plugin.reply_notice(command, "No episodes today, try `upcoming`")
+        client = command_client.client
 
+    (week_start, week_end) = await current_week_dates()
+    message: str = await compose_upcoming(week_start, week_end)
 
-async def current_episodes_timer(client):
-    """
-    Get the list of episodes for the current day and last day and post them to the configured room
-    :param client: nio.AsyncClient
-    :return: -
-    """
-
-    message: str = await build_today_and_yesterday_list()
     if message != "":
         # store event_id for later editing
         event_id = await plugin.message(client, plugin.read_config("room_id"), message)
@@ -191,12 +176,14 @@ async def current_episodes_timer(client):
 
 async def update_current_episodes(client):
     """
-    Check the list of current episodes for successful downloads and update the message accordingly
+    update the message posted by current_episodes to reflect current status of episodes
     :param client: nio.AsyncClient
     :return:
     """
 
-    message: str = await build_today_and_yesterday_list()
+    (week_start, week_end) = await current_week_dates()
+    message: str = await compose_upcoming(week_start, week_end)
+
     if message != "" and message != await plugin.read_data("today_message_text"):
         await plugin.replace(client, plugin.read_config("room_id"), await plugin.read_data("today_message"), message)
         await plugin.store_data("today_message_text", message)
