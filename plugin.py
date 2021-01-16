@@ -54,7 +54,6 @@ class Plugin:
             return False
 
     def get_help_text(self):
-        # TODO: change to use of self.help_texts
         """
         Extract helptexts from commands
 
@@ -92,6 +91,21 @@ class Plugin:
         else:
             logger.error(f"Error adding command {command} - command already exists")
 
+    def del_command(self, command: str) -> bool:
+        """
+        Removes an active command
+        :param command: the actual name of the command
+        :return:    True, if the command has been found and removed,
+                    False, otherwise
+        """
+
+        if command in self.commands.keys():
+            del self.commands[command]
+            return True
+
+        else:
+            return False
+
     def get_commands(self):
         """
         Extract called methods from commands
@@ -103,6 +117,14 @@ class Plugin:
         return self.commands
 
     def add_hook(self, event_type: str, method: Callable, room_id: List[str] = None):
+        """
+        Hook into events defined by event_type with `method`.
+        Will overwrite existing hooks with the same event_type and method.
+        :param event_type: event-type to hook into, currently "m.reaction" and "m.room.message"
+        :param method: method to be called when an event is received
+        :param room_id: optional list of room_ids the hook is active on
+        :return:
+        """
 
         plugin_hook = PluginHook(event_type, method, room_id)
         if event_type not in self.hooks.keys():
@@ -114,6 +136,26 @@ class Plugin:
     def get_hooks(self):
 
         return self.hooks
+
+    def del_hook(self, event_type: str, method: Callable) -> bool:
+        """
+        Remove an active hook
+        :param event_type:
+        :param method:
+        :return:    True, if hook for given event_type and method has been found and removed
+                    False, otherwise
+        """
+
+        if event_type in self.hooks.keys():
+
+            hooks = self.hooks
+            hook: PluginHook
+            for hook in hooks:
+                if hook.method == method:
+                    self.hooks[event_type].remove(hook)
+                    return True
+
+        return False
 
     def add_timer(self, method: Callable, frequency: str or datetime.timedelta or None = None):
         """
@@ -583,6 +625,22 @@ class Plugin:
                 return None
         else:
             return None
+
+    async def _save_state(self):
+        """
+        Save dynamic commands, dynamic hooks and all timers to state file
+        :return:
+        """
+
+        pass
+
+    async def _load_state(self):
+        """
+        Load dynamic commands, dynamic hooks and all timers from state file
+        :return:
+        """
+
+        pass
 
 
 class PluginCommand:
