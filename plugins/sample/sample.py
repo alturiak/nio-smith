@@ -21,6 +21,7 @@ def setup():
     plugin.add_command("sample_reaction_test", sample_reaction_test, "Post a message and record reactions to this message")
     plugin.add_command("sample_react", sample_react, "Post reactions to a command")
     plugin.add_command("sample_replace", sample_replace, "Post a message and edit it afterwards")
+    plugin.add_command("sample_add_command", add_command, "Dynamically adds an active command `sample_remove_command`")
     plugin.add_hook("m.reaction", hook_reactions)
 
     """The following part demonstrates defining a configuration value to be expected in the plugin's configuration file and reading the value
@@ -203,6 +204,16 @@ async def timer_every_36_minutes(client):
     """
 
     print(f"This method is being executed every 36 minutes")
+
+
+async def add_command(command):
+
+    plugin.add_command("sample_remove_command", remove_command, "Dynamically removes an active command `sample_remove_command`")
+
+
+async def remove_command(command):
+
+    plugin.del_command("sample_remove_command")
 
 
 setup()

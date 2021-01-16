@@ -15,13 +15,13 @@ Pull Requests and [feedback](https://matrix.to/#/#nio-smith:pack.rocks) welcome.
 See [docs/PLUGINS.md](docs/PLUGINS.md) for further details on plugin capabilities.
 
 ## Features
+- ✔ dynamic plugin-loading (on startup), just place your plugin in the `plugins`-directory
 - ✔ transparent end-to-end encryption (E2EE)
 - ✔ configurable command-prefix
 - ✔ fuzzy command matching (for the autocorrect-victims among us)
-- ✔ dynamic plugin-loading (on startup), just place your plugin in the `plugins`-directory
-- ✔ autojoin channels on invite (can be restricted to specified accounts)
 - ✔ silently ignores unknown commands to avoid clashes with other bots using the same command prefix
 - ✔ dynamic population of `help`-command with plugins valid for the respective room
+- ✔ autojoin channels on invite (can be restricted to specified accounts)
 - ✔ resilience against temporary homeserver-outages (e.g. during restarts)
 - ✔ resilience against exceptions caused by plugins
 - ❌ cross-signing support

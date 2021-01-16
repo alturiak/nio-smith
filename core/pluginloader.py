@@ -44,9 +44,6 @@ class PluginLoader:
     def __init__(self, timers_filepath: str):
         # get all loaded plugins from sys.modules and make them available as plugin_list
         self.__plugin_list: Dict[str, Plugin] = {}
-        self.commands: Dict[str, PluginCommand] = {}
-        self.help_texts: Dict[str, str] = {}
-        self.hooks: Dict[str, List[PluginHook]] = {}
 
         """load stored timers"""
         self.timers_filepath: str = timers_filepath
@@ -59,20 +56,6 @@ class PluginLoader:
                     self.__plugin_list[modules[key].plugin.name] = modules[key].plugin
 
         for plugin in self.__plugin_list.values():
-
-            """assemble all valid commands and their respective methods"""
-            self.commands.update(plugin.get_commands())
-
-            """assemble all hooks and their respective methods"""
-            event_type: str
-            plugin_hooks: List[PluginHook]
-            plugin_hook: PluginHook
-            for event_type, plugin_hooks in plugin.get_hooks().items():
-                if event_type in self.hooks.keys():
-                    for plugin_hook in plugin_hooks:
-                        self.hooks[event_type].append(plugin_hook)
-                else:
-                    self.hooks[event_type] = plugin_hooks
 
             """
             check if a timer of the same name exists already,
@@ -124,12 +107,37 @@ class PluginLoader:
             return None
 
     def get_hooks(self) -> Dict[str, List[PluginHook]]:
+        """
+        Get all hooks currently registered by all plugins
+        :return: Dict of eventtype and list of PluginHooks for the eventtype
+        """
 
-        return self.hooks
+        all_plugin_hooks: Dict[str, List[PluginHook]] = {}
+        plugin: Plugin
+
+        for plugin in self.get_plugins().values():
+            for event_type, current_plugin_hooks in plugin.get_hooks().items():
+                if event_type in all_plugin_hooks.keys():
+                    for plugin_hook in current_plugin_hooks:
+                        all_plugin_hooks[event_type].append(plugin_hook)
+                else:
+                    all_plugin_hooks[event_type] = current_plugin_hooks
+
+        return all_plugin_hooks
 
     def get_commands(self) -> Dict[str, PluginCommand]:
+        """
+        Get all commands curently registered by all plugins
+        :return: Dict of command-string and the corresponding PluginCommand
+        """
 
-        return self.commands
+        plugin_commands: Dict[str, PluginCommand] = {}
+        plugin: Plugin
+
+        for plugin in self.get_plugins().values():
+            plugin_commands.update(plugin.get_commands())
+
+        return plugin_commands
 
     def get_timers(self) -> List[Timer]:
 
@@ -149,13 +157,13 @@ class PluginLoader:
         command_start = command.command.split()[0].lower()
         run_command: str = ""
 
-        if command_start in self.commands.keys():
+        if command_start in self.get_commands().keys():
             run_command = command_start
 
         # Command not found, try fuzzy matching
         else:
             ratios: Dict[str, int] = {}
-            for key in self.commands.keys():
+            for key in self.get_commands().keys():
                 if fuzz.ratio(command_start, key) > 60:
                     ratios[key] = fuzz.ratio(command_start, key)
 
@@ -165,14 +173,14 @@ class PluginLoader:
 
         # check if we did actually find a matching command
         if run_command != "":
-            if self.commands[run_command].room_id is None or command.room.room_id in self.commands[run_command].room_id:
+            if self.get_commands()[run_command].room_id is None or command.room.room_id in self.get_commands()[run_command].room_id:
 
                 # check if the user's power_level matches the command's requirement
-                if command.room.power_levels.get_user_level(command.event.sender) >= self.commands[run_command].power_level:
+                if command.room.power_levels.get_user_level(command.event.sender) >= self.get_commands()[run_command].power_level:
 
                     # Make sure, exceptions raised by plugins do not kill the bot
                     try:
-                        await self.commands[run_command].method(command)
+                        await self.get_commands()[run_command].method(command)
                     except Exception as err:
                         logger.critical(f"Plugin failed to catch exception caused by {command_start}:")
                         traceback.print_exc()
@@ -185,9 +193,9 @@ class PluginLoader:
 
     async def run_hooks(self, client, event_type: str, room, event):
 
-        if event_type in self.hooks.keys():
+        if event_type in self.get_hooks().keys():
 
-            event_hooks: List[PluginHook] = self.hooks[event_type]
+            event_hooks: List[PluginHook] = self.get_hooks()[event_type]
             event_hook: PluginHook
 
             for event_hook in event_hooks:
