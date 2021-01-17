@@ -1,7 +1,3 @@
-"""
-    Imports all plugins from plugins subdirectory
-
-"""
 from core.chat_functions import send_text_to_room
 from plugin import Plugin, PluginCommand, PluginHook
 from core.timer import Timer
@@ -9,7 +5,6 @@ from sys import modules
 from re import match
 from time import time
 import operator
-import pickle
 from typing import List, Dict
 import glob
 from os.path import basename, isfile, isdir
@@ -41,14 +36,9 @@ for module in module_files:
 
 class PluginLoader:
 
-    def __init__(self, timers_filepath: str):
+    def __init__(self):
         # get all loaded plugins from sys.modules and make them available as plugin_list
         self.__plugin_list: Dict[str, Plugin] = {}
-
-        """load stored timers"""
-        self.timers_filepath: str = timers_filepath
-        self.timers: List[Timer] = []
-        stored_timers: List[Timer] = self.__load_timers()
 
         for key in modules.keys():
             if match(r"^plugins\.\w*(\.\w*)?", key):
@@ -56,26 +46,6 @@ class PluginLoader:
                     self.__plugin_list[modules[key].plugin.name] = modules[key].plugin
 
         for plugin in self.__plugin_list.values():
-
-            """
-            check if a timer of the same name exists already,
-            overwrite method if needed, keep last_execution from stored timer
-            non-existing timers will be added as is
-            """
-            new_timer: Timer
-            stored_timer: Timer
-
-            for new_timer in plugin.get_timers():
-                for stored_timer in stored_timers:
-                    if stored_timer.name == new_timer.name:
-                        logger.debug(f"Updated existing timer {stored_timer.name} {stored_timer.last_execution}")
-                        self.timers.append(Timer(new_timer.name, new_timer.method, new_timer.frequency, stored_timer.last_execution))
-                        break
-                else:
-                    # timer not found in stored timers
-                    self.timers.append(new_timer)
-                    logger.debug(f"Added new timer: {new_timer.name}")
-
             """Display details about the loaded plugins, this does nothing else"""
             logger.info(f"Loaded plugin {plugin.name}:")
             if plugin.get_commands() != {}:
@@ -92,6 +62,15 @@ class PluginLoader:
 
         for plugin in self.__plugin_list.values():
             plugin.plugin_data = await plugin._load_data_from_file()
+
+    async def load_plugin_state(self):
+        """
+        Load the plugin state (dynamic commands, dynamic hooks, timers)
+        :return:
+        """
+
+        for plugin in self.get_plugins().values():
+            plugin._load_state()
 
     def get_plugins(self) -> Dict[str, Plugin]:
 
@@ -140,8 +119,18 @@ class PluginLoader:
         return plugin_commands
 
     def get_timers(self) -> List[Timer]:
+        """
+        Return a list of all active timers of all plugins
+        :return:
+        """
 
-        return self.timers
+        all_plugin_timers: List[Timer] = []
+        plugin: Plugin
+
+        for plugin in self.get_plugins().values():
+            all_plugin_timers += plugin.get_timers()
+
+        return all_plugin_timers
 
     async def run_command(self, command) -> int:
         """
@@ -233,25 +222,13 @@ class PluginLoader:
                     traceback.print_exc()
 
             if timers_triggered:
-                # write all timers to file
-                try:
-                    pickle.dump(self.get_timers(), open(filepath, "wb"))
-                except IOError as err:
-                    logger.error(f"Error writing last timers execution to {filepath}: {err}")
+                # save all plugin-states as we currently do not know, which plugin's timer triggered
+                # TODO: only save state of affected plugins
+                plugin: Plugin
+                for plugin in self.get_plugins().values():
+                    plugin._save_state()
 
             return time()
         else:
             return timestamp
 
-    def __load_timers(self) -> List[Timer]:
-        """
-        Load all timers' last execution time from file
-        :return:
-        """
-
-        try:
-            return pickle.load(open(self.timers_filepath, "rb"))
-        except (FileNotFoundError, AttributeError, ModuleNotFoundError) as err:
-            # TODO: this (AttributeError) resets the stored last execution times for ALL timers of the plugin if the method of a stored timer has been renamed
-            logger.warning(f"Failed loading last timers execution from {self.timers_filepath}: {err}")
-            return []

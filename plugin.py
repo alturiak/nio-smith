@@ -1,7 +1,7 @@
 import os.path
 from os import remove, path
 import pickle
-from typing import List, Any, Dict, Callable, Union, Hashable
+from typing import List, Any, Dict, Callable, Union, Hashable, Tuple
 import datetime
 import yaml
 from core.chat_functions import send_text_to_room, send_reaction, send_replace
@@ -40,6 +40,7 @@ class Plugin:
 
         self.plugin_data_filename: str = f"{self.basepath}.pkl"
         self.plugin_dataj_filename: str = f"{self.basepath}.json"
+        self.plugin_state_filename: str = f"{self.basepath}_state.json"
         self.config_items_filename: str = f"{self.basepath}.yaml"
 
         self.plugin_data: Dict[str, Any] = {}
@@ -67,7 +68,7 @@ class Plugin:
 
         return command_help
 
-    def add_command(self, command: str, method: Callable, help_text: str, room_id: List[str] = None, power_level: int = 0):
+    def add_command(self, command: str, method: Callable, help_text: str, room_id: List[str] = None, power_level: int = 0, command_type: str = "static"):
         """
         Adds a new command
         :param command: the actual name of the command, e.g. !help
@@ -75,10 +76,11 @@ class Plugin:
         :param help_text: the command's helptext, e.g. as displayed by !help
         :param power_level: an optional matrix room power_level needed for users to be able to execute the command (defaults to 0, all users may execute the command)
         :param room_id: an optional room_id-list the command will be added on (defaults to none, command will be active on all rooms)
+        :param command_type: the optional type of the command, currently "static" (default) or "dynamic"
         :return:
         """
 
-        plugin_command = PluginCommand(command, method, help_text, power_level, room_id)
+        plugin_command = PluginCommand(command, method, help_text, power_level=power_level, room_id=room_id, command_type=command_type)
         if command not in self.commands.keys():
             self.commands[command] = plugin_command
             self.help_texts[command] = help_text
@@ -88,6 +90,9 @@ class Plugin:
                     if room not in self.rooms:
                         self.rooms.append(room)
             logger.debug(f"Added command {command} to rooms {room_id}")
+
+            if command_type == "dynamic":
+                self._save_state()
         else:
             logger.error(f"Error adding command {command} - command already exists")
 
@@ -99,8 +104,10 @@ class Plugin:
                     False, otherwise
         """
 
-        if command in self.commands.keys():
+        command: str
+        if command in self.commands.keys() and self.commands.get(command).command_type == "dynamic":
             del self.commands[command]
+            self._save_state()
             return True
 
         else:
@@ -116,21 +123,25 @@ class Plugin:
 
         return self.commands
 
-    def add_hook(self, event_type: str, method: Callable, room_id: List[str] = None):
+    def add_hook(self, event_type: str, method: Callable, room_id: List[str] = None, hook_type: str = "static"):
         """
         Hook into events defined by event_type with `method`.
         Will overwrite existing hooks with the same event_type and method.
         :param event_type: event-type to hook into, currently "m.reaction" and "m.room.message"
         :param method: method to be called when an event is received
         :param room_id: optional list of room_ids the hook is active on
+        :param hook_type: the optional type of the hook, currently "static" (default) or "dynamic"
         :return:
         """
 
-        plugin_hook = PluginHook(event_type, method, room_id)
+        plugin_hook = PluginHook(event_type, method, room_id=room_id, hook_type=hook_type)
         if event_type not in self.hooks.keys():
             self.hooks[event_type] = [plugin_hook]
         else:
             self.hooks[event_type].append(plugin_hook)
+
+        if hook_type == "dynamic":
+            self._save_state()
         logger.debug(f"Added hook for {event_type} to rooms {room_id}")
 
     def get_hooks(self):
@@ -150,14 +161,15 @@ class Plugin:
 
             hooks = self.hooks
             hook: PluginHook
-            for hook in hooks:
-                if hook.method == method:
+            for hook in hooks.get(event_type):
+                if hook.method == method and hook.hook_type == "dynamic":
                     self.hooks[event_type].remove(hook)
+                    self._save_state()
                     return True
 
         return False
 
-    def add_timer(self, method: Callable, frequency: str or datetime.timedelta or None = None):
+    def add_timer(self, method: Callable, frequency: str or datetime.timedelta or None = None, timer_type: str = "static"):
         """
 
         :param method: the method to be called when the timer trigger
@@ -169,15 +181,31 @@ class Plugin:
                     - "daily": run once a day roughly at midnight
                     - "hourly": run once an hour roughly at :00
                 - None: triggers about every thirty seconds
-
+        :param timer_type:
         :return:
         """
 
-        self.timers.append(Timer(f"{self.name}.{method.__name__}", method, frequency))
+        self.timers.append(Timer(f"{self.name}.{method.__name__}", method, frequency=frequency, timer_type=timer_type))
+        if timer_type == "dynamic":
+            self._save_state()
 
     def get_timers(self) -> List[Timer]:
 
         return self.timers
+
+    def del_timer(self, method: Callable):
+        """
+        Remove an existing timer, if it is of timer_type dynamic
+        :param method:
+        :return:
+        """
+
+        timer: Timer
+        timers = self.get_timers()
+        for timer in timers:
+            if timer.method == method and timer.timer_type == "dynamic":
+                self.get_timers().remove(timer)
+                self._save_state()
 
     async def store_data(self, name: str, data: Any) -> bool:
         """
@@ -626,36 +654,129 @@ class Plugin:
         else:
             return None
 
-    async def _save_state(self):
+    def _save_state(self) -> bool:
         """
         Save dynamic commands, dynamic hooks and all timers to state file
         :return:
         """
 
-        pass
+        dynamic_commands: Dict[str, PluginCommand] = {}
+        dynamic_hooks: Dict[str, List[PluginHook]] = {}
 
-    async def _load_state(self):
+        command: PluginCommand
+        for name, command in self.get_commands().items():
+            if command.command_type == "dynamic":
+                dynamic_commands[name] = command
+
+        hooks_list: List[PluginHook]
+        for event_type, hooks_list in self.get_hooks().items():
+            hook: PluginHook
+            for hook in hooks_list:
+                if hook.hook_type == "dynamic":
+                    if event_type in dynamic_hooks.keys():
+                        dynamic_hooks.get(event_type).append(hook)
+                    else:
+                        dynamic_hooks[event_type] = [hook]
+
+        plugin_state: Tuple[Dict, Dict, List] = (dynamic_commands, dynamic_hooks, self.get_timers())
+
+        if plugin_state != ({}, {}, []):
+            # we have an actual state to save
+            try:
+                json_data = jsonpickle.encode(plugin_state)
+                file = open(self.plugin_state_filename, "w")
+                file.write(json_data)
+                file.close()
+                return True
+            except Exception as err:
+                logger.critical(f"Could not write plugin_state to {self.plugin_state_filename}: {err}")
+                return False
+        else:
+            # state is empty, remove file if it exists
+            if os.path.isfile(self.plugin_state_filename):
+                try:
+                    remove(self.plugin_state_filename)
+                    return True
+                except Exception as err:
+                    logger.critical(f"Could not remove file {self.plugin_state_filename}: {err}")
+                    return False
+
+    def _load_state(self):
         """
         Load dynamic commands, dynamic hooks and all timers from state file
         :return:
         """
 
-        pass
+        try:
+            file = open(self.plugin_state_filename, "r")
+            json_data: str = file.read()
+            file.close()
+        except Exception as err:
+            logger.debug(f"Could not load plugin_state from {self.plugin_state_filename}: {err}")
+            return
+
+        dynamic_commands: Dict[str, PluginCommand]
+        dynamic_hooks: Dict[str, PluginHook]
+        timers: List[Timer]
+        (dynamic_commands, dynamic_hooks, timers) = jsonpickle.decode(json_data)
+
+        # add dynamic commands
+        self.commands.update(dynamic_commands)
+
+        # add dynamic hooks
+        event: str
+        hooks_list: List[PluginHook]
+        for event, hooks_list in dynamic_hooks.items():
+            self.get_hooks()[event] += hooks_list
+
+        # add last execution for static timers and all dynamic timers
+        state_timer: Timer
+        static_timer: Timer
+        for state_timer in timers:
+            for static_timer in self.get_timers():
+                if static_timer.name == state_timer.name:
+                    # update last execution from state, keep everything else
+                    static_timer.last_execution = state_timer.last_execution
+                    break
+
+            else:
+                # state_timer not found in static_timers, add if dynamic
+                if state_timer.timer_type == "dynamic":
+                    self.timers.append(state_timer)
 
 
 class PluginCommand:
 
-    def __init__(self, command: str, method: Callable, help_text: str, power_level, room_id: List[str]):
+    def __init__(self, command: str, method: Callable, help_text: str, power_level, room_id: List[str], command_type: str = "static"):
+        """
+        Initialise a PluginCommand
+        :param command: the actual command used to call the Command, e.g. "help"
+        :param method: the method that's being called by the command
+        :param help_text: the help_text displayed for the command
+        :param power_level: an optional required power_level to execute the command
+        :param room_id: an optional list of room_ids the command will be active on
+        :param command_type: the optional type of the command, currently "static" (default) or "dynamic"
+        """
+
         self.command: str = command
         self.method: Callable = method
         self.help_text: str = help_text
         self.power_level: int = power_level
         self.room_id: List[str] = room_id
+        self.command_type: str = command_type
 
 
 class PluginHook:
 
-    def __init__(self, event_type: str, method: Callable, room_id: List[str]):
+    def __init__(self, event_type: str, method: Callable, room_id: List[str], hook_type: str = "static"):
+        """
+        Initialise a PluginHook
+        :param event_type: the event_type the hook is being executed for
+        :param method: the method that's being called when the hook is called
+        :param room_id: an optional list of room_ids for
+        :param hook_type: the optional type of the hook, currently "static" (default) or "dynamic"
+        """
         self.event_type: str = event_type
         self.method: Callable = method
         self.room_id: List[str] = room_id
+        self.hook_type: str = hook_type
