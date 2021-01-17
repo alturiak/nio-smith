@@ -123,18 +123,19 @@ class Plugin:
 
         return self.commands
 
-    def add_hook(self, event_type: str, method: Callable, room_id: List[str] = None, hook_type: str = "static"):
+    def add_hook(self, event_type: str, method: Callable, room_id: List[str] or None = None, event_ids: List[str] or None = None, hook_type: str = "static"):
         """
         Hook into events defined by event_type with `method`.
         Will overwrite existing hooks with the same event_type and method.
         :param event_type: event-type to hook into, currently "m.reaction" and "m.room.message"
         :param method: method to be called when an event is received
         :param room_id: optional list of room_ids the hook is active on
+        :param event_ids: optional list of event-ids, the hook is applicable for, currently only useful for "m.reaction"-hooks
         :param hook_type: the optional type of the hook, currently "static" (default) or "dynamic"
         :return:
         """
 
-        plugin_hook = PluginHook(event_type, method, room_id=room_id, hook_type=hook_type)
+        plugin_hook = PluginHook(event_type, method, room_id=room_id, event_ids=event_ids, hook_type=hook_type)
         if event_type not in self.hooks.keys():
             self.hooks[event_type] = [plugin_hook]
         else:
@@ -768,15 +769,17 @@ class PluginCommand:
 
 class PluginHook:
 
-    def __init__(self, event_type: str, method: Callable, room_id: List[str], hook_type: str = "static"):
+    def __init__(self, event_type: str, method: Callable, room_id: List[str] or None = None, event_ids: List[str] or None = None, hook_type: str = "static"):
         """
         Initialise a PluginHook
         :param event_type: the event_type the hook is being executed for
         :param method: the method that's being called when the hook is called
         :param room_id: an optional list of room_ids for
+        :param event_ids: optional list of event-ids, the hook is applicable for, currently only useful for "m.reaction"-hooks
         :param hook_type: the optional type of the hook, currently "static" (default) or "dynamic"
         """
         self.event_type: str = event_type
         self.method: Callable = method
-        self.room_id: List[str] = room_id
+        self.room_id: List[str] or None = room_id
+        self.event_ids: List[str] or None = event_ids
         self.hook_type: str = hook_type
