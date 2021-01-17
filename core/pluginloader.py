@@ -1,3 +1,5 @@
+from nio import UnknownEvent
+
 from core.chat_functions import send_text_to_room
 from plugin import Plugin, PluginCommand, PluginHook
 from core.timer import Timer
@@ -180,20 +182,32 @@ class PluginLoader:
             else:
                 return 1
 
-    async def run_hooks(self, client, event_type: str, room, event):
+    async def run_hooks(self, client, event_type: str, room, event: UnknownEvent):
+        """
+        Run all applicable hooks for the event_type
+        :param client:
+        :param event_type:
+        :param room:
+        :param event:
+        :return:
+        """
 
         if event_type in self.get_hooks().keys():
 
-            event_hooks: List[PluginHook] = self.get_hooks()[event_type]
-            event_hook: PluginHook
+            plugin_hooks: List[PluginHook] = self.get_hooks()[event_type]
+            plugin_hook: PluginHook
 
-            for event_hook in event_hooks:
-                if event_hook.room_id is None or room.room_id in event_hook.room_id:
+            for plugin_hook in plugin_hooks:
+                if (plugin_hook.room_id is None or room.room_id in plugin_hook.room_id) and \
+                        (plugin_hook.event_ids is None or event.source['content']['m.relates_to']['event_id'] in plugin_hook.event_ids):
+                    # plugin_hook is valid for room of the current event and
+                    # event relates to a specified event_id
+
                     # Make sure, exceptions raised by plugins do not kill the bot
                     try:
-                        await event_hook.method(client, room.room_id, event)
+                        await plugin_hook.method(client, room.room_id, event)
                     except Exception as err:
-                        logger.critical(f"Plugin failed to catch exception caused by hook {event_hook.method} on {room} for {event}:")
+                        logger.critical(f"Plugin failed to catch exception caused by hook {plugin_hook.method} on {room} for {event}:")
                         traceback.print_exc()
 
     async def run_timers(self, client, timestamp: float, filepath: str) -> float:

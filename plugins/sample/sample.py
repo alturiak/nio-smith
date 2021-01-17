@@ -24,7 +24,6 @@ def setup():
     plugin.add_command("sample_react", sample_react, "Post reactions to a command")
     plugin.add_command("sample_replace", sample_replace, "Post a message and edit it afterwards")
     plugin.add_command("sample_add_command", add_command, "Dynamically adds an active command `sample_remove_command`")
-    plugin.add_hook("m.reaction", hook_reactions)
 
     """The following part demonstrates defining a configuration value to be expected in the plugin's configuration file and reading the value
 
@@ -119,12 +118,33 @@ async def sample_reaction_test(command):
     """
 
     if len(command.args) == 0:
-        event_id: str = await plugin.reply(command, f"Reactions to this message will be tracked and posted back to the room")
+        event_id: str = await plugin.reply(command, f"A reaction to this message will be tracked and posted back to the room.")
         await plugin.reply_notice(command, f"Tracking Event ID {event_id}")
         await plugin.store_data("tracked_message", event_id)
 
+        # Dynamically add a reaction hook for one specific event-id
+        plugin.add_hook("m.reaction", hook_reactions, event_ids=[event_id], hook_type="dynamic")
+
     else:
         await plugin.reply_notice(command, "Usage: sample_reaction_test")
+
+
+async def hook_reactions(client: AsyncClient, room_id: str, event: UnknownEvent):
+    """
+    Is being called when a reaction to the message posted by `sample_reaction_test` has been received
+    :param client: AsyncClient
+    :param room_id: The room_id the reaction was received on
+    :param event: nio.events.room_events.UnknownEvent: the actual event received
+    :return:
+    """
+
+    tracked_message: str = await plugin.read_data("tracked_message")
+    reaction: str = event.source['content']['m.relates_to']['key']
+
+    if tracked_message is not None:
+        await plugin.notice(client, room_id, f"Reaction received to event {tracked_message} received: {reaction}. Disabling reaction tracking.")
+        # Remove dynamic reaction hook
+        plugin.del_hook("m.reaction", hook_reactions)
 
 
 async def sample_react(command):
@@ -155,23 +175,6 @@ async def sample_replace(command):
 
     # ... this should not
     await plugin.replace(command.client, command.room.room_id, message_id, f"<font color=\"green\">This is an edited test message</font>")
-
-
-async def hook_reactions(client: AsyncClient, room_id: str, event: UnknownEvent):
-    """
-    Hooks into reactions, checks if they relate to tracked_message and - if true - posts them to the room
-    :param client: AsyncClient
-    :param room_id: The room_id the reaction was received on
-    :param event: nio.events.room_events.UnknownEvent: the actual event received
-    :return:
-    """
-
-    relates_to: str = event.source['content']['m.relates_to']['event_id']
-    tracked_message: str = await plugin.read_data("tracked_message")
-    reaction: str = event.source['content']['m.relates_to']['key']
-
-    if tracked_message is not None and relates_to == tracked_message:
-        await plugin.notice(client, room_id, f"Reaction received to event {relates_to} received: {reaction}")
 
 
 async def read_configuration(command):
