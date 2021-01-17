@@ -98,17 +98,20 @@ class Plugin:
 
     def del_command(self, command: str) -> bool:
         """
-        Removes an active command
+        Removes an active command if it's of type dynamic
         :param command: the actual name of the command
         :return:    True, if the command has been found and removed,
                     False, otherwise
         """
 
         command: str
-        if command in self.commands.keys() and self.commands.get(command).command_type == "dynamic":
-            del self.commands[command]
-            self._save_state()
-            return True
+        if command in self.commands.keys():
+            if self.commands.get(command).command_type == "dynamic":
+                del self.commands[command]
+                self._save_state()
+                return True
+            else:
+                logger.warning(f"Plugin {self.name} tried to remove static command {command}.")
 
         else:
             return False
@@ -163,10 +166,13 @@ class Plugin:
             hooks = self.hooks
             hook: PluginHook
             for hook in hooks.get(event_type):
-                if hook.method == method and hook.hook_type == "dynamic":
-                    self.hooks[event_type].remove(hook)
-                    self._save_state()
-                    return True
+                if hook.method == method:
+                    if hook.hook_type == "dynamic":
+                        self.hooks[event_type].remove(hook)
+                        self._save_state()
+                        return True
+                    else:
+                        logger.warning(f"Plugin {self.name} tried to remove static hook for {event_type}.")
 
         return False
 
@@ -194,7 +200,7 @@ class Plugin:
 
         return self.timers
 
-    def del_timer(self, method: Callable):
+    def del_timer(self, method: Callable) -> bool:
         """
         Remove an existing timer, if it is of timer_type dynamic
         :param method:
@@ -204,9 +210,15 @@ class Plugin:
         timer: Timer
         timers = self.get_timers()
         for timer in timers:
-            if timer.method == method and timer.timer_type == "dynamic":
-                self.get_timers().remove(timer)
-                self._save_state()
+            if timer.method == method:
+                if timer.timer_type == "dynamic":
+                    self.get_timers().remove(timer)
+                    self._save_state()
+                    return True
+                else:
+                    logger.warning(f"Plugin {self.name} tried to remove static timer {timer.name}.")
+
+        return False
 
     async def store_data(self, name: str, data: Any) -> bool:
         """
