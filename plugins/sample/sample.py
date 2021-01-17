@@ -1,4 +1,6 @@
 from nio import AsyncClient, UnknownEvent
+
+from core.bot_commands import Command
 from plugin import Plugin
 import logging
 import datetime
@@ -207,13 +209,37 @@ async def timer_every_36_minutes(client):
 
 
 async def add_command(command):
+    """
+    Dynamically activate a command and a hook for reactions
+    :param command:
+    :return:
+    """
 
-    plugin.add_command("sample_remove_command", remove_command, "Dynamically removes an active command `sample_remove_command`")
+    plugin.add_command("sample_remove_command", remove_command, "Dynamically removes an active command `sample_remove_command`", command_type="dynamic")
+    plugin.add_hook("m.reaction", remove_command, room_id=[command.room.room_id], hook_type="dynamic")
+    await plugin.reply(command, "Dynamic command `sample_remove_command` and dynamic hook for reactions activated.  \n"
+                                "Use `sample_remove_command` or a reaction to disable again")
 
 
-async def remove_command(command):
+async def remove_command(command_client: AsyncClient or Command, room_id: str = "", event: UnknownEvent or None = None):
+    """
+    Dynamically remove the command and hook added by add_command()
+    :param event:
+    :param command_client:
+    :param room_id:
+    :return:
+    """
 
     plugin.del_command("sample_remove_command")
+    plugin.del_hook("m.reaction", remove_command)
+
+    if isinstance(command_client, AsyncClient):
+        client = command_client
+        room = room_id
+    else:
+        client = command_client.client
+        room = command_client.room.room_id
+    await plugin.message(client, room, "Dynamic command `sample_remove_command` and hook for reactions deactivated.")
 
 
 setup()

@@ -4,27 +4,29 @@ from typing import List, Callable
 
 class Timer:
 
-    """
-    A class for storing timers that call a specific method in a specified interval
-
-    Attributes:
-        name (str): the name of a timer, usually derived from the plugin that added it and the name of the method that is being called
-        method (Callable): the method called when the timer is triggered
-        last_execution (datetime.datetime): timestamp of the timer's last execution
-        valid_frequencies (List[str]): List of valid hardcoded frequencies needed for special cases
-        frequency (str or datetime.timedelta or None): the frequency in which the timer is allowed to trigger, None will allow the timer to trigger every
-            time it is being called
-    """
-
-    def __init__(self, name: str, method: Callable, frequency: str or datetime.timedelta or None = None, last_execution: datetime.datetime or None = None):
+    def __init__(self,
+                 name: str,
+                 method: Callable,
+                 frequency: str or datetime.timedelta or None = None,
+                 last_execution: datetime.datetime or None = None,
+                 timer_type: str = "static"
+                 ):
 
         """
-        Initialisation of a timer
+        A class for storing timers that call a specific method in a specified interval
+        :param name: the name of a timer, usually derived from the plugin that added it and the name of the method that is being called
+        :param method: the method called when the timer is triggered
+        :param frequency: the frequency in which the timer is allowed to trigger, None will allow the timer to trigger every time it is being called
+        :param last_execution: timestamp of the timer's last execution
+        :param timer_type: type of the timer, either static (default) or dynamic
         """
+
         self.name: str = name
         self.method: Callable = method
         self.last_execution: datetime.datetime or None = last_execution
+        self.timer_type: str = timer_type
         self.valid_frequencies: List[str] = ["weekly", "daily", "hourly"]
+        """List of valid hardcoded frequencies needed for special cases"""
 
         if frequency is None or isinstance(frequency, datetime.timedelta) or (isinstance(frequency, str) and frequency in self.valid_frequencies):
             self.frequency: str or datetime.timedelta or None = frequency

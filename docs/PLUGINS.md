@@ -71,19 +71,20 @@ Please be advised that the plugin interface is about to
     - the method called when the command is encountered,
     - a short helptext and
     - an optional list of rooms the command is valid for
-- `del_command`: remove a previously added command
+- `del_command`: remove a previously added command (only if command_type=="dynamic")
 - `add_hook`: define
     - an event type to be hooked into
         - "m.room.message": normal text messages sent to rooms
         - "m.reaction": reactions to room messages
     - the method called when the event is encountered,
     - an optional list of rooms the hook is valid for
-- `del_hook`: remove a previously added hook  
+- `del_hook`: remove a previously added hook (only if hook_type=="dynamic")  
 - `add_timer`: define
     - the method to be called (currently once every ~30s whenever a sync event is received)
     - the frequency, in which the method is to be called, either as
         - datetime.timedelta or
         - str: "weekly", "daily", "hourly"
+- `del_timer`: remove a previously added timer (only if timer_type=="dynamic")  
 - `store_data`: persistently store data for later use
 - `read_data`: read data from store
 - `clear_data`: clear stored data
