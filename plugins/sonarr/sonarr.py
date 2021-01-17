@@ -185,8 +185,11 @@ async def update_current_episodes(client):
     message: str = await compose_upcoming(week_start, week_end)
 
     if message != "" and message != await plugin.read_data("today_message_text"):
-        await plugin.replace(client, plugin.read_config("room_id"), await plugin.read_data("today_message"), message)
-        await plugin.store_data("today_message_text", message)
+        message_id: str or None = await plugin.replace(client, plugin.read_config("room_id"), await plugin.read_data("today_message"), message)
+        if not message_id:
+            await current_episodes(client)
+        else:
+            await plugin.store_data("today_message_text", message)
 
 
 setup()

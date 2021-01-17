@@ -1,9 +1,10 @@
 import logging
 from io import StringIO
 from html.parser import HTMLParser
+from typing import Union
 
 from nio import (
-    SendRetryError, RoomSendResponse, Event, RoomGetEventResponse
+    SendRetryError, RoomSendResponse, Event, RoomGetEventResponse, RoomGetEventError
 )
 from markdown import markdown
 
@@ -114,29 +115,36 @@ async def send_replace(client, room_id: str, event_id: str, message: str) -> str
                 None, if the event has not been edited
     """
 
-    original_response: RoomGetEventResponse = await client.room_get_event(room_id, event_id)
-    original_event: Event = original_response.event
-    original_content = original_event.source["content"]
+    try:
+        original_response: Union[RoomGetEventResponse, RoomGetEventError] = await client.room_get_event(room_id, event_id)
+        original_event: Event = original_response.event
+        original_content = original_event.source["content"]
+    except Exception:
+        return None
 
-    new_content = {
-        "m.new_content": {
+    if isinstance(original_response, RoomGetEventResponse) and original_content != {}:
+
+        new_content = {
+            "m.new_content": {
+                "msgtype": "m.text",
+                "format": "org.matrix.custom.html",
+                "body": strip_tags(message),
+                "formatted_body": markdown(message)
+            },
+            "m.relates_to": {
+                "rel_type": "m.replace",
+                "event_id": event_id
+            },
             "msgtype": "m.text",
             "format": "org.matrix.custom.html",
             "body": strip_tags(message),
             "formatted_body": markdown(message)
-        },
-        "m.relates_to": {
-            "rel_type": "m.replace",
-            "event_id": event_id
-        },
-        "msgtype": "m.text",
-        "format": "org.matrix.custom.html",
-        "body": strip_tags(message),
-        "formatted_body": markdown(message)
-    }
+        }
 
-    # check if there are any differences in body or formatted_body before actually sending the m.replace-event
-    if new_content["body"] != original_content["body"] or new_content["formatted_body"] != original_content["formatted_body"]:
-        return await client.room_send(room_id, "m.room.message", new_content, ignore_unverified_devices=True)
+        # check if there are any differences in body or formatted_body before actually sending the m.replace-event
+        if new_content["body"] != original_content["body"] or new_content["formatted_body"] != original_content["formatted_body"]:
+            return await client.room_send(room_id, "m.room.message", new_content, ignore_unverified_devices=True)
+        else:
+            return None
     else:
         return None
