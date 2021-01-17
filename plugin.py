@@ -549,8 +549,8 @@ class Plugin:
             """attempt fuzzy matching"""
             ratios: Dict[int, RoomMember] = {}
             for room_member in room_members.members:
-                score: int
-                if (score := fuzz.ratio(display_name.lower(), room_member.display_name.lower())) >= fuzziness:
+                score: int = 0
+                if room_member.display_name and (score := fuzz.ratio(display_name.lower(), room_member.display_name.lower())) >= fuzziness:
                     ratios[score] = room_member
 
             if ratios != {}:
