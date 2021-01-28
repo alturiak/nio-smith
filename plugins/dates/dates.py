@@ -55,7 +55,6 @@ class StoreDate:
             today = datetime.date.today()
             midnight = datetime.datetime.combine(today, datetime.datetime.min.time())
             tomorrow = datetime.datetime.combine(today, datetime.datetime.max.time())
-
             return midnight < self.date < tomorrow
 
         elif self.date_type == "birthday":
@@ -265,7 +264,7 @@ async def current_dates(client):
                 await plugin.react(client, store_date.mx_room, message_id, "🎈")
                 await plugin.react(client, store_date.mx_room, message_id, "🎊")
 
-            elif store_date.date_type == "date:":
+            elif store_date.date_type == "date":
                 await plugin.message(client, store_date.mx_room, f"Reminder: {store_date.name} is today!  \n"
                                                                  f"Date: {store_date.date}  \n"
                                                                  f"Description: {store_date.description}")
