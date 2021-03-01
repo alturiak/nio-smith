@@ -1,4 +1,4 @@
-from nio import UnknownEvent
+from nio import UnknownEvent, RoomMessageText
 
 from core.chat_functions import send_text_to_room
 from plugin import Plugin, PluginCommand, PluginHook
@@ -182,7 +182,7 @@ class PluginLoader:
             else:
                 return 1
 
-    async def run_hooks(self, client, event_type: str, room, event: UnknownEvent):
+    async def run_hooks(self, client, event_type: str, room, event: UnknownEvent or RoomMessageText):
         """
         Run all applicable hooks for the event_type
         :param client:
