@@ -1,6 +1,7 @@
 # -*- coding: utf8 -*-
 from typing import Dict, List
 
+import urllib3
 from nio import AsyncClient
 
 from core.bot_commands import Command
@@ -43,7 +44,10 @@ async def series(command):
     api_path = "/series"
     api_parameters = {"apikey": plugin.read_config("api_key")}
 
-    shows = requests.get(plugin.read_config("api_base") + api_path, params=api_parameters)
+    try:
+        shows = requests.get(plugin.read_config("api_base") + api_path, params=api_parameters)
+    except (TimeoutError, ConnectionRefusedError, urllib3.exceptions.NewConnectionError):
+        return
 
     if shows.status_code == 200:
         message = "<table><tr>"
@@ -96,8 +100,10 @@ async def get_calendar_episodes(start_date: str, end_date: str) -> list or None:
                       "start": start_date,
                       "end": end_date
                       }
-
-    response: requests.Response = requests.get(plugin.read_config("api_base") + api_path, params=api_parameters)
+    try:
+        response: requests.Response = requests.get(plugin.read_config("api_base") + api_path, params=api_parameters)
+    except (TimeoutError, ConnectionRefusedError, urllib3.exceptions.NewConnectionError):
+        return
 
     if response.status_code == 200:
         return sorted(response.json(), key=lambda i: i['airDateUtc'])
