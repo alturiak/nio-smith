@@ -7,6 +7,7 @@ import datetime
 from shlex import split
 import logging
 from dateparser import parse
+from asyncio import sleep
 
 logger = logging.getLogger(__name__)
 plugin = Plugin("dates", "General", "Stores dates and birthdays, posts reminders")
@@ -263,6 +264,8 @@ async def current_dates(client):
                 await plugin.react(client, store_date.mx_room, message_id, "✨")
                 await plugin.react(client, store_date.mx_room, message_id, "🎈")
                 await plugin.react(client, store_date.mx_room, message_id, "🎊")
+                # sleep for 15 seconds to avoid being ratelimited if there's multiple birthdays
+                await sleep(15)
 
             elif store_date.date_type == "date":
                 await plugin.message(client, store_date.mx_room, f"Reminder: {store_date.name} is today!  \n"
