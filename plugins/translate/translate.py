@@ -1,5 +1,5 @@
 # -*- coding: utf8 -*-
-from plugin import Plugin
+from core.plugin import Plugin
 from nio import AsyncClient, RoomMessageText
 from re import sub
 from typing import List, Dict

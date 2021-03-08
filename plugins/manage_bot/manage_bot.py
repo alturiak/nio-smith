@@ -1,5 +1,5 @@
 from nio import AsyncClient, MatrixRoom
-from plugin import Plugin
+from core.plugin import Plugin
 
 plugin = Plugin("manage_bot", "General", "Provide functions to manage the bot from an admin-room")
 

@@ -1,4 +1,4 @@
-from plugin import Plugin
+from core.plugin import Plugin
 
 plugin = Plugin("echo", "General", "A very simple Echo plugin")
 

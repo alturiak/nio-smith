@@ -42,7 +42,7 @@
 
 ## Plugins must
 - ✔ use async
-- ✔ instantiate `Plugin` as `plugin`
+- ✔ instantiate `core.plugin.Plugin` as `plugin`
 - ✔ be uniquely named and use this name as
   - directory-name (`plugins/sample/`)
   - file-name (`plugins/sample/sample.py`)

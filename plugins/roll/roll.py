@@ -3,7 +3,7 @@ __description__ = "Roll one or more dice. The trigger is 'roll'."
 __version__ = "1.1"
 __author__ = "Dingo"
 
-from plugin import Plugin
+from core.plugin import Plugin
 import random
 
 
