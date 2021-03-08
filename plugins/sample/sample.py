@@ -1,7 +1,7 @@
 from nio import AsyncClient, UnknownEvent
 
 from core.bot_commands import Command
-from plugin import Plugin
+from core.plugin import Plugin
 import logging
 import datetime
 from asyncio import sleep

@@ -1,5 +1,5 @@
 from nio import AsyncClient, UnknownEvent
-from plugin import Plugin
+from core.plugin import Plugin
 from typing import Dict, List, Tuple
 import time
 import random

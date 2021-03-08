@@ -1,4 +1,4 @@
-from plugin import Plugin, PluginCommand
+from core.plugin import Plugin, PluginCommand
 from re import match
 
 from typing import List, Tuple

@@ -1,7 +1,7 @@
 from nio import UnknownEvent, RoomMessageText
 
 from core.chat_functions import send_text_to_room
-from plugin import Plugin, PluginCommand, PluginHook
+from core.plugin import Plugin, PluginCommand, PluginHook
 from core.timer import Timer
 from sys import modules
 from re import match

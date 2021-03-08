@@ -1,11 +1,10 @@
 # -*- coding: utf8 -*-
 from typing import Dict, List
 
-import urllib3
 from nio import AsyncClient
 
 from core.bot_commands import Command
-from plugin import Plugin
+from core.plugin import Plugin
 import datetime
 import logging
 import requests

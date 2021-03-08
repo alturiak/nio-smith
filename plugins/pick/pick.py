@@ -3,7 +3,7 @@ __description__ = "Pick a random item from a given list of items. The trigger is
 __version__ = "1.0"
 __author__ = "Dingo"
 
-from plugin import Plugin
+from core.plugin import Plugin
 import re
 import random
 

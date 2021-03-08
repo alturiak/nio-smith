@@ -1,7 +1,7 @@
 # -*- coding: utf8 -*-
 from nio import AsyncClient, RoomMessageText
 
-from plugin import Plugin
+from core.plugin import Plugin
 from typing import Dict, List
 import datetime
 from shlex import split
