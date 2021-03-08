@@ -172,7 +172,7 @@ class PluginLoader:
                     # Make sure, exceptions raised by plugins do not kill the bot
                     try:
                         await self.get_commands()[run_command].method(command)
-                    except Exception as err:
+                    except Exception:
                         logger.critical(f"Plugin failed to catch exception caused by {command_start}:")
                         traceback.print_exc()
                     return 0
@@ -231,8 +231,8 @@ class PluginLoader:
                     if await timer.trigger(client):
                         logger.debug(f"Timer {timer.name} triggered")
                         timers_triggered = True
-                except Exception as err:
-                    logger.critical(f"Plugin failed to catch exception caused by timer {timer.name}: {err}")
+                except Exception:
+                    logger.critical(f"Plugin failed to catch exception caused by timer {timer.name}:")
                     traceback.print_exc()
 
             if timers_triggered:
