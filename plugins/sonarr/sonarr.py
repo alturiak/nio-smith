@@ -46,7 +46,8 @@ async def series(command):
 
     try:
         shows = requests.get(plugin.read_config("api_base") + api_path, params=api_parameters)
-    except (TimeoutError, ConnectionRefusedError, urllib3.exceptions.NewConnectionError):
+    except requests.exceptions.ConnectionError as err:
+        logger.warning(f"Connection to sonarr failed: {err}")
         return
 
     if shows.status_code == 200:
@@ -102,8 +103,9 @@ async def get_calendar_episodes(start_date: str, end_date: str) -> list or None:
                       }
     try:
         response: requests.Response = requests.get(plugin.read_config("api_base") + api_path, params=api_parameters)
-    except (TimeoutError, ConnectionRefusedError, urllib3.exceptions.NewConnectionError):
-        return
+    except requests.exceptions.ConnectionError as err:
+        logger.warning(f"Connection to sonarr failed: {err}")
+        return None
 
     if response.status_code == 200:
         return sorted(response.json(), key=lambda i: i['airDateUtc'])
