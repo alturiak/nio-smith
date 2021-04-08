@@ -51,6 +51,16 @@ class QuoteLine:
         self.message: str = message
         self.message_type: str = message_type
 
+    def match(self, search_term: str) -> bool:
+        """
+        Check contents of a QuoteLine for a case-insensitive match to the given search_term. The match may be either in
+        nickname or message text
+        :param search_term:
+        :return:    True, if a match to search_term has been found
+                    False otherwise
+        """
+        return (self.nick and search_term.lower() in self.nick.lower()) or search_term.lower() in self.message.lower()
+
 
 class Quote:
 
@@ -180,11 +190,16 @@ class Quote:
         """
 
         search_term: str
+        quote_line: QuoteLine
         for search_term in search_terms:
-            if search_term.lower() not in self.text.lower():
+            for quote_line in self.lines:
+                if quote_line.match(search_term):
+                    break
+
+            else:
                 return False
-        else:
-            return True
+
+        return True
 
     async def quote_add_reaction(self, reaction: str):
         """
