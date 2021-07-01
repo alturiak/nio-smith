@@ -1,3 +1,6 @@
+import asyncio
+from random import randrange
+
 from nio import AsyncClient, UnknownEvent
 
 from core.bot_commands import Command
@@ -24,6 +27,7 @@ def setup():
     plugin.add_command("sample_react", sample_react, "Post reactions to a command")
     plugin.add_command("sample_replace", sample_replace, "Post a message and edit it afterwards")
     plugin.add_command("sample_add_command", add_command, "Dynamically adds an active command `sample_remove_command`")
+    plugin.add_command("sample_sleep", sample_sleep, "Sleep for five seconds, then post a message, to test parallel execution of commands")
 
     """The following part demonstrates defining a configuration value to be expected in the plugin's configuration file and reading the value
 
@@ -244,5 +248,18 @@ async def remove_command(command_client: AsyncClient or Command, room_id: str = 
         room = command_client.room.room_id
     await plugin.message(client, room, "Dynamic command `sample_remove_command` and hook for reactions deactivated.")
 
+
+async def sample_sleep(command: Command):
+    """
+    Post a message before and after a timer, to demonstrate and test parallel execution of commands
+    If called twice in rapid succession, both timers should run in parallel
+    :param command:
+    :return:
+    """
+
+    random_int: int = randrange(1000)
+    await plugin.reply(command, f"ID: {random_int} - before timer")
+    await asyncio.sleep(5)
+    await plugin.reply(command, f"ID: {random_int} - after timer")
 
 setup()
