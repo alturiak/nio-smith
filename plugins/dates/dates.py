@@ -247,11 +247,11 @@ async def date_next(command):
         return
 
     dates: Dict[str, StoreDate] = await plugin.read_data("stored_dates")
-    dates_list: List[StoreDate] = list(dates.values())
-    sorted_dates: List[StoreDate] = sorted(dates_list, key=lambda x: x.date)
+    sorted_dates: List[StoreDate] = sorted(dates.values(), key=lambda x: x.date)
 
     date: StoreDate
     for date in sorted_dates:
+        # iterate through the sorted dates until we find the first upcoming date
         if date.date > datetime.datetime.now():
             await plugin.reply(command, f"{date}")
             return
@@ -295,9 +295,9 @@ async def current_dates(client):
                 await sleep(15)
 
             elif store_date.date_type == "date":
-                await plugin.message(client, store_date.mx_room, f"Reminder: {store_date.name} is today!  \n"
-                                                                 f"Date: {store_date.date}  \n"
-                                                                 f"Description: {store_date.description}")
+                await plugin.message(client, store_date.mx_room, f"**Reminder:** {store_date.name} is today!  \n"
+                                                                 f"**Date:** {store_date.date}  \n"
+                                                                 f"**Description:** {store_date.description}")
 
     # store if there is any birthday today to take some load off birthday_tada
     await plugin.store_data("birthday_rooms_today", birthday_rooms_today)
