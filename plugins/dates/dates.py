@@ -17,6 +17,7 @@ def setup():
     plugin.add_command("date_add", date_add, "Add a date or birthday")
     plugin.add_command("date_del", date_del, "Delete a date or birthday", power_level=50)
     plugin.add_command("date_show", date_show, "Display details of a specific date")
+    plugin.add_command("date_next", date_next, "Display details of the next upcoming date")
     plugin.add_timer(current_dates, frequency="daily")
     plugin.add_hook("m.room.message", birthday_tada)
 
@@ -232,6 +233,28 @@ async def date_show(command):
         await plugin.reply(command, f"{store_date}")
     else:
         await plugin.reply_notice(command, f"Error: date {name} not found.")
+
+
+async def date_next(command):
+    """
+    Display the next, upcoming date
+    :param command:
+    :return:
+    """
+
+    if len(command.args) > 0:
+        await plugin.reply_notice(command, "Usage: `date_next`")
+        return
+
+    dates: Dict[str, StoreDate] = await plugin.read_data("stored_dates")
+    dates_list: List[StoreDate] = list(dates.values())
+    sorted_dates: List[StoreDate] = sorted(dates_list, key=lambda x: x.date)
+
+    date: StoreDate
+    for date in sorted_dates:
+        if date.date > datetime.datetime.now():
+            await plugin.reply(command, f"{date}")
+            return
 
 
 async def current_dates(client):
