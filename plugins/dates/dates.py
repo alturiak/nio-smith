@@ -73,6 +73,13 @@ class StoreDate:
         if await self.is_today() and self.date_type == "birthday" and self.mx_room == room_id:
             return (plaintext and self.description.lower() in plaintext.lower()) or (formatted and self.name.lower() in formatted.lower())
 
+    def __str__(self):
+
+        return f"**Name:** {self.name}  \n" \
+               f"**Date:** {self.date}  \n" \
+               f"**Type:** {self.date_type}  \n" \
+               f"**Description:** {self.description}  \n"
+
 
 def generate_date_id(mx_room: str, name: str) -> str:
     """
@@ -222,10 +229,7 @@ async def date_show(command):
 
     if date_id in dates.keys():
         store_date: StoreDate = dates[date_id]
-        await plugin.reply(command, f"Name: {store_date.name}  \n"
-                                    f"Date: {store_date.date}  \n"
-                                    f"Type: {store_date.date_type}  \n"
-                                    f"Description: {store_date.description}  \n")
+        await plugin.reply(command, f"{store_date}")
     else:
         await plugin.reply_notice(command, f"Error: date {name} not found.")
 
