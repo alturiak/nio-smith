@@ -14,12 +14,22 @@ Example: `date_add test "in 28 days" "28 days later"`
 Example: `date_add new_year 2021-01-01 "A new year"`  
 Example: `date_add start_of_unixtime "01.01.1970 00:00:00" The dawn of time`  
 
+Add a date or birthday
+
 ### date_del
 Usage: `date_del <name or username>`
+
+Delete a date or birthday (PL: 50)
 
 ### date_show
 Usage: `date_show <name or username>`
 
+Display details of a specific date
 
-## Requirements
+### date_next
+Usage: `date_next`
+
+Display details of the next upcoming date
+
+## External Requirements
 - [dateparser](https://pypi.org/project/dateparser/) to allow for almost arbitrary input format of dates
