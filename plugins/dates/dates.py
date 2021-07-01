@@ -128,7 +128,7 @@ async def date_add(command):
         description: str = ""
 
     if date is None:
-        await plugin.reply_notice(command, "Invalid date. Usage: `date_add <name or username> <date>")
+        await plugin.reply_notice(command, "Invalid date. Usage: `date_add <name or username> <date> [description]`")
         await plugin.react(command.client, command.room.room_id, command.event.event_id, "❌")
         return
 
