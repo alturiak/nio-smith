@@ -1,4 +1,6 @@
 # -*- coding: utf8 -*-
+import random
+
 from nio import AsyncClient, RoomMessageText
 
 from core.plugin import Plugin
@@ -386,7 +388,8 @@ async def birthday_tada(client: AsyncClient, room_id: str, event: RoomMessageTex
                 await store_date.is_birthday_person(room_id, plaintext=event.body, formatted=event.formatted_body):
 
             # sender is birthday person or birthday person is mentioned
-            await plugin.message(client, room_id, "🎉")
+            reactions: List[str] = ["🎉", "❄️", "🎆"]
+            await plugin.message(client, room_id, random.choice(reactions))
             await plugin.store_data("last_tada", {room_id: datetime.datetime.now()})
             break
 
