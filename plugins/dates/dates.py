@@ -14,10 +14,12 @@ plugin = Plugin("dates", "General", "Stores dates and birthdays, posts reminders
 
 
 def setup():
+    plugin.add_command("date", date, "Display the details of the next upcoming date or a specific date")
     plugin.add_command("date_add", date_add, "Add a date or birthday")
     plugin.add_command("date_del", date_del, "Delete a date or birthday", power_level=50)
-    plugin.add_command("date_show", date_show, "Display details of a specific date")
+    plugin.add_command("date_list", date_list, "Display a list of all stored dates")
     plugin.add_command("date_next", date_next, "Display details of the next upcoming date")
+    plugin.add_command("date_show", date_show, "Display details of a specific date")
     plugin.add_timer(current_dates, frequency="daily")
     plugin.add_hook("m.room.message", birthday_tada)
 
@@ -106,6 +108,23 @@ async def reply_usage_message(command) -> str:
                                               "Example: `date_add new_year 2021-01-01 \"A new year\"`  \n"
                                               "Example: `date_add start_of_unixtime \"01.01.1970 00:00:00\" The dawn of time`  \n"
                                               "Dates consisting of multiple words must be enclosed in quotes.")
+
+
+async def date(command):
+    """
+    Display the next or a specific date
+    :param command:
+    :return:
+    """
+
+    if len(command.args) == 0:
+        await date_next(command)
+
+    elif len(command.args) == 1:
+        await date_show(command)
+
+    else:
+        await plugin.reply_notice(command, "Usage: `date [name or username]`")
 
 
 async def date_add(command):
@@ -252,9 +271,40 @@ async def date_next(command):
     date: StoreDate
     for date in sorted_dates:
         # iterate through the sorted dates until we find the first upcoming date
-        if date.date > datetime.datetime.now():
+        if date.mx_room and date.mx_room == command.room.room_id and date.date > datetime.datetime.now():
             await plugin.reply(command, f"{date}")
             return
+
+    else:
+        await plugin.reply_notice(command, f"No upcoming dates for this room.")
+
+
+async def date_list(command):
+    """
+    Display a list of all dates
+    :param command:
+    :return:
+    """
+
+    if len(command.args) > 0:
+        await plugin.reply_notice(command, "Usage: `date_list`")
+        return
+
+    dates: Dict[str, StoreDate] = await plugin.read_data("stored_dates")
+    sorted_dates: List[StoreDate] = sorted(dates.values(), key=lambda x: x.date)
+
+    date: StoreDate
+    date_list: str = ""
+
+    for date in sorted_dates:
+        if date.mx_room and date.mx_room == command.room.room_id and date.date_type == "date":
+            date_list += f"{date.date} - {date.name} - {date.description}  \n"
+
+    if date_list:
+        await plugin.reply(command, f"**All stored dates for this room**  \n"
+                                    f"{date_list}")
+    else:
+        await plugin.react(command.client, command.room.room_id, command.event.event_id, "❌")
 
 
 async def current_dates(client):
