@@ -16,12 +16,9 @@ git clone https://github.com/alturiak/nio-smith.git nio-smith
 ```
 ## Dependencies
 
-If you would rather not or are unable to run docker, the following will
-instruct you on how to install the dependencies natively:
-
 ### Install libolm
 You should be able to install [libolm](https://gitlab.matrix.org/matrix-org/olm) from your distribution's package 
-manager, e.g. `apt install libolm3` on Debian/Ubuntu
+manager, e.g. `apt install libolm3 libolm-dev` on Debian/Ubuntu
 
 ### Install Python dependencies
 
