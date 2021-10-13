@@ -200,6 +200,21 @@ class Plugin:
 
         return self.timers
 
+    def has_timer_for_method(self, method: Callable) -> bool:
+        """
+        Check if timers exist for a given method
+        :param method: Callable to check for
+        :return:    True, if there are any timers for the given method
+                    False, otherwise
+        """
+
+        timer: Timer
+        timers = self.get_timers()
+        for timer in timers:
+            if timer.method == method:
+                return True
+        return False
+
     def del_timer(self, method: Callable) -> bool:
         """
         Remove an existing timer, if it is of timer_type dynamic
