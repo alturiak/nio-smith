@@ -22,7 +22,7 @@ def setup():
     plugin.add_command("date_list", date_list, "Display a list of all stored dates")
     plugin.add_command("date_next", date_next, "Display details of the next upcoming date")
     plugin.add_command("date_show", date_show, "Display details of a specific date")
-    plugin.add_timer(current_dates, frequency="daily")
+    plugin.add_timer(day_setup, frequency="daily")
     plugin.add_hook("m.room.message", birthday_tada)
 
 
@@ -34,13 +34,16 @@ class StoreDate:
                  mx_room: str,
                  date_type: str = "date",
                  description: str = "",
-                 added_by: str or None = None):
+                 added_by: str or None = None,
+                 last_reminded: datetime.datetime or None = None):
         """
         A date, consisting of a name, a date and the type of date
         :param name: Name of the entry, either arbitrary text or a matrix username
         :param date: The actual date
         :param date_type: the type of date, currently either "date" or "birthday"
         :param description: a description of a date
+        :param added_by: name of the person who added the date
+        :param last_reminded: date of last posted reminder for the date
         """
 
         self.name: str = name
@@ -49,6 +52,7 @@ class StoreDate:
         self.description: str = description
         self.added_by: str or None = added_by
         self.mx_room: str = mx_room
+        self.last_reminded: datetime.datetime or None = last_reminded
         self.id: str = generate_date_id(mx_room, name)
 
     async def is_today(self) -> bool:
@@ -77,6 +81,27 @@ class StoreDate:
 
         if await self.is_today() and self.date_type == "birthday" and self.mx_room == room_id:
             return (plaintext and self.description.lower() in plaintext.lower()) or (formatted and self.name.lower() in formatted.lower())
+
+    async def needs_reminding(self) -> bool:
+        """
+        Checks if a reminder for a date still has to be posted today
+        :return:    True, if date needs reminding (a reminder hasn't been posted yet)
+                    False, if date doesn't need reminding (a reminder has already been posted)
+        """
+
+        if self.last_reminded:
+            return (self.last_reminded.date() < datetime.date.today()) or \
+                   (self.date_type != "birthday" and datetime.datetime.now() > self.date > self.last_reminded)
+        else:
+            return True
+
+    async def set_reminded(self):
+        """
+        Set the current timestamp as time of last reminder
+        :return:
+        """
+
+        self.last_reminded = datetime.datetime.now()
 
     def __str__(self):
 
@@ -179,6 +204,9 @@ async def date_add(command):
 
         dates[store_date.id] = store_date
         await plugin.store_data("stored_dates", dates)
+        # if date is today, start a timer to post a reminder
+        if store_date.is_today() and not plugin.has_timer_for_method(in_day_reminder):
+            plugin.add_timer(in_day_reminder, timer_type="dynamic")
         await plugin.react(command.client, command.room.room_id, command.event.event_id, "✅")
 
     else:
@@ -195,6 +223,9 @@ async def date_add(command):
         else:
             dates[store_date.id] = store_date
             await plugin.store_data("stored_dates", dates)
+            # if date is today, start a timer to post a reminder
+            if store_date.date.date() == datetime.date.today() and not plugin.has_timer_for_method(in_day_reminder):
+                plugin.add_timer(in_day_reminder, timer_type="dynamic")
             await plugin.react(command.client, command.room.room_id, command.event.event_id, "✅")
 
 
@@ -309,7 +340,17 @@ async def date_list(command):
         await plugin.react(command.client, command.room.room_id, command.event.event_id, "❌")
 
 
-async def current_dates(client):
+async def in_day_reminder(client):
+    """
+    Display dates when they happen
+    :param client:
+    :return:
+    """
+
+    await day_setup(client)
+
+
+async def day_setup(client):
     """
     Display dates for the current day at the start of each day
     :param client:
@@ -323,33 +364,50 @@ async def current_dates(client):
     store_date: StoreDate
 
     birthday_rooms_today: List[str] = []
+    dates_today: bool = False
     await plugin.clear_data("last_tada")
 
     for store_date in dates.values():
         if await store_date.is_today():
-            if store_date.date_type == "birthday":
-                if store_date.mx_room not in birthday_rooms_today:
-                    birthday_rooms_today.append(store_date.mx_room)
+            dates_today = True
+            if await store_date.needs_reminding():
+                if store_date.date_type == "birthday":
+                    if store_date.mx_room not in birthday_rooms_today:
+                        birthday_rooms_today.append(store_date.mx_room)
 
-                user_link: str or None
-                if (user_link := await plugin.link_user(client, store_date.mx_room, store_date.description)) is not None:
-                    message_id: str = await plugin.message(client, store_date.mx_room, f"🎉 @room, it's {user_link}'s birthday! 🎉  \n")
-                else:
-                    message_id: str = await plugin.message(client, store_date.mx_room, f"🎉 @room, it's {store_date.description}'s birthday! 🎉  \n")
+                    user_link: str or None
+                    if (user_link := await plugin.link_user(client, store_date.mx_room, store_date.description)) is not None:
+                        message_id: str = await plugin.message(client, store_date.mx_room, f"🎉 @room, it's {user_link}'s birthday! 🎉  \n")
+                    else:
+                        message_id: str = await plugin.message(client, store_date.mx_room, f"🎉 @room, it's {store_date.description}'s birthday! 🎉  \n")
+                    await store_date.set_reminded()
+                    await plugin.store_data("stored_dates", dates)
 
-                await plugin.react(client, store_date.mx_room, message_id, "🎁")
-                await plugin.react(client, store_date.mx_room, message_id, "🍻")
-                await plugin.react(client, store_date.mx_room, message_id, "🥂")
-                await plugin.react(client, store_date.mx_room, message_id, "✨")
-                await plugin.react(client, store_date.mx_room, message_id, "🎈")
-                await plugin.react(client, store_date.mx_room, message_id, "🎊")
-                # sleep for 15 seconds to avoid being ratelimited if there's multiple birthdays
-                await sleep(15)
+                    await plugin.react(client, store_date.mx_room, message_id, "🎁")
+                    await plugin.react(client, store_date.mx_room, message_id, "🍻")
+                    await plugin.react(client, store_date.mx_room, message_id, "🥂")
+                    await plugin.react(client, store_date.mx_room, message_id, "✨")
+                    await plugin.react(client, store_date.mx_room, message_id, "🎈")
+                    await plugin.react(client, store_date.mx_room, message_id, "🎊")
+                    # sleep for 15 seconds to avoid being ratelimited if there's multiple birthdays
+                    await sleep(15)
 
-            elif store_date.date_type == "date":
-                await plugin.message(client, store_date.mx_room, f"**Reminder:** {store_date.name} is today!  \n"
-                                                                 f"**Date:** {store_date.date}  \n"
-                                                                 f"**Description:** {store_date.description}")
+                elif store_date.date_type == "date":
+
+                    if datetime.datetime.now() < store_date.date:
+                        await plugin.message(client, store_date.mx_room, f"**Reminder:** {store_date.name} is today!  \n"
+                                                                         f"**Date:** {store_date.date}  \n"
+                                                                         f"**Description:** {store_date.description}")
+                    else:
+                        await plugin.message(client, store_date.mx_room, f"**{store_date.name}** ({store_date.description}) is **now**!  \n")
+                    await store_date.set_reminded()
+                    await plugin.store_data("stored_dates", dates)
+                    if not plugin.has_timer_for_method(in_day_reminder):
+                        plugin.add_timer(in_day_reminder, timer_type="dynamic")
+
+    # remove in_day_reminder if there are no events today
+    if not dates_today:
+        plugin.del_timer(in_day_reminder)
 
     # store if there is any birthday today to take some load off birthday_tada
     await plugin.store_data("birthday_rooms_today", birthday_rooms_today)
