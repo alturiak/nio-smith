@@ -507,7 +507,6 @@ async def quote_add_or_replace(command, quote_id: str = "0") -> Quote or None:
     :return: added quote_object or None
     """
 
-
     quotes: Dict[str, Quote] = await plugin.read_data("quotes")
     if not quotes:
         quotes = {}
@@ -519,7 +518,7 @@ async def quote_add_or_replace(command, quote_id: str = "0") -> Quote or None:
     if command.command.find('\n') == -1:
         # assume irc-formatting if there are no line breaks
         quote_text: str
-        if quote_id != 0:
+        if quote_id != "0":
             quote_text = " ".join(command.args[1:])
         else:
             quote_text = " ".join(command.args)
