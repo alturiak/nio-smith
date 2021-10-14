@@ -110,7 +110,12 @@ class Quote:
 
     async def set_id(self) -> str:
 
-        quote_id = str(max(list(map(int, (await plugin.read_data("quotes")).keys()))) + 1)
+        quotes = await plugin.read_data("quotes")
+        if quotes:
+            quote_id = str(max(list(map(int, (await plugin.read_data("quotes")).keys()))) + 1)
+        else:
+            quote_id = 1
+
         self.id = quote_id
         return quote_id
 
@@ -383,6 +388,8 @@ async def post_quote(command, quote_object: Quote, match_index: int = -1, total_
     tracked_quotes: List[TrackedQuote]
     try:
         tracked_quotes = await plugin.read_data("tracked_quotes")
+        if not tracked_quotes:
+            tracked_quotes = []
         while len(tracked_quotes) > 100:
             tracked_quotes.pop()
         tracked_quote = TrackedQuote(event_id, quote_object.id)
@@ -500,10 +507,9 @@ async def quote_add_or_replace(command, quote_id: str = "0") -> Quote or None:
     :return: added quote_object or None
     """
 
-    quotes: Dict[str, Quote]
-    try:
-        quotes = await plugin.read_data("quotes")
-    except KeyError:
+
+    quotes: Dict[str, Quote] = await plugin.read_data("quotes")
+    if not quotes:
         quotes = {}
 
     quote_text: str = ""
