@@ -112,7 +112,7 @@ class Quote:
 
         quotes = await plugin.read_data("quotes")
         if quotes:
-            quote_id = str(max(list(map(int, (await plugin.read_data("quotes")).keys()))) + 1)
+            quote_id = str(max(list(map(int, quotes.keys()))) + 1)
         else:
             quote_id = 1
 
@@ -314,12 +314,11 @@ async def quote_command(command):
     """
 
     """Load all active (quote.deleted == False) quotes"""
-    quotes: Dict[str, Quote]
-    try:
-        quotes = await plugin.read_data("quotes")
+    quotes: Dict[str, Quote] = await plugin.read_data("quotes")
+    if quotes:
         # TODO: check if this needs fixing
         quotes = dict(filter(lambda item: not item[1].deleted, quotes.items()))
-    except KeyError:
+    else:
         await plugin.reply_notice(command, "Error: no quotes stored")
         return False
 
@@ -566,10 +565,8 @@ async def quote_delete_command(command):
     :return:
     """
 
-    quotes: Dict[str, Quote]
-    try:
-        quotes = await plugin.read_data("quotes")
-    except KeyError:
+    quotes: Dict[str, Quote] = await plugin.read_data("quotes")
+    if not quotes:
         quotes = {}
 
     if len(command.args) > 1:
@@ -595,10 +592,8 @@ async def quote_restore_command(command):
     :return:
     """
 
-    quotes: Dict[str, Quote]
-    try:
-        quotes = await plugin.read_data("quotes")
-    except KeyError:
+    quotes: Dict[str, Quote] = await plugin.read_data("quotes")
+    if not quotes:
         quotes = {}
 
     if len(command.args) > 1:
@@ -624,10 +619,10 @@ async def quote_links_command(command):
     :return:
     """
 
-    try:
-        await plugin.store_data("nick_links", not await plugin.read_data("nick_links"))
-
-    except KeyError:
+    nick_links: bool = await plugin.read_data("nick_links")
+    if nick_links:
+        await plugin.store_data("nick_links", not nick_links)
+    else:
         await plugin.store_data("nick_links", False)
 
     await plugin.reply_notice(command, f"Nick linking {await plugin.read_data('nick_links')}")
@@ -640,10 +635,8 @@ async def quote_stats_command(command):
     :return:
     """
 
-    quotes: Dict[str, Quote]
-    try:
-        quotes = await plugin.read_data("quotes")
-    except KeyError:
+    quotes: Dict[str, Quote] = await plugin.read_data("quotes")
+    if not quotes:
         quotes = {}
 
     quote_count: int = len(quotes)
@@ -716,17 +709,14 @@ async def quote_add_reaction(client: AsyncClient, room_id: str, event: UnknownEv
     :return:
     """
 
-    quotes: Dict[str, Quote]
-    try:
-        quotes = await plugin.read_data("quotes")
-    except KeyError:
+    quotes: Dict[str, Quote] = await plugin.read_data("quotes")
+    if not quotes:
         quotes = {}
 
     tracked_quotes: List[TrackedQuote]
-    try:
-        tracked_quotes = await plugin.read_data("tracked_quotes")
-    except KeyError:
-        return
+    tracked_quotes = await plugin.read_data("tracked_quotes")
+    if not tracked_quotes:
+        tracked_quotes = []
 
     relates_to: str = event.source['content']['m.relates_to']['event_id']
     reaction: str = event.source['content']['m.relates_to']['key']
@@ -752,11 +742,8 @@ async def upgrade_quotes(command):
     :return:
     """
 
-    quotes: Dict[str, Quote]
-    try:
-        quotes = await plugin.read_data("quotes")
-
-    except KeyError:
+    quotes: Dict[str, Quote] = await plugin.read_data("quotes")
+    if not quotes:
         quotes = {}
 
     upgraded_quotes: int = 0
