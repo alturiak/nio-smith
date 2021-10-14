@@ -89,7 +89,7 @@ class StoreDate:
                     False, if date doesn't need reminding (a reminder has already been posted)
         """
 
-        if self.last_reminded:
+        if hasattr(self, 'last_reminded') and self.last_reminded:
             return (self.last_reminded.date() < datetime.date.today()) or \
                    (self.date_type != "birthday" and datetime.datetime.now() > self.date > self.last_reminded)
         else:
