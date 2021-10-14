@@ -27,6 +27,8 @@ for module in module_dirs:
         globals()[module] = importlib.import_module(f"plugins.{module}.{module}")
     except ModuleNotFoundError:
         logger.error(f"Error importing {module}. Please check requirements: {traceback.format_exc(limit=1)}")
+    except KeyError:
+        logger.error(f"Error importing {module} due to missing configuration items. Skipping.")
 
 for module in module_files:
     try:
@@ -34,7 +36,8 @@ for module in module_files:
         globals()[module] = importlib.import_module(f"plugins.{module}")
     except ModuleNotFoundError:
         logger.error(f"Error importing {module}. Please check requirements: {traceback.format_exc(limit=1)}")
-
+    except KeyError:
+        logger.error(f"Error importing {module} due to missing configuration items. Skipping.")
 
 class PluginLoader:
 
