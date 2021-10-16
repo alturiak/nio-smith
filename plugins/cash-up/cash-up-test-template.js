@@ -4,6 +4,7 @@ const realPayments = {
   Niklas: 80,
 }
 
+// !register-users Marius 0,7; Andrea 0,15; Niklas 0,15;
 const splitPercentage = {
   Marius: 0.7,
   Andrea: 0.15,
