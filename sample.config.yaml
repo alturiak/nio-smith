@@ -24,8 +24,8 @@ matrix:
   # as described here: https://github.com/poljar/matrix-nio#installation
   enable_encryption: true
   # Define matrix-accounts eligible for certain actions (currently invites), an empty list will allow everybody
-  # botmasters: []
-  botmasters: "[@botmaster:matrix.server,@anotherbotmaster:matrix.server]"
+  # botmasters: ["@botmaster:matrix.server","@anotherbotmaster:matrix.server"]
+  botmasters: []
 
 storage:
   # The path to the database
