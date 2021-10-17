@@ -17,31 +17,32 @@ import traceback
 
 logger = logging.getLogger(__name__)
 
-# import all plugins
-module_all = glob.glob("plugins/*")
-module_dirs: List[str] = [basename(d) for d in module_all if isdir(d) and not d.endswith('__pycache__')]
-module_files: List[str] = [basename(f)[:-3] for f in module_all if isfile(f) and f.endswith('.py') and not f.endswith('__init__.py')]
-
-for module in module_dirs:
-    try:
-        globals()[module] = importlib.import_module(f"plugins.{module}.{module}")
-    except ModuleNotFoundError:
-        logger.error(f"Error importing {module}. Please check requirements: {traceback.format_exc(limit=1)}")
-    except KeyError:
-        logger.error(f"Error importing {module} due to missing configuration items. Skipping.")
-
-for module in module_files:
-    try:
-        logger.warning(f"DEPRECATION WARNING: Single-file plugin {module} detected. This will not be loaded from 0.2.0 onwards.")
-        globals()[module] = importlib.import_module(f"plugins.{module}")
-    except ModuleNotFoundError:
-        logger.error(f"Error importing {module}. Please check requirements: {traceback.format_exc(limit=1)}")
-    except KeyError:
-        logger.error(f"Error importing {module} due to missing configuration items. Skipping.")
 
 class PluginLoader:
 
     def __init__(self):
+        # import all plugins
+        module_all = glob.glob("plugins/*")
+        module_dirs: List[str] = [basename(d) for d in module_all if isdir(d) and not d.endswith('__pycache__')]
+        module_files: List[str] = [basename(f)[:-3] for f in module_all if isfile(f) and f.endswith('.py') and not f.endswith('__init__.py')]
+
+        for module in module_dirs:
+            try:
+                globals()[module] = importlib.import_module(f"plugins.{module}.{module}")
+            except ModuleNotFoundError:
+                logger.error(f"Error importing {module}. Please check requirements: {traceback.format_exc(limit=1)}")
+            except KeyError:
+                logger.error(f"Error importing {module} due to missing configuration items. Skipping.")
+
+        for module in module_files:
+            try:
+                logger.warning(f"DEPRECATION WARNING: Single-file plugin {module} detected. This will not be loaded from 0.2.0 onwards.")
+                globals()[module] = importlib.import_module(f"plugins.{module}")
+            except ModuleNotFoundError:
+                logger.error(f"Error importing {module}. Please check requirements: {traceback.format_exc(limit=1)}")
+            except KeyError:
+                logger.error(f"Error importing {module} due to missing configuration items. Skipping.")
+
         # get all loaded plugins from sys.modules and make them available as plugin_list
         self.__plugin_list: Dict[str, Plugin] = {}
 
