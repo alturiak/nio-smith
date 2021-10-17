@@ -18,7 +18,7 @@ current_version: int = 2
 plugin = Plugin("quote", "General", "Store (more or less) funny quotes and access them randomly or by search term")
 
 
-async def setup():
+def setup():
     """
     Register commands and hooks
     :return:
@@ -762,4 +762,4 @@ async def upgrade_quotes(command):
     else:
         await plugin.reply_notice(command, f"Error: upgraded {upgraded_quotes} of {len(quotes)} Quotes to Version {current_version}")
 
-asyncio.get_event_loop().run_until_complete(setup())
+setup()
