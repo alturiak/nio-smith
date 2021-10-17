@@ -6,7 +6,6 @@ import random
 import re
 from shlex import split
 from sys import maxsize
-import asyncio
 
 import logging
 logger = logging.getLogger(__name__)
