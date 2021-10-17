@@ -85,7 +85,8 @@ Please be advised that the plugin interface is about to
     - the frequency, in which the method is to be called, either as
         - datetime.timedelta or
         - str: "weekly", "daily", "hourly"
-- `del_timer`: remove a previously added timer (only if timer_type=="dynamic")  
+- `del_timer`: remove a previously added timer (only if `timer_type=="dynamic"`)
+- `has_timer_for_method`: check if a timer for the given method exists
 - `store_data`: persistently store data for later use
 - `read_data`: read data from store
 - `clear_data`: clear stored data
