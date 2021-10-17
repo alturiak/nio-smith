@@ -3,6 +3,7 @@ from nio import UnknownEvent, RoomMessageText
 from core.chat_functions import send_text_to_room
 from core.plugin import Plugin, PluginCommand, PluginHook
 from core.timer import Timer
+from core.config import Config
 from sys import modules
 from re import match
 from time import time
@@ -20,28 +21,39 @@ logger = logging.getLogger(__name__)
 
 class PluginLoader:
 
-    def __init__(self):
+    def __init__(self, config):
+        """
+        Handles importing and running plugins
+        :param config (Config): Bot configuration parameters
+        """
+
+        self.config: Config = config
         # import all plugins
         module_all = glob.glob("plugins/*")
         module_dirs: List[str] = [basename(d) for d in module_all if isdir(d) and not d.endswith('__pycache__')]
         module_files: List[str] = [basename(f)[:-3] for f in module_all if isfile(f) and f.endswith('.py') and not f.endswith('__init__.py')]
 
         for module in module_dirs:
-            try:
-                globals()[module] = importlib.import_module(f"plugins.{module}.{module}")
-            except ModuleNotFoundError:
-                logger.error(f"Error importing {module}. Please check requirements: {traceback.format_exc(limit=1)}")
-            except KeyError:
-                logger.error(f"Error importing {module} due to missing configuration items. Skipping.")
-
+            if self.is_allowed_plugin(module):
+                try:
+                    globals()[module] = importlib.import_module(f"plugins.{module}.{module}")
+                except ModuleNotFoundError:
+                    logger.error(f"Error importing {module}. Please check requirements: {traceback.format_exc(limit=1)}")
+                except KeyError:
+                    logger.error(f"Error importing {module} due to missing configuration items. Skipping.")
+            else:
+                logger.info(f"Skipping plugin {module} as it hasn't been allowed by configuration.")
         for module in module_files:
-            try:
-                logger.warning(f"DEPRECATION WARNING: Single-file plugin {module} detected. This will not be loaded from 0.2.0 onwards.")
-                globals()[module] = importlib.import_module(f"plugins.{module}")
-            except ModuleNotFoundError:
-                logger.error(f"Error importing {module}. Please check requirements: {traceback.format_exc(limit=1)}")
-            except KeyError:
-                logger.error(f"Error importing {module} due to missing configuration items. Skipping.")
+            if self.is_allowed_plugin(module):
+                try:
+                    logger.warning(f"DEPRECATION WARNING: Single-file plugin {module} detected. This will not be loaded from 0.2.0 onwards.")
+                    globals()[module] = importlib.import_module(f"plugins.{module}")
+                except ModuleNotFoundError:
+                    logger.error(f"Error importing {module}. Please check requirements: {traceback.format_exc(limit=1)}")
+                except KeyError:
+                    logger.error(f"Error importing {module} due to missing configuration items. Skipping.")
+            else:
+                logger.info(f"Skipping plugin {module} as it hasn't been allowed by configuration.")
 
         # get all loaded plugins from sys.modules and make them available as plugin_list
         self.__plugin_list: Dict[str, Plugin] = {}
@@ -63,6 +75,17 @@ class PluginLoader:
                 for timer in plugin.get_timers():
                     timers.append(timer.name)
                 logger.info(f"  Timers:   {', '.join(timers)}")
+
+    def is_allowed_plugin(self, plugin: str):
+        """
+        Check if a given plugin is allowed to be loaded
+        :param plugin: (str) Name of the plugin to check
+        :return:    True, if plugin may be loaded
+                    False, otherwise
+        """
+
+        if plugin not in self.config.plugins_denylist:
+            return not self.config.plugins_allowlist or plugin in self.config.plugins_allowlist
 
     async def load_plugin_data(self):
 
