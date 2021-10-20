@@ -14,10 +14,11 @@ store/
 # Python
 __pycache__/
 
-# Config files
+# Config files (except samples)
 config.yaml
 plugins/*.yaml
 plugins/*/*.yaml
+!plugins/*/*.sample.yaml
 
 # Plugin data
 plugins/*.pkl
