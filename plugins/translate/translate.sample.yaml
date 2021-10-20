@@ -1,0 +1,16 @@
+# Sample configuration of translate-plugin. Rename to translate.yaml to use.
+
+# List of room-id the plugin is allowed to work in (if empty, all rooms are allowed)
+# allowed_rooms: []
+
+# minimum power level to activate translation (default: 50)
+# min_power_level: 50
+
+# list of default source language(s) to translate messages from, if not specified when using !translate (default: ['any'])
+# default_source: ['any']
+
+# default destination language to translate messages from, if not specified when using !translate
+# default_dest: en
+
+# default to bidirectional translation, if not specified when using !translate
+# default_bidirectional: False
