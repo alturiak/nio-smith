@@ -7,19 +7,15 @@ import logging
 import googletrans
 
 logger = logging.getLogger(__name__)
-plugin = Plugin("translate", "General", "Provide near-realtime translations of all room-messages via Google Translate")
+plugin = Plugin("translate", "General", "Provide translations of all room-messages via Google Translate")
 
 
 def setup():
-
+    # Change settings in translate.yaml if required
     plugin.add_config("allowed_rooms", [], is_required=False)
-    # minimum power level to activate translation
     plugin.add_config("min_power_level", 50, is_required=False)
-    # default source language to translate messages from, if not specified when using !translate
     plugin.add_config("default_source", ['any'], is_required=False)
-    # default destination language to translate messages from, if not specified when using !translate
     plugin.add_config("default_dest", 'en', is_required=False)
-    # default value, if bidirectional translation is to be used, if not specified when using !translate
     plugin.add_config("default_bidirectional", False, is_required=False)
 
     plugin.add_command("translate", switch, "`translate [[bi] source_lang... dest_lang]` - translate text from one or more source_lang to dest_lang",

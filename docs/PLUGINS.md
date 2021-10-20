@@ -12,7 +12,7 @@ Note: automatic loading of plugins can be configured by allow- and denylist in t
 - `sampleplugin`: Just a simple sample, demonstrating the current capabilities of the `Plugin` interface
 - `sonarr`: provides commands to query sonarr's API
 - `spruch`: famous quotes from even more famous people (german, sorry)
-- `translate`: provides near-realtime translations of all room-messages via Google Translate
+- `translate`: Provide translations of all room-messages via Google Translate (using googletrans, may break randomly)
 
 ## Included plugins' 3rd party requirements
 - `dates`: [dateparser](https://pypi.org/project/dateparser/) to allow for almost arbitrary input format of dates
