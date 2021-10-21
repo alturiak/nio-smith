@@ -48,13 +48,13 @@ async def print_help(command):
         try:
             requested_plugin: Plugin
             if requested_plugin := command.plugin_loader.get_plugin_by_name(command.args[0]):
-                if requested_plugin.is_valid_for_room(command.room.room_id):
+                if requested_plugin._is_valid_for_room(command.room.room_id):
                     plugin_command_name: str
                     plugin_command: PluginCommand
                     command_texts: List[Tuple[str, str, int]] = []
 
                     # Iterate through all commands of requested plugin and add descriptions
-                    for (plugin_command_name, plugin_command) in requested_plugin.get_commands().items():
+                    for (plugin_command_name, plugin_command) in requested_plugin._get_commands().items():
                         command_texts.append((plugin_command_name, plugin_command.help_text, plugin_command.power_level))
 
                     headline: str = f"**Plugin {requested_plugin.name}**"
@@ -75,7 +75,7 @@ async def print_help(command):
         # too many arguments or invalid plugin-name
         help_text = "try `help` ;-)"
 
-    await plugin.reply_notice(command, help_text)
+    await plugin.respond_notice(command, help_text)
 
 
 plugin = Plugin("help", "General", "Provide helpful help")

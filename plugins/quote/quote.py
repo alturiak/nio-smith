@@ -318,7 +318,7 @@ async def quote_command(command):
         # TODO: check if this needs fixing
         quotes = dict(filter(lambda item: not item[1].deleted, quotes.items()))
     else:
-        await plugin.reply_notice(command, "Error: no quotes stored")
+        await plugin.respond_notice(command, "Error: no quotes stored")
         return False
 
     quote_id: str
@@ -334,7 +334,7 @@ async def quote_command(command):
         if quote_object := await find_quote_by_id(quotes, str(command.args[0])):
             await post_quote(command, quote_object)
         else:
-            await plugin.reply_notice(command, f"Quote {command.args[0]} not found")
+            await plugin.respond_notice(command, f"Quote {command.args[0]} not found")
 
     else:
         """Find quote by search term"""
@@ -357,7 +357,7 @@ async def quote_command(command):
             (quote_object, match_index, total_matches) = await find_quote_by_search_term(quotes, terms, match_id)
             await post_quote(command, quote_object, match_index, total_matches)
         except TypeError:
-            await plugin.reply_notice(command, f"No quote found matching {terms}")
+            await plugin.respond_notice(command, f"No quote found matching {terms}")
 
 
 async def post_quote(command, quote_object: Quote, match_index: int = -1, total_matches: int = -1):
@@ -371,16 +371,16 @@ async def post_quote(command, quote_object: Quote, match_index: int = -1, total_
     """
 
     if match_index != -1:
-        event_id: str = await plugin.reply_notice(command, f"{await quote_object.display_text(command)}  \nMatch {match_index} of {total_matches}")
+        event_id: str = await plugin.respond_notice(command, f"{await quote_object.display_text(command)}  \nMatch {match_index} of {total_matches}")
     else:
-        event_id: str = await plugin.reply_notice(command, f"{await quote_object.display_text(command)}")
+        event_id: str = await plugin.respond_notice(command, f"{await quote_object.display_text(command)}")
 
     for reaction, count in quote_object.reactions.items():
         if count == 1:
             reaction_text: str = f"{reaction}"
         else:
             reaction_text: str = f"{reaction} {count}"
-        await plugin.react(command.client, command.room.room_id, event_id, reaction_text)
+        await plugin.send_reaction(command.client, command.room.room_id, event_id, reaction_text)
 
     """store the event id of the message to allow for tracking reactions to the last 100 posted quotes"""
     tracked_quotes: List[TrackedQuote]
@@ -473,9 +473,9 @@ async def quote_add_command(command):
 
     if len(command.args) > 0:
         quote: Quote = await quote_add_or_replace(command)
-        await plugin.reply_notice(command, f"Quote {quote.id} added")
+        await plugin.respond_notice(command, f"Quote {quote.id} added")
     else:
-        await plugin.reply_notice(command, "Usage: quote_add <quote_text>")
+        await plugin.respond_notice(command, "Usage: quote_add <quote_text>")
 
 
 async def quote_replace_command(command):
@@ -488,13 +488,13 @@ async def quote_replace_command(command):
     if len(command.args) > 2 and re.match(r'\d+', command.args[0]) and command.args[0] in (await plugin.read_data("quotes")).keys():
         old_quote_text: str = await (await plugin.read_data("quotes"))[command.args[0]].display_text(command)
         quote: Quote = await quote_add_or_replace(command, command.args[0])
-        await plugin.reply_notice(command, f"Quote {quote.id} replaced  \n"
+        await plugin.respond_notice(command, f"Quote {quote.id} replaced  \n"
                                            f"**Old:**  \n"
                                            f"{old_quote_text}  \n\n"
                                            f"**New:**  \n"
                                            f"{await quote.display_text(command)}")
     else:
-        await plugin.reply_notice(command, "Usage: `quote_replace <quote_id> <quote_text>`")
+        await plugin.respond_notice(command, "Usage: `quote_replace <quote_id> <quote_text>`")
 
 
 async def quote_add_or_replace(command, quote_id: str = "0") -> Quote or None:
@@ -569,7 +569,7 @@ async def quote_delete_command(command):
         quotes = {}
 
     if len(command.args) > 1:
-        await plugin.reply_notice(command, f"Usage: quote_delete <quote_id>")
+        await plugin.respond_notice(command, f"Usage: quote_delete <quote_id>")
 
     elif len(command.args) == 1 and command.args[0].isdigit():
         quote_id: str = str(command.args[0])
@@ -577,11 +577,11 @@ async def quote_delete_command(command):
             if not quotes[quote_id].deleted:
                 quotes[quote_id].deleted = True
                 await plugin.store_data("quotes", quotes)
-                await plugin.reply_notice(command, f"Quote {quote_id} deleted")
+                await plugin.respond_notice(command, f"Quote {quote_id} deleted")
         except KeyError:
-            await plugin.reply_notice(command, f"Quote {quote_id} not found")
+            await plugin.respond_notice(command, f"Quote {quote_id} not found")
     else:
-        await plugin.reply_notice(command, f"Usage: quote_delete <id>")
+        await plugin.respond_notice(command, f"Usage: quote_delete <id>")
 
 
 async def quote_restore_command(command):
@@ -596,7 +596,7 @@ async def quote_restore_command(command):
         quotes = {}
 
     if len(command.args) > 1:
-        await plugin.reply_notice(command, f"Usage: quote_restore <quote_id>")
+        await plugin.respond_notice(command, f"Usage: quote_restore <quote_id>")
 
     elif len(command.args) == 1 and command.args[0].isdigit():
         quote_id: str = str(command.args[0])
@@ -604,11 +604,11 @@ async def quote_restore_command(command):
             if quotes[quote_id].deleted:
                 quotes[quote_id].deleted = False
                 await plugin.store_data("quotes", quotes)
-                await plugin.reply_notice(command, f"Quote {quote_id} restored")
+                await plugin.respond_notice(command, f"Quote {quote_id} restored")
         except KeyError:
-            await plugin.reply_notice(command, f"Quote {quote_id} not found")
+            await plugin.respond_notice(command, f"Quote {quote_id} not found")
     else:
-        await plugin.reply_notice(command, f"Usage: quote_restore <id>")
+        await plugin.respond_notice(command, f"Usage: quote_restore <id>")
 
 
 async def quote_links_command(command):
@@ -624,7 +624,7 @@ async def quote_links_command(command):
     else:
         await plugin.store_data("nick_links", False)
 
-    await plugin.reply_notice(command, f"Nick linking {await plugin.read_data('nick_links')}")
+    await plugin.respond_notice(command, f"Nick linking {await plugin.read_data('nick_links')}")
 
 
 async def quote_stats_command(command):
@@ -696,7 +696,7 @@ async def quote_stats_command(command):
         if not full_output and nick_count >= 5:
             break
 
-    await plugin.reply_notice(command, stats_message)
+    await plugin.respond_notice(command, stats_message)
 
 
 async def quote_add_reaction(client: AsyncClient, room_id: str, event: UnknownEvent):
@@ -757,8 +757,8 @@ async def upgrade_quotes(command):
     if upgrade_successful:
         await plugin.store_data("quotes", quotes)
         await plugin.store_data("store_version", current_version)
-        await plugin.reply_notice(command, f"Success: upgraded {upgraded_quotes} of {len(quotes)} Quotes to Version {current_version}")
+        await plugin.respond_notice(command, f"Success: upgraded {upgraded_quotes} of {len(quotes)} Quotes to Version {current_version}")
     else:
-        await plugin.reply_notice(command, f"Error: upgraded {upgraded_quotes} of {len(quotes)} Quotes to Version {current_version}")
+        await plugin.respond_notice(command, f"Error: upgraded {upgraded_quotes} of {len(quotes)} Quotes to Version {current_version}")
 
 setup()

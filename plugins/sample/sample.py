@@ -49,7 +49,7 @@ class Sample:
 
 
 async def sample_command(command):
-    await plugin.reply(command, "This is a sample output")
+    await plugin.respond_message(command, "This is a sample output")
 
 
 async def sample_store(command):
@@ -64,11 +64,11 @@ async def sample_store(command):
         message: str = " ".join(command.args)
         sample: Sample = Sample(message)
         if await plugin.store_data("sample", sample):
-            await plugin.reply_notice(command, f"Message \"{message}\" stored successfully")
+            await plugin.respond_notice(command, f"Message \"{message}\" stored successfully")
         else:
-            await plugin.reply_notice(command, "Could not store message")
+            await plugin.respond_notice(command, "Could not store message")
     else:
-        await plugin.reply_notice(command, "No message supplied")
+        await plugin.respond_notice(command, "No message supplied")
 
 
 async def sample_read(command):
@@ -80,9 +80,9 @@ async def sample_read(command):
 
     try:
         sample: Sample = await plugin.read_data("sample")
-        await plugin.reply(command, f"Message: {sample.message}", 200)
+        await plugin.respond_message(command, f"Message: {sample.message}", 200)
     except KeyError:
-        await plugin.reply_notice(command, "Message could not be loaded")
+        await plugin.respond_notice(command, "Message could not be loaded")
 
 
 async def sample_clear(command):
@@ -93,9 +93,9 @@ async def sample_clear(command):
     """
 
     if await plugin.clear_data("sample"):
-        await plugin.reply_notice(command, "Message cleared")
+        await plugin.respond_notice(command, "Message cleared")
     else:
-        await plugin.reply_notice(command, "Could not clear message as no message was stored")
+        await plugin.respond_notice(command, "Could not clear message as no message was stored")
 
 
 async def sample_link_user(command):
@@ -108,9 +108,9 @@ async def sample_link_user(command):
     if len(command.args) == 1:
         user_link: str
         if user_link := await plugin.link_user(command.client, command.room.room_id, command.args[0]):
-            await plugin.reply(command, f"Requested Displayname: {command.args[0]}, User Link: {user_link}")
+            await plugin.respond_message(command, f"Requested Displayname: {command.args[0]}, User Link: {user_link}")
         else:
-            await plugin.reply_notice(command, f"No user found for {command.args[0]}")
+            await plugin.respond_notice(command, f"No user found for {command.args[0]}")
 
 
 async def sample_reaction_test(command):
@@ -122,15 +122,15 @@ async def sample_reaction_test(command):
     """
 
     if len(command.args) == 0:
-        event_id: str = await plugin.reply(command, f"A reaction to this message will be tracked and posted back to the room.")
-        await plugin.reply_notice(command, f"Tracking Event ID {event_id}")
+        event_id: str = await plugin.respond_message(command, f"A reaction to this message will be tracked and posted back to the room.")
+        await plugin.respond_notice(command, f"Tracking Event ID {event_id}")
         await plugin.store_data("tracked_message", event_id)
 
         # Dynamically add a reaction hook for one specific event-id
         plugin.add_hook("m.reaction", hook_reactions, event_ids=[event_id], hook_type="dynamic")
 
     else:
-        await plugin.reply_notice(command, "Usage: sample_reaction_test")
+        await plugin.respond_notice(command, "Usage: sample_reaction_test")
 
 
 async def hook_reactions(client: AsyncClient, room_id: str, event: UnknownEvent):
@@ -146,7 +146,7 @@ async def hook_reactions(client: AsyncClient, room_id: str, event: UnknownEvent)
     reaction: str = event.source['content']['m.relates_to']['key']
 
     if tracked_message is not None:
-        await plugin.notice(client, room_id, f"Reaction received to event {tracked_message} received: {reaction}. Disabling reaction tracking.")
+        await plugin.send_notice(client, room_id, f"Reaction received to event {tracked_message} received: {reaction}. Disabling reaction tracking.")
         # Remove dynamic reaction hook
         plugin.del_hook("m.reaction", hook_reactions)
 
@@ -159,8 +159,8 @@ async def sample_react(command):
     """
 
     if len(command.args) == 0:
-        await plugin.react(command.client, command.room.room_id, command.event.event_id, "Hello")
-        await plugin.react(command.client, command.room.room_id, command.event.event_id, "👋")
+        await plugin.send_reaction(command.client, command.room.room_id, command.event.event_id, "Hello")
+        await plugin.send_reaction(command.client, command.room.room_id, command.event.event_id, "👋")
 
 
 async def sample_replace(command):
@@ -170,15 +170,15 @@ async def sample_replace(command):
     :return: -
     """
 
-    message_id: str = await plugin.reply(command, f"<font color=\"red\">This is a test message</font>")
+    message_id: str = await plugin.respond_message(command, f"<font color=\"red\">This is a test message</font>")
     await sleep(3)
 
     # this should actually edit the message ...
-    await plugin.replace(command.client, command.room.room_id, message_id, f"<font color=\"green\">This is an edited test message</font>")
+    await plugin.replace_message(command.client, command.room.room_id, message_id, f"<font color=\"green\">This is an edited test message</font>")
     await sleep(3)
 
     # ... this should not
-    await plugin.replace(command.client, command.room.room_id, message_id, f"<font color=\"green\">This is an edited test message</font>")
+    await plugin.replace_message(command.client, command.room.room_id, message_id, f"<font color=\"green\">This is an edited test message</font>")
 
 
 async def read_configuration(command):
@@ -190,9 +190,9 @@ async def read_configuration(command):
 
     try:
         message: str = plugin.read_config("default_message")
-        await plugin.reply(command, f"Configuration value: {message}")
+        await plugin.respond_message(command, f"Configuration value: {message}")
     except KeyError:
-        await plugin.reply_notice(command, f"Could not read message from configuration")
+        await plugin.respond_notice(command, f"Could not read message from configuration")
 
 
 async def timer_daily(client):
@@ -224,7 +224,7 @@ async def add_command(command):
 
     plugin.add_command("sample_remove_command", remove_command, "Dynamically removes an active command `sample_remove_command`", command_type="dynamic")
     plugin.add_hook("m.reaction", remove_command, room_id=[command.room.room_id], hook_type="dynamic")
-    await plugin.reply(command, "Dynamic command `sample_remove_command` and dynamic hook for reactions activated.  \n"
+    await plugin.respond_message(command, "Dynamic command `sample_remove_command` and dynamic hook for reactions activated.  \n"
                                 "Use `sample_remove_command` or a reaction to disable again")
 
 
@@ -246,7 +246,7 @@ async def remove_command(command_client: AsyncClient or Command, room_id: str = 
     else:
         client = command_client.client
         room = command_client.room.room_id
-    await plugin.message(client, room, "Dynamic command `sample_remove_command` and hook for reactions deactivated.")
+    await plugin.send_message(client, room, "Dynamic command `sample_remove_command` and hook for reactions deactivated.")
 
 
 async def sample_sleep(command: Command):
@@ -258,8 +258,8 @@ async def sample_sleep(command: Command):
     """
 
     random_int: int = randrange(1000)
-    await plugin.reply(command, f"ID: {random_int} - before timer")
+    await plugin.respond_message(command, f"ID: {random_int} - before timer")
     await asyncio.sleep(5)
-    await plugin.reply(command, f"ID: {random_int} - after timer")
+    await plugin.respond_message(command, f"ID: {random_int} - after timer")
 
 setup()

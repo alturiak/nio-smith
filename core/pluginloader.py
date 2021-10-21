@@ -66,13 +66,13 @@ class PluginLoader:
         for plugin in self.__plugin_list.values():
             """Display details about the loaded plugins, this does nothing else"""
             logger.info(f"Loaded plugin {plugin.name}:")
-            if plugin.get_commands() != {}:
-                logger.info(f"  Commands: {', '.join([*plugin.get_commands().keys()])}")
-            if plugin.get_hooks() != {}:
-                logger.info(f"  Hooks:    {', '.join([*plugin.get_hooks().keys()])}")
-            if plugin.get_timers():
+            if plugin._get_commands() != {}:
+                logger.info(f"  Commands: {', '.join([*plugin._get_commands().keys()])}")
+            if plugin._get_hooks() != {}:
+                logger.info(f"  Hooks:    {', '.join([*plugin._get_hooks().keys()])}")
+            if plugin._get_timers():
                 timers: List[str] = []
-                for timer in plugin.get_timers():
+                for timer in plugin._get_timers():
                     timers.append(timer.name)
                 logger.info(f"  Timers:   {', '.join(timers)}")
 
@@ -124,7 +124,7 @@ class PluginLoader:
         plugin: Plugin
 
         for plugin in self.get_plugins().values():
-            for event_type, current_plugin_hooks in plugin.get_hooks().items():
+            for event_type, current_plugin_hooks in plugin._get_hooks().items():
                 if event_type in all_plugin_hooks.keys():
                     for plugin_hook in current_plugin_hooks:
                         all_plugin_hooks[event_type].append(plugin_hook)
@@ -143,7 +143,7 @@ class PluginLoader:
         plugin: Plugin
 
         for plugin in self.get_plugins().values():
-            plugin_commands.update(plugin.get_commands())
+            plugin_commands.update(plugin._get_commands())
 
         return plugin_commands
 
@@ -157,7 +157,7 @@ class PluginLoader:
         plugin: Plugin
 
         for plugin in self.get_plugins().values():
-            all_plugin_timers += plugin.get_timers()
+            all_plugin_timers += plugin._get_timers()
 
         return all_plugin_timers
 

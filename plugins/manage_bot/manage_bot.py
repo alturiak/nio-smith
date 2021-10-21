@@ -28,7 +28,7 @@ async def bot_rooms_list(command):
         message += f"`{room.display_name}` ({room.room_id}): {room.member_count}  \n"
         if room.member_count == 2:
             message += f"{room.users}  \n"
-    await plugin.reply(command, message)
+    await plugin.respond_message(command, message)
 
 
 async def bot_rooms_cleanup(command):
@@ -46,7 +46,7 @@ async def bot_rooms_cleanup(command):
             message += f"Leaving {room.display_name} ({room.room_id})  \n"
             await client.room_leave(room.room_id)
 
-    await plugin.reply(command, message)
+    await plugin.respond_message(command, message)
 
 
 setup()

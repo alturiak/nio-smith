@@ -10,6 +10,6 @@ def setup():
 async def echo(command):
     """Echo back the command's arguments"""
     response = " ".join(command.args)
-    await plugin.reply(command, response)
+    await plugin.respond_message(command, response)
 
 setup()
