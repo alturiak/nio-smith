@@ -65,13 +65,13 @@ async def switch(command):
                 source_langs = command.args[:-1]
                 dest_lang = command.args[-1]
         except IndexError:
-            await plugin.reply_notice(command, "Syntax: `!translate [[bi] source_lang... dest_lang]`")
+            await plugin.respond_notice(command, "Syntax: `!translate [[bi] source_lang... dest_lang]`")
             return False
 
     if command.room.room_id in enabled_rooms:
         del rooms_db[command.room.room_id]
         await plugin.store_data("rooms_db", rooms_db)
-        await plugin.reply_notice(command, "Translations disabled")
+        await plugin.respond_notice(command, "Translations disabled")
 
     elif plugin.read_config("allowed_rooms") == [] or command.room.room_id in plugin.read_config("allowed_rooms"):
         if dest_lang in googletrans.LANGUAGES.keys() and source_langs == ['any'] or all(elem in googletrans.LANGUAGES.keys() for elem in source_langs):
@@ -85,9 +85,9 @@ async def switch(command):
                 message = f"Unidirectional translations ({str(source_langs)}=>{dest_lang}) enabled.  \n"
 
             message += f"**ATTENTION**: *ALL* future messages in this room will be sent to Google Translate until disabled again."
-            await plugin.reply_notice(command, message)
+            await plugin.respond_notice(command, message)
         else:
-            await plugin.reply_notice(command, f"Invalid language specified.")
+            await plugin.respond_notice(command, f"Invalid language specified.")
 
 
 async def translate_message(client: AsyncClient, room_id: str, event: RoomMessageText):
@@ -118,7 +118,7 @@ async def translate_message(client: AsyncClient, room_id: str, event: RoomMessag
         except Exception:
             del rooms_db[room_id]
             await plugin.store_data("rooms_db", rooms_db)
-            await plugin.notice(client, room_id, "Error in backend translation module. Translations disabled.")
+            await plugin.send_notice(client, room_id, "Error in backend translation module. Translations disabled.")
             return
 
         if rooms_db[room_id]["bidirectional"]:
@@ -128,13 +128,13 @@ async def translate_message(client: AsyncClient, room_id: str, event: RoomMessag
                 languages.remove(message_source_lang)
                 dest_lang = languages[0]
                 translated = trans.translate(message, dest=dest_lang).text
-                await plugin.notice(client, room_id, translated)
+                await plugin.send_notice(client, room_id, translated)
 
         else:
             if message_source_lang != rooms_db[room_id]["dest_lang"] and \
                     (rooms_db[room_id]["source_langs"] == ['any'] or message_source_lang in rooms_db[room_id]["source_langs"]):
                 translated = trans.translate(message, dest=rooms_db[room_id]["dest_lang"]).text
-                await plugin.notice(client, room_id, translated)
+                await plugin.send_notice(client, room_id, translated)
 
 
 setup()

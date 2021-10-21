@@ -10,7 +10,7 @@ import random
 async def roll(command):
 
     if not command.args:
-        await plugin.reply_notice(command, "No argument given.")
+        await plugin.respond_notice(command, "No argument given.")
         return None
     try:
         number, rest = command.args[0].lower().split("d", 1)
@@ -46,15 +46,15 @@ async def roll(command):
             modifier = 0
 
     except ValueError:
-        await plugin.reply_notice(command, "Malformed argument! Use 1d6, 3d10 etc.")
+        await plugin.respond_notice(command, "Malformed argument! Use 1d6, 3d10 etc.")
         return None
     if number == 0 or sides == 0:
-        await plugin.reply_notice(command, "Number of dice or sides per die are zero! Please use only nonzero numbers.")
+        await plugin.respond_notice(command, "Number of dice or sides per die are zero! Please use only nonzero numbers.")
         return None
     random.seed()
     roll_list = []
     if number > 100000:
-        await plugin.reply_notice(command, "Number of dice too large! Try a more reasonable number. (5 digits are fine)")
+        await plugin.respond_notice(command, "Number of dice too large! Try a more reasonable number. (5 digits are fine)")
         return None
     for _ in range(number):
         roll_list.append(random.randint(lowest_value, sides))
@@ -67,7 +67,7 @@ async def roll(command):
     if len(roll_list) == 1:
         result_list = ""
 
-    await plugin.reply(command, "**Result:** " + str(sum(roll_list) + modifier) + result_list, delay=200)
+    await plugin.respond_message(command, "**Result:** " + str(sum(roll_list) + modifier) + result_list, delay=200)
 
 plugin = Plugin("roll", "General", "Plugin to provide a simple, randomized !roll of dice")
 plugin.add_command("roll", roll, "the dice giveth and the dice taketh away")

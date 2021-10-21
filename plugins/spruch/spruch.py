@@ -8,7 +8,7 @@ async def spruch(command):
         sprueche = spruchdb.readlines()
 
     message = random.choice(sprueche)
-    await plugin.reply(command, message, delay=200)
+    await plugin.respond_message(command, message, delay=200)
 
 plugin = Plugin("spruch", "General", "Plugin to provide a simple, randomized !spruch")
 plugin.add_command("spruch", spruch, "famous quotes from even more famous people")

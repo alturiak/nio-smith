@@ -68,10 +68,10 @@ async def series(command):
                 message = message + "<td>" + col + "</td>"
             message = message + "</tr>"
         message = message + "</table>"
-        await plugin.reply(command, message)
+        await plugin.respond_message(command, message)
 
     else:
-        await plugin.reply_notice(command, f"Response Code: {str(shows.status_code)}")
+        await plugin.respond_notice(command, f"Response Code: {str(shows.status_code)}")
 
 
 async def current_week_dates() -> (str, str):
@@ -176,7 +176,7 @@ async def current_episodes(command_client: Command or AsyncClient):
 
     if message != "":
         # store event_id for later editing
-        event_id = await plugin.message(client, plugin.read_config("room_id"), message)
+        event_id = await plugin.send_message(client, plugin.read_config("room_id"), message)
         await plugin.store_data("today_message", event_id)
         await plugin.store_data("today_message_text", message)
 
@@ -192,7 +192,7 @@ async def update_current_episodes(client):
     message: str = await compose_upcoming(week_start, week_end)
 
     if message != "" and message != await plugin.read_data("today_message_text"):
-        message_id: str or None = await plugin.replace(client, plugin.read_config("room_id"), await plugin.read_data("today_message"), message)
+        message_id: str or None = await plugin.replace_message(client, plugin.read_config("room_id"), await plugin.read_data("today_message"), message)
         if not message_id:
             await current_episodes(client)
         else:
