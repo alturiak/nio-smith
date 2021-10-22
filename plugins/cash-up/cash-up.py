@@ -57,12 +57,22 @@ class Group_payments:
         # update first and hopefully only match
         payment_to_increase[0]["expenses"] += new_expense
 
-    def print(self):
-        print("group:")
-        print("payments:",self.payments)
+    # def print(self):
+    #     print("group:")
+    #     print("payments:",self.payments)
     
     def to_str(self):
-        return f"Group: splits_evenly: {self.splits_evenly}, member list: {self.payments}"
+        group_str: str = f"**Group**: splits_evenly: {self.splits_evenly},  \n"
+        for payment in self.payments:
+            name = payment["uid"]
+            expense = payment["expenses"]
+            group_str += f"{name} spend {expense}"
+            if self.splits_evenly == False:
+                percentage = payment["percentage"] * 100
+                group_str += f" and will pay {percentage}% of the over all cost  \n"
+            else:
+                group_str += f"  \n"
+        return group_str
 
 
 class Persistent_groups:
@@ -127,7 +137,6 @@ class Cash_up(object):
         """calculate the sum & mean of all expenses in the group"""
         self._sum_group_expenses = functools.reduce(lambda acc, curr: acc+ int(curr['expenses']), self._payments, 0)
         self._mean_group_expenses = self._sum_group_expenses / len(self._payments)
-        # print("sum of expenses",self._sum_group_expenses)
         
     def _calculate_parts_to_pay(self):
         """calculate the parts each person has to pay
@@ -136,7 +145,6 @@ class Cash_up(object):
             self._parts_to_pay = [{"uid": payment["uid"], "has_to_pay": (payment['expenses'] - (self._sum_group_expenses * payment['percentage']))} for payment in self._payments]
         else:
             self._parts_to_pay = [{"uid": payment["uid"], "has_to_pay": (payment['expenses'] - (self._mean_group_expenses))} for payment in self._payments]
-        # print("parts to pay:",self._parts_to_pay)
 
     def _who_owes_who(self):
         """Build strings of who owes who how much.
@@ -186,7 +194,6 @@ async def register(command):
         new_names = []
         new_percentages = []
         for arg in command.args:
-            print("arg:",arg)
             # remove all ; from arg element;
             arg = arg.replace(';', '')
             # find any numbers in string (eg: 12; 12,1; 12.1)
@@ -238,7 +245,9 @@ async def read(command):
     response = "No group registered for this room!"
     if loaded_group is not None:
         response = loaded_group.to_str()
-    await plugin.reply(command, response)
+        await plugin.reply(command, response)
+    else:
+        await plugin.reply(command, "No data to read!")
 
 async def add_expense_for_user(command):
     """Adds a new expense for the given username"""
