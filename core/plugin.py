@@ -166,16 +166,21 @@ class Plugin:
 
         if event_type in self.hooks.keys():
 
+            hook_removed: bool = False
             hooks = self.hooks
             hook: PluginHook
             for hook in hooks.get(event_type):
                 if hook.method == method:
                     if hook.hook_type == "dynamic":
                         self.hooks[event_type].remove(hook)
-                        self._save_state()
-                        return True
+                        hook_removed = True
+
                     else:
                         logger.warning(f"Plugin {self.name} tried to remove static hook for {event_type}.")
+
+            if hook_removed:
+                self._save_state()
+                return True
 
         return False
 
