@@ -813,7 +813,10 @@ class Plugin:
         event: str
         hooks_list: List[PluginHook]
         for event, hooks_list in dynamic_hooks.items():
-            self._get_hooks()[event] += hooks_list
+            if self.hooks.get(event):
+                self._get_hooks()[event] += hooks_list
+            else:
+                self.hooks[event] = hooks_list
 
         # add last execution for static timers and all dynamic timers
         state_timer: Timer
