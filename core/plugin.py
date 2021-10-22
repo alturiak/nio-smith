@@ -145,7 +145,13 @@ class Plugin:
         if event_type not in self.hooks.keys():
             self.hooks[event_type] = [plugin_hook]
         else:
-            self.hooks[event_type].append(plugin_hook)
+            hook: PluginHook
+            for hook in self.hooks[event_type]:
+                # check if a duplicate hook exists
+                if hook.method == method and hook.room_id == room_id:
+                    break
+            else:
+                self.hooks[event_type].append(plugin_hook)
 
         if hook_type == "dynamic":
             self._save_state()
