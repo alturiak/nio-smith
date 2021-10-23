@@ -33,6 +33,11 @@ class PluginLoader:
         module_dirs: List[str] = [basename(d) for d in module_all if isdir(d) and not d.endswith('__pycache__')]
         module_files: List[str] = [basename(f)[:-3] for f in module_all if isfile(f) and f.endswith('.py') and not f.endswith('__init__.py')]
 
+        if self.config.plugins_allowlist:
+            logger.info(f"Plugin allowlist: {self.config.plugins_allowlist}")
+        if self.config.plugins_denylist:
+            logger.info(f"Plugin denylist: {self.config.plugins_denylist}")
+
         for module in module_dirs:
             if self.is_allowed_plugin(module):
                 try:

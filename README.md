@@ -12,7 +12,7 @@ It's based on the lovely [nio-template](https://github.com/anoadragon453/nio-tem
 Pull Requests and [feedback](https://matrix.to/#/#nio-smith:pack.rocks) welcome. :-)
 
 ## Plugins
-See [docs/PLUGINS.md](docs/PLUGINS.md) for further details on plugin capabilities.
+See [plugins/README.md](plugins/README.md) for further details on plugin capabilities.
 
 ## Features
 - ✔ dynamic plugin-loading (on startup), just place your plugin in the `plugins`-directory
@@ -37,7 +37,7 @@ See [docs/PLUGINS.md](docs/PLUGINS.md) for further details on plugin capabilitie
 - [matrix-nio](https://matrix-nio.readthedocs.io/en/latest/nio.html) with end-to-end-encryption enabled
 - [fuzzywuzzy](https://github.com/seatgeek/fuzzywuzzy) for fuzzy command matching and nick linking (yes, it's worth it)
 
-See [docs/PLUGINS.md](docs/PLUGINS.md) for further details on additional plugin requirements.
+See [plugins/README.md](plugins/README.md) for further details on additional plugin requirements.
 
 ## Breaking changes
 Please see [docs/BREAKING.md](docs/BREAKING.md) for a list of breaking changes.
