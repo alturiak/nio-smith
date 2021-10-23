@@ -1,0 +1,7 @@
+# Sample configuration of manage_bot-plugin. Rename to manage_bot.yaml to use.
+
+# List of room_ids on which admin_commands are allowed. Only room-admins will be allowed to issue commands.
+# manage_bot_rooms: ["!rdBDrHapAsYdvmgGMP:pack.rocks"]
+
+# Optional power level (on rooms in manage_bot_rooms) required to issue commands. Default: 100
+# manage_bot_power_level: 100

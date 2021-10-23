@@ -5,9 +5,12 @@ plugin = Plugin("manage_bot", "General", "Provide functions to manage the bot fr
 
 
 def setup():
-    plugin.add_config("manage_bot_room", default_value=[], is_required=False)
-    plugin.add_command("bot_rooms_list", bot_rooms_list, "Displays a list of rooms the bot is in", [plugin.read_config("manage_bot_room")])
-    plugin.add_command("bot_rooms_cleanup", bot_rooms_cleanup, "Leave rooms the bot is alone in", [plugin.read_config("manage_bot_room")])
+    plugin.add_config("manage_bot_rooms", is_required=True)
+    plugin.add_config("manage_bot_power_level", is_required=False, default_value=100)
+    plugin.add_command("bot_rooms_list", bot_rooms_list, "Displays a list of rooms the bot is in", plugin.read_config("manage_bot_rooms"),
+                       plugin.read_config("manage_bot_power_level"))
+    plugin.add_command("bot_rooms_cleanup", bot_rooms_cleanup, "Leave rooms the bot is alone in", plugin.read_config("manage_bot_rooms"),
+                       plugin.read_config("manage_bot_power_level"))
 
 
 async def bot_rooms_list(command):
