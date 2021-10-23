@@ -49,13 +49,20 @@ class Plugin:
 
     def _is_valid_for_room(self, room_id: str) -> bool:
         """
-        Determine if the plugin is allowed to be used in the given room
+        Determine if at least one of the plugin's commands is allowed to be used in the given room
         :param room_id: room_id to check for
         :return:    True, if the plugin is allowed for the room
                     False, otherwise
         """
 
-        return self.rooms == [] or room_id in self.rooms
+        if not self.rooms:
+            return True
+        else:
+            command: PluginCommand
+            for command in self.commands.values():
+                if not command.room_id or command.room_id and room_id in command.room_id:
+                    return True
+            return False
 
     def _get_help_text(self):
         """
