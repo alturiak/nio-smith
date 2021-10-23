@@ -36,7 +36,7 @@ async def print_help(command):
 
         # Load names and descriptions of all loaded plugins
         for loaded_plugin in command.plugin_loader.get_plugins().values():
-            if not loaded_plugin.rooms or current_room_id in loaded_plugin.rooms:
+            if loaded_plugin._is_valid_for_room(command.room.room_id):
                 plugin_texts.append((loaded_plugin.name, loaded_plugin.description, 0))
 
         headline: str = f"**Available Plugins in this room**  \nuse `help <pluginname>` to get detailed help"
