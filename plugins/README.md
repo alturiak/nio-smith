@@ -1,7 +1,7 @@
 # Plugins
 ## Included Plugins
 Note: automatic loading of plugins can be configured by allow- and denylist in the bot's configuration.  
-- `dates`: Stores dates and birthdays, posts reminders ([README.md](../plugins/dates/README.md))
+- `dates`: Stores dates and birthdays, posts reminders ([README.md](dates/README.md))
 - `echo`: echoes back text following the command.
 - `help`: lists all available plugins. If called with a plugin as parameter, lists all available commands
 - `meter`: accurately measures someones somethingness
@@ -10,11 +10,11 @@ Note: automatic loading of plugins can be configured by allow- and denylist in t
 - `quote`: store quotes and provide several means to display them
 - `roll`: the dice giveth and the dice taketh away
 - `sample`: Just a simple sample, demonstrating the current capabilities of the `Plugin` interface
-([README.md](../plugins/sample/README.md))
+([README.md](sample/README.md))
 - `sonarr`: provides commands to query sonarr's API
 - `spruch`: famous quotes from even more famous people (german, sorry)
 - `translate`: Provide translations of all room-messages via Google Translate (using googletrans, may break randomly) 
-([README.md](../plugins/translate/README.md))
+([README.md](translate/README.md))
 
 ## Included plugins' 3rd party requirements
 - `dates`: [dateparser](https://pypi.org/project/dateparser/) to allow for almost arbitrary input format of dates
@@ -73,9 +73,11 @@ Note: automatic loading of plugins can be configured by allow- and denylist in t
   - `README.md`: optional documentation of the plugin  
   - `requirements.txt`: external modules required by the plugin
 
+Additional files may be placed in the plugin's directory (e.g. an external database queried by the plugin's code).
+
 ## Plugin Interface
 The class `Plugin` is used by all plugins, providing the following methods. See 
-[sample.py](../plugins/sample/sample.py) for examples.  
+[sample.py](sample/sample.py) for examples.  
 Please be advised that the plugin interface is about to
 [change](https://github.com/alturiak/nio-smith/blob/master/BREAKING.md#simplify-plugins-interface) in future releases.
 
