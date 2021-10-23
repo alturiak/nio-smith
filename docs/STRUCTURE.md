@@ -65,7 +65,8 @@ defined for when a error is found while the config file is being processed.
 
 #### `core/plugin.py`
 
-The class used by all plugins, providing plugins with interface methods as described in [PLUGINS.md](PLUGINS.md)
+The class used by all plugins, providing plugins with interface methods as described in
+[plugins/PLUGINS.md](../plugins/README.md)
 
 #### `core/pluginloader.py`
 
