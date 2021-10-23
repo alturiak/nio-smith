@@ -14,6 +14,8 @@ from asyncio import sleep
 logger = logging.getLogger(__name__)
 plugin = Plugin("dates", "General", "Stores dates and birthdays, posts reminders")
 
+celebratory_emoji: List[str] = ["🎉", "🎈", "🍺", "🎂", "🍾", "🍻", "🥂", "🍸", "🎊", "🧁", "🥳", "🎇", "🎆", "🍰", "🍹", "🍷", "👯", "🎁", "💐"]
+
 
 def setup():
     plugin.add_command("date", date, "Display the details of the next upcoming date or a specific date")
@@ -22,8 +24,7 @@ def setup():
     plugin.add_command("date_list", date_list, "Display a list of all stored dates")
     plugin.add_command("date_next", date_next, "Display details of the next upcoming date")
     plugin.add_command("date_show", date_show, "Display details of a specific date")
-    plugin.add_timer(day_setup, frequency="daily")
-    plugin.add_hook("m.room.message", birthday_tada)
+    plugin.add_timer(day_start, frequency="daily")
 
 
 class StoreDate:
@@ -130,11 +131,11 @@ async def reply_usage_message(command) -> str:
     """
 
     return await plugin.respond_notice(command, "Usage: `date_add <name or username> <date in most common formats> [description]`  \n"
-                                              "Example: `date_add test tomorrow`  \n"
-                                              "Example: `date_add test \"in 28 days\" \"28 days later\"`  \n"
-                                              "Example: `date_add new_year 2021-01-01 \"A new year\"`  \n"
-                                              "Example: `date_add start_of_unixtime \"01.01.1970 00:00:00\" The dawn of time`  \n"
-                                              "Dates consisting of multiple words must be enclosed in quotes.")
+                                                "Example: `date_add test tomorrow`  \n"
+                                                "Example: `date_add test \"in 28 days\" \"28 days later\"`  \n"
+                                                "Example: `date_add new_year 2021-01-01 \"A new year\"`  \n"
+                                                "Example: `date_add start_of_unixtime \"01.01.1970 00:00:00\" The dawn of time`  \n"
+                                                "Dates consisting of multiple words must be enclosed in quotes.")
 
 
 async def date(command):
@@ -200,13 +201,15 @@ async def date_add(command):
 
         if store_date.id in dates.keys():
             await plugin.respond_notice(command, f"Birthday for {await plugin.get_mx_user_id(command.client, command.room.room_id, name)} already stored as "
-                                               f"{dates[store_date.id].date}, overwriting.")
+                                                 f"{dates[store_date.id].date}, overwriting.")
 
         dates[store_date.id] = store_date
         await plugin.store_data("stored_dates", dates)
         # if date is today, start a timer to post a reminder
-        if store_date.is_today() and not plugin.has_timer_for_method(in_day_reminder):
-            plugin.add_timer(in_day_reminder, timer_type="dynamic")
+        if await store_date.is_today() and not plugin.has_timer_for_method(post_reminders):
+            plugin.add_timer(post_reminders, timer_type="dynamic")
+
+        plugin.add_hook("m.room.message", birthday_tada, room_id=[command.room.room_id], hook_type="dynamic")
         await plugin.send_reaction(command.client, command.room.room_id, command.event.event_id, "✅")
 
     else:
@@ -218,14 +221,15 @@ async def date_add(command):
 
         if store_date.id in dates.keys():
             await plugin.respond_notice(command, f"Error: date {name} already exists:  \n"
-                                               f"Date: {dates[store_date.id].date}  \n"
-                                               f"Description: {dates[store_date.id].description}")
+                                                 f"Date: {dates[store_date.id].date}  \n"
+                                                 f"Description: {dates[store_date.id].description}")
         else:
             dates[store_date.id] = store_date
             await plugin.store_data("stored_dates", dates)
             # if date is today, start a timer to post a reminder
-            if store_date.date.date() == datetime.date.today() and not plugin.has_timer_for_method(in_day_reminder):
-                plugin.add_timer(in_day_reminder, timer_type="dynamic")
+            if store_date.date.date() == datetime.date.today() and not plugin.has_timer_for_method(post_reminders):
+                plugin.add_timer(post_reminders, timer_type="dynamic")
+            await plugin.respond_notice(command, f"Date {store_date.name} added for {store_date.date}.")
             await plugin.send_reaction(command.client, command.room.room_id, command.event.event_id, "✅")
 
 
@@ -251,7 +255,7 @@ async def date_del(command):
         dates: Dict[str, StoreDate] = {}
 
     if date_id in dates.keys():
-        del(dates[date_id])
+        del (dates[date_id])
         await plugin.send_reaction(command.client, command.room.room_id, command.event.event_id, "✅")
     else:
         await plugin.send_reaction(command.client, command.room.room_id, command.event.event_id, "❌")
@@ -335,22 +339,48 @@ async def date_list(command):
 
     if date_list:
         await plugin.respond_message(command, f"**All stored dates for this room**  \n"
-                                    f"{date_list}")
+                                              f"{date_list}")
     else:
         await plugin.send_reaction(command.client, command.room.room_id, command.event.event_id, "❌")
 
 
-async def in_day_reminder(client):
+async def day_start(client):
     """
-    Display dates when they happen
+    Setup at the start of the day, clearing any expired timers and set up new ones if required
     :param client:
     :return:
     """
 
-    await day_setup(client)
+    dates: Dict[str, StoreDate] = await plugin.read_data("stored_dates")
+    if dates is None:
+        dates: Dict[str, StoreDate] = {}
+
+    await plugin.clear_data("last_tada")
+    # remove in_day_reminder if there are no events today
+    plugin.del_timer(post_reminders)
+    plugin.del_hook("m.room.message", birthday_tada)
+
+    dates_today: bool = False
+    birthdays_today: bool = False
+    birthday_rooms_today: List[str] = []
+
+    for store_date in dates.values():
+        if await store_date.is_today():
+            dates_today = True
+            if store_date.date_type == "birthday":
+                birthdays_today = True
+                if store_date.mx_room not in birthday_rooms_today:
+                    birthday_rooms_today.append(store_date.mx_room)
+
+    if dates_today:
+        if not plugin.has_timer_for_method(post_reminders):
+            plugin.add_timer(post_reminders, timer_type="dynamic")
+
+        if birthdays_today:
+            plugin.add_hook("m.room.message", birthday_tada, room_id=birthday_rooms_today, hook_type="dynamic")
 
 
-async def day_setup(client):
+async def post_reminders(client):
     """
     Display dates for the current day at the start of each day
     :param client:
@@ -362,55 +392,35 @@ async def day_setup(client):
         dates: Dict[str, StoreDate] = {}
 
     store_date: StoreDate
-
-    birthday_rooms_today: List[str] = []
-    dates_today: bool = False
-    await plugin.clear_data("last_tada")
-
     for store_date in dates.values():
-        if await store_date.is_today():
-            dates_today = True
-            if await store_date.needs_reminding():
-                if store_date.date_type == "birthday":
-                    if store_date.mx_room not in birthday_rooms_today:
-                        birthday_rooms_today.append(store_date.mx_room)
+        if await store_date.is_today() and await store_date.needs_reminding():
+            if store_date.date_type == "birthday":
+                user_link: str or None
+                if (user_link := await plugin.link_user(client, store_date.mx_room, store_date.description)) is not None:
+                    message_id: str = await plugin.send_message(client, store_date.mx_room, f"🎉 @room, it's {user_link}'s birthday! 🎉  \n")
+                else:
+                    message_id: str = await plugin.send_message(client, store_date.mx_room, f"🎉 @room, it's {store_date.description}'s birthday! 🎉  \n")
 
-                    user_link: str or None
-                    if (user_link := await plugin.link_user(client, store_date.mx_room, store_date.description)) is not None:
-                        message_id: str = await plugin.send_message(client, store_date.mx_room, f"🎉 @room, it's {user_link}'s birthday! 🎉  \n")
-                    else:
-                        message_id: str = await plugin.send_message(client, store_date.mx_room, f"🎉 @room, it's {store_date.description}'s birthday! 🎉  \n")
-                    await store_date.set_reminded()
-                    await plugin.store_data("stored_dates", dates)
+                # post 3 to 6 random emoji
+                emoji_list: List[str] = random.sample(celebratory_emoji, random.randint(3, 6))
+                emoji: str
+                for emoji in emoji_list:
+                    await plugin.send_reaction(client, store_date.mx_room, message_id, emoji)
+                # sleep for 15 seconds to avoid being ratelimited if there's multiple birthdays
+                await sleep(15)
 
-                    await plugin.send_reaction(client, store_date.mx_room, message_id, "🎁")
-                    await plugin.send_reaction(client, store_date.mx_room, message_id, "🍻")
-                    await plugin.send_reaction(client, store_date.mx_room, message_id, "🥂")
-                    await plugin.send_reaction(client, store_date.mx_room, message_id, "✨")
-                    await plugin.send_reaction(client, store_date.mx_room, message_id, "🎈")
-                    await plugin.send_reaction(client, store_date.mx_room, message_id, "🎊")
-                    # sleep for 15 seconds to avoid being ratelimited if there's multiple birthdays
-                    await sleep(15)
+            elif store_date.date_type == "date":
+                if datetime.datetime.now() < store_date.date:
+                    # date is in the future, post start of day reminder
+                    await plugin.send_message(client, store_date.mx_room, f"**Reminder:** {store_date.name} is today!  \n"
+                                                                          f"**Date:** {store_date.date}  \n"
+                                                                          f"**Description:** {store_date.description}")
+                else:
+                    # date is in the past, post alert
+                    await plugin.send_message(client, store_date.mx_room, f"**{store_date.name}** ({store_date.description}) is **now**!  \n")
 
-                elif store_date.date_type == "date":
-
-                    if datetime.datetime.now() < store_date.date:
-                        await plugin.send_message(client, store_date.mx_room, f"**Reminder:** {store_date.name} is today!  \n"
-                                                                         f"**Date:** {store_date.date}  \n"
-                                                                         f"**Description:** {store_date.description}")
-                    else:
-                        await plugin.send_message(client, store_date.mx_room, f"**{store_date.name}** ({store_date.description}) is **now**!  \n")
-                    await store_date.set_reminded()
-                    await plugin.store_data("stored_dates", dates)
-                    if not plugin.has_timer_for_method(in_day_reminder):
-                        plugin.add_timer(in_day_reminder, timer_type="dynamic")
-
-    # remove in_day_reminder if there are no events today
-    if not dates_today:
-        plugin.del_timer(in_day_reminder)
-
-    # store if there is any birthday today to take some load off birthday_tada
-    await plugin.store_data("birthday_rooms_today", birthday_rooms_today)
+            await store_date.set_reminded()
+            await plugin.store_data("stored_dates", dates)
 
 
 async def birthday_tada(client: AsyncClient, room_id: str, event: RoomMessageText):
@@ -422,10 +432,6 @@ async def birthday_tada(client: AsyncClient, room_id: str, event: RoomMessageTex
     :param event:
     :return:
     """
-
-    # check if there is any birthday today
-    if await plugin.read_data("birthday_rooms_today") is not None and room_id not in await plugin.read_data("birthday_rooms_today"):
-        return
 
     # check if at least one hour has passed since last tada in the current room
     last_tada_dict: Dict[str, datetime.datetime] or None = await plugin.read_data("last_tada")
@@ -444,9 +450,8 @@ async def birthday_tada(client: AsyncClient, room_id: str, event: RoomMessageTex
 
         if await store_date.is_birthday_person(room_id, formatted=event.sender) or \
                 await store_date.is_birthday_person(room_id, plaintext=event.body, formatted=event.formatted_body):
-
             # sender is birthday person or birthday person is mentioned
-            reactions: List[str] = ["🎉", "❄️", "🎆"]
+            reactions: List[str] = ["🎉", "❄", "🎆"]
             await plugin.send_message(client, room_id, random.choice(reactions))
             await plugin.store_data("last_tada", {room_id: datetime.datetime.now()})
             break
