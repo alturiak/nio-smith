@@ -204,7 +204,7 @@ class PluginLoader:
                         traceback.print_exc()
                     return 0
                 else:
-                    await send_text_to_room(command.client, command.room.room_id, f"Required power level for command {command[0]} not met")
+                    await send_text_to_room(command.client, command.room.room_id, f"Required power level for command {command.command} not met")
                     return 2
             else:
                 return 1
