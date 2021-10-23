@@ -1,0 +1,4 @@
+# Sample configuration of quote-plugin. Rename to quote.yaml to use.
+
+# List of room_ids on which modifications to existing quotes are allowed.
+# manage_quote_rooms: ["!rdBDrHapAsYdvmgGMP:pack.rocks"]
