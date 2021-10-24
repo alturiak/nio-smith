@@ -21,15 +21,16 @@ logger = logging.getLogger(__name__)
 
 class PluginLoader:
 
-    def __init__(self, config):
+    def __init__(self, config, plugins_dir: str = "plugins"):
         """
         Handles importing and running plugins
         :param config (Config): Bot configuration parameters
+        :param plugins_dir: (str) Directory containing the plugins
         """
 
         self.config: Config = config
         # import all plugins
-        module_all = glob.glob("plugins/*")
+        module_all = glob.glob(f"{plugins_dir}/*")
         module_dirs: List[str] = [basename(d) for d in module_all if isdir(d) and not d.endswith('__pycache__')]
         module_files: List[str] = [basename(f)[:-3] for f in module_all if isfile(f) and f.endswith('.py') and not f.endswith('__init__.py')]
 

@@ -2,6 +2,8 @@
 
 import logging
 import asyncio
+import os
+import sys
 from time import time
 from asyncio import sleep
 
@@ -45,8 +47,27 @@ async def main():
     global plugin_loader
     global timers_filepath
 
+    # Read user-configured options from a config file.
+    # A different config file path can be specified as the first command line argument
+    if len(sys.argv) > 1:
+        config_path: str = sys.argv[1]
+        if not os.path.isfile(config_path):
+            logger.fatal(f"Configuration file {config_path} doesn't exist, exiting.")
+            exit(1)
+    else:
+        config_path: str = "config.yaml"
+
+    # Read user-configured plugin-directory
+    if len(sys.argv) > 2:
+        plugin_dir: str = sys.argv[2]
+        if not os.path.isdir(plugin_dir):
+            logger.fatal(f"Plugin directory {plugin_dir} doesn't exist, exiting.")
+            exit(1)
+    else:
+        plugin_dir: str = "plugins"
+
     # Read config file
-    config = Config("config.yaml")
+    config = Config(config_path)
 
     # Configure the database
     store = Storage(config.database_filepath)
@@ -69,7 +90,7 @@ async def main():
     )
 
     # instantiate the pluginLoader
-    plugin_loader = PluginLoader(config)
+    plugin_loader = PluginLoader(config, plugin_dir)
     await plugin_loader.load_plugin_data()
     await plugin_loader.load_plugin_state()
 
