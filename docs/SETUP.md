@@ -74,7 +74,15 @@ Then simply run the bot with:
 python main.py
 ```
 
-By default, the bot will run with the config file at `./config.yaml`.
+By default, the bot will run with the config file at `./config.yaml` and load all plugins from the `plugins`-directory.
+You may optionally specify a different config-file and plugins-directory by running:
+```
+python main.py [configfile [plugins_directory]]
+```
+e.g.
+```
+python main.py myconfig.yaml myplugins
+```
 
 ## Upgrading
 If you've checked out a tag in step 1, switch to the latest tag.
