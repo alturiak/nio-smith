@@ -12,56 +12,94 @@ import re
 
 
 logger = logging.getLogger(__name__)
-plugin = Plugin("cash-up", "General", "A very simple cash-up plugin to share expenses in a group")
+plugin = Plugin("cashup", "General", "A very simple cash-up plugin to share expenses in a group")
 
 
 def setup():
     # first command will be called when plugin name is called
-    plugin.add_command("cash-up-help", help, "cash up help info text")
-    plugin.add_command("cash-up-register", register, "Resets existing room DB and initializes all group members for sharing expenses.")
-    plugin.add_command("cash-up-add-expense", add_expense_for_user, "Adds a new expense for the given user-name.")
-    plugin.add_command("cash-up-print", read, "debug print function")
-    plugin.add_command("cash-up", cash_up, "Settle all registered expenses among the previously registered group.") 
-    plugin.add_command("cash-up-r", register, "Short form for `chash-up-register`")
-    plugin.add_command("cash-up-ae", add_expense_for_user, "Short form for `chash-up-add-expense`")
-    plugin.add_command("cash-up-p", read, "Short form for `cash-up-print`")
+    plugin.add_command("cashup-help", help, "cash up help info text")
+    plugin.add_command("cashup-register", register, "Resets existing room DB and initializes all group members for sharing expenses.", power_level=100)
+    plugin.add_command("cashup-add-expense", add_expense_for_user, "Adds a new expense for the given user-name.")
+    plugin.add_command("cashup-print", print_room_state, "debug print function")
+    plugin.add_command("cashup", cash_up, "Settle all registered expenses among the previously registered group.", power_level=50) 
+    plugin.add_command("cashup-ae", add_expense_for_user, "Short form for `chash-up-add-expense`")
+    plugin.add_command("cashup-p", print_room_state, "Short form for `cash-up-print`")
+    # TODO shorter - smartphone friendly naming
+    # TODO update help function
 
 
 class Group_payments:
     def __init__(self, splits_evenly: bool):
+        """Setup Group_payments instance
+        Represents a group of people that want to share expenses.
+
+        payments is an array of dict in the format
+        that Cash_up class consumes
+        each dict contains:
+            * uid - user name
+            * expenses - the sum of all expenses spend
+            * [percentage] - optionally the percentage of the over
+            over all cost this person is going to pay
+
+        Args:
+            splits_evenly (bool)
+                defines if the group splits all expenses
+                envenly or every member pays a certain
+                percantage of the over all cost
+        """
         self.payments = []
         self.splits_evenly = splits_evenly
     
     def append_new_member(self, new_uid:str, new_percentage: float = None):
+        """Adds a new member to this group
+        
+        throws ValueError when percentage value is demanded but not given.
+        
+        Args:
+            new_uid (str): the new user name to be added
+            [new_percentage] (float): optional the percentage this person is going to pay"""
         new_member = {}
         if self.splits_evenly == False:
+            # group is defined as not spliting evenly
             if new_percentage is not None:
+                # and a percentage value is given
                 new_member = {"uid": new_uid, "percentage": new_percentage, "expenses": 0}  
             else:
-                logger.error("cash-up Group_payments append_new_member failed: members percentage is not defined for a group that does not split evenly")
-                # TODO throw error!
+                # percentage value is demanded but not given
+                error_msg = "cash-up Group_payments append_new_member failed: members percentage is not defined for a group that does not split evenly"
+                logger.error(error_msg)
+                raise ValueError(error_msg, new_member)
         else:
+            # group splits expenses evenly
             new_member = {"uid": new_uid, "expenses": 0}
+        # store new member in groups list
         self.payments.append(new_member)
 
 
     def reset_all_expenses(self):
-        # für alle payments
+        """Sets all expenses to 0 for every group member.
+        
+        Attention all previously captured expeneses are lost!!!"""
         for payment in self.payments:
             payment["expenses"] = 0
 
     def increase_expense(self, search_uid, new_expense: float):
-        # TODO implement error handling when uid not found!
+        """Increases the current expenses of user with name search_uid
+        by the given new_expense
+        
+        Args:
+            search_uid (str): user name whos expenses will be increased
+            new_expense (float): the new expense that will be added
+        """
         # find all payments where uid matches
         payment_to_increase = list(filter(lambda payment: payment['uid'] == search_uid, self.payments))
         # update first and hopefully only match
+        # throws IndexError when search_uid not found
         payment_to_increase[0]["expenses"] += new_expense
 
-    # def print(self):
-    #     print("group:")
-    #     print("payments:",self.payments)
     
     def to_str(self):
+        """Simple function to get a human readable string of this groups state"""
         group_str: str = f"**Group**: splits_evenly: {self.splits_evenly},  \n"
         for payment in self.payments:
             name = payment["uid"]
@@ -76,6 +114,13 @@ class Group_payments:
 
 
 class Persistent_groups:
+    """Setup Persistent_groups instance
+    Simple wrapper for persisting groups in some kind of data base
+
+    Args:
+        store
+            The object used to interact with the database
+    """
     def __init__(self, store):
         self.store = store
 
@@ -92,8 +137,8 @@ class Persistent_groups:
 
 pg = Persistent_groups(plugin)
 
-class Cash_up(object):
-    def __init__(self, group_payments):
+class Cash_up:
+    def __init__(self, group: Group_payments):
         """Setup Cash_up algorithm
         For a set of people who owe each other some money or none
         this algorithm can settle expense among this group.
@@ -102,24 +147,11 @@ class Cash_up(object):
         the over all expenses should be paid by each person.
         If not specified the expenses are distributed equally.
         Args:
-            group_payments (array): Dict per person
-                {"uid": some **unique** id/name [str],
-                "expenses": sum of this persons expenses [int/float],
-                "percentage": [optional] percentage (0 to 1) to pay for the group [float]}
-                * uid must be unique in this group
-                * array length must be > 1
-                * percentage must be defined for all or no one
+            group (Group_payments): Object representing a groups
+            expenses and how they want to split these
         """
-        nr_percentage_defined = 0
-        for payment in group_payments:
-            if "percentage" in payment:
-                    nr_percentage_defined += 1
-        # check for correct split percentage in total, if defined
-        if nr_percentage_defined == len(group_payments):
-            self._split_uneven = True
-        else:
-            self._split_uneven = False
-        self._payments = group_payments
+        self._split_uneven = not group.splits_evenly
+        self._payments = group.payments
 
 
     def distribute_expenses(self):
@@ -168,8 +200,9 @@ class Cash_up(object):
             sortedValuesPaid[i] += debt
             sortedValuesPaid[j] -= debt
             # generate output string
-            new_text=str(sortedPeople[i])+" owes "+str(sortedPeople[j])+" "+str(debt)+" €"
-            output_texts.append(new_text)
+            if debt != 0.0:
+                new_text=str(sortedPeople[i])+" owes "+str(sortedPeople[j])+" "+str(debt)+" €"
+                output_texts.append(new_text)
             if sortedValuesPaid[i] == 0:
                 i+=1
             if sortedValuesPaid[j] ==0:
@@ -183,9 +216,18 @@ async def help(command):
 
 async def register(command):
     """Register a set of people as a new group to share expenses"""
-    response_input_error = "You need to register at least two users: `chash-up-register <user-name1> [<user1-percentage>]; <user-name2> [<user2-percentage>]; ...` [optional]"
-    # TODO error response new text line with example:  `chash-up-register A 0.2; B 0.8;` A pays 20%, B pays 80% or `chash-up-register A; B;` to split expenses evenly
-    # TODO run cash-up ald data if available before deleting it!
+    response_input_error = f"You need to register at least two users:  \n" \
+        "`chash-up-register <user-name1> [<user1-percentage>]; <user-name2> [<user2-percentage>]; ...` [optional]  \n" \
+        "examples:  \n" \
+        "`chash-up-register A 0.2; B 0.8;` A pays 20%, B pays 80% or `chash-up-register A; B;` to split expenses evenly"
+    # if there is a group registered for this room already
+    # run a cash-up so old data will be shown to the users
+    # before deleting it
+    previously_persisted_group: Group_payments = await pg.load_group(command.room.room_id)
+    if previously_persisted_group is not None:
+        await plugin.reply_notice(command, "There is already a group registered for this room. " \
+            "I will do a quick cash-up so no data will be lost when registering the new group.")
+        await cash_up(command)
     if command.args:
         logger.debug(f"cash-up-register called with {command.args}")
         # cash-up-register called with ['Marius', '0,7;', 'Andrea', '0.3;']
@@ -200,7 +242,6 @@ async def register(command):
             match_arg_nr = re.search('\d*[.,]?\d+',arg)
             # returns a match object
             if match_arg_nr:
-                # TODO fail if len > 1?
                 # number (as string) found
                 # replace "," of german numbers by a "." decimal point
                 # convert the number to a real float number
@@ -236,10 +277,11 @@ async def register(command):
         # no command args defined
         await plugin.reply_notice(command, response_input_error)
         return
-    response_success = "Successfully registered new group!"
+    response_success = "Successfully registered a new group:"
     await plugin.reply(command, response_success)
+    await print_room_state(command)
 
-async def read(command):
+async def print_room_state(command):
     """Read the database for the group registered for the current room [debugging helper function]"""
     loaded_group: Group_payments = await pg.load_group(command.room.room_id)
     response = "No group registered for this room!"
@@ -251,8 +293,9 @@ async def read(command):
 
 async def add_expense_for_user(command):
     """Adds a new expense for the given username"""
-    response_input_error = "You need to provide a previously registered user-name and expense value: `chash-up-add-expense <user-name> <expense-value>[€/$] [optional]`"
-    # TODO run cash-up of old data if available before deleting it!
+    response_input_error = "You need to provide a previously registered user-name and expense value:  \n" \
+        "`chash-up-add-expense <user-name> <expense-value>[€/$] [optional]`"
+    # TODO if only a number is given, try to increase expense for the user that send the command
     if len(command.args) != 2:
         # command should only contain <user-name> and <expense-value>
         await plugin.reply_notice(command, response_input_error)
@@ -267,7 +310,6 @@ async def add_expense_for_user(command):
         if match_expense_nr:
             # extract match, then replace "," of german numbers by a "." decimal point
             expense_float = float(match_expense_nr.group().replace(',', '.'))
-            # TODO try catch?! room_id not defined OR user_name not defined!
             try:
                 # Persistent_groups.load_group throws AttributeError when group not found
                 loaded_group: Group_payments = await pg.load_group(command.room.room_id)
@@ -289,13 +331,18 @@ async def cash_up(command):
     except AttributeError:
         response_error = "No cash-up possible because there was no group registered for this room."
         await plugin.reply(command, response_error)
-    cash_up = Cash_up(loaded_group.payments)
+        return
+    cash_up = Cash_up(loaded_group)
     message: str = ""
     who_owes_who_texts = cash_up.distribute_expenses()
-    message += f"**Result of group cash-up**:  \n"
-    for line in who_owes_who_texts:
-        message += f"{line}  \n"
-    await plugin.reply(command, message)
+    # check if any payments should be done
+    if len(who_owes_who_texts) > 0:
+        message += f"**Result of group cash-up**:  \n"
+        for line in who_owes_who_texts:
+            message += f"{line}  \n"
+        await plugin.reply(command, message)
+    else:
+        await plugin.reply(command, "No balancing of expenses needed.")
     loaded_group.reset_all_expenses()
     await pg.save_group(command.room.room_id,loaded_group)
 
