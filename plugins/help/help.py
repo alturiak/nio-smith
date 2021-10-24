@@ -62,6 +62,8 @@ async def print_help(command):
                             additional_commands = True
 
                     headline: str = f"**Plugin {requested_plugin.name}**"
+                    if requested_plugin.doc_url:
+                        headline += f" ([Documentation]({requested_plugin.doc_url}))"
                     help_text = build_sorted_text_output(headline, command_texts)
                     if additional_commands:
                         help_text += f"\nNote: This plugin exposes additional commands which are restricted to other rooms.\n"

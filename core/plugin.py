@@ -47,6 +47,9 @@ class Plugin:
         self.config_items: Dict[str, Any] = {}
         self.configuration: Union[Dict[Hashable, Any], list, None] = self.__load_config()
 
+        self.add_config("doc_url", is_required=False)
+        self.doc_url: str = self.read_config("doc_url")
+
     def _is_valid_for_room(self, room_id: str) -> bool:
         """
         Determine if at least one of the plugin's commands is allowed to be used in the given room
