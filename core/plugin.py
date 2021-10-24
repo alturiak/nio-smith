@@ -867,6 +867,16 @@ class PluginCommand:
         self.room_id: List[str] = room_id
         self.command_type: str = command_type
 
+    def _is_valid_from_room(self, room_id: str) -> bool:
+        """
+        Check whether the command is valid for the given room
+        :param room_id: room_id to check for
+        :return:    True, if the command is allowed on the given room,
+                    False, otherwise
+        """
+
+        return not self.room_id or room_id in self.room_id
+
 
 class PluginHook:
 
