@@ -8,6 +8,7 @@ from core.plugin import Plugin
 import logging
 import datetime
 from asyncio import sleep
+
 logger = logging.getLogger(__name__)
 
 plugin = Plugin("sample", "General", "Just a simple sample.")
@@ -17,7 +18,6 @@ timers_enabled: bool = False
 
 
 def setup():
-
     plugin.add_command("sample", sample_command, "A simple sample command, producing a simple sample output")
     plugin.add_command("sample_store", sample_store, "Store a message persistently", power_level=50)
     plugin.add_command("sample_read", sample_read, "Read the stored message")
@@ -28,6 +28,7 @@ def setup():
     plugin.add_command("sample_replace", sample_replace, "Post a message and edit it afterwards")
     plugin.add_command("sample_add_command", add_command, "Dynamically adds an active command `sample_remove_command`")
     plugin.add_command("sample_sleep", sample_sleep, "Sleep for five seconds, then post a message, to test parallel execution of commands")
+    plugin.add_command("sample_user", sample_user, "Respond with the mxid and displayname of the user issuing the command")
 
     """The following part demonstrates defining a configuration value to be expected in the plugin's configuration file and reading the value
 
@@ -225,7 +226,7 @@ async def add_command(command):
     plugin.add_command("sample_remove_command", remove_command, "Dynamically removes an active command `sample_remove_command`", command_type="dynamic")
     plugin.add_hook("m.reaction", remove_command, room_id=[command.room.room_id], hook_type="dynamic")
     await plugin.respond_message(command, "Dynamic command `sample_remove_command` and dynamic hook for reactions activated.  \n"
-                                "Use `sample_remove_command` or a reaction to disable again")
+                                          "Use `sample_remove_command` or a reaction to disable again")
 
 
 async def remove_command(command_client: AsyncClient or Command, room_id: str = "", event: UnknownEvent or None = None):
@@ -261,5 +262,19 @@ async def sample_sleep(command: Command):
     await plugin.respond_message(command, f"ID: {random_int} - before timer")
     await asyncio.sleep(5)
     await plugin.respond_message(command, f"ID: {random_int} - after timer")
+
+
+async def sample_user(command: Command):
+    """
+    Respond with the mxid and displayname of the user issuing the command
+    :param command:
+    :return:
+    """
+
+    mxid: str = command.event.sender
+    display_name: str = command.room.user_name(mxid)
+    user_link: str = await plugin.link_user(command.client, command.room.room_id, display_name)
+    await plugin.respond_message(command, f"Command received from {display_name} ({mxid}). Userlink: {user_link}")
+
 
 setup()
