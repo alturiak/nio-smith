@@ -52,13 +52,19 @@ async def print_help(command):
                     plugin_command_name: str
                     plugin_command: PluginCommand
                     command_texts: List[Tuple[str, str, int]] = []
+                    additional_commands: bool = False
 
                     # Iterate through all commands of requested plugin and add descriptions
                     for (plugin_command_name, plugin_command) in requested_plugin._get_commands().items():
-                        command_texts.append((plugin_command_name, plugin_command.help_text, plugin_command.power_level))
+                        if plugin_command._is_valid_from_room(current_room_id):
+                            command_texts.append((plugin_command_name, plugin_command.help_text, plugin_command.power_level))
+                        else:
+                            additional_commands = True
 
                     headline: str = f"**Plugin {requested_plugin.name}**"
                     help_text = build_sorted_text_output(headline, command_texts)
+                    if additional_commands:
+                        help_text += f"\nNote: This plugin exposes additional commands which are restricted to other rooms.\n"
 
                 else:
                     # Plugin is not valid for the room
