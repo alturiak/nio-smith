@@ -138,3 +138,13 @@ Please be advised that the plugin interface is about to
         - str: "weekly", "daily", "hourly"
 - `del_timer`: remove a previously added timer (only if `timer_type=="dynamic"`)
 - `has_timer_for_method`: check if a timer for the given method exists
+
+## Configuration
+Plugins can read additional configuration options from the file `plugins/<pluginname>/<pluginname>.yaml`.  
+Any configuration item that is to be used within the plugin has to be defined by `add_config()` first. It's value can 
+then be read at anytime by calling `read_config()`. See [sample.py](sample/sample.py) for examples.  
+
+## Documentation URL for each individual plugin
+If present in `<pluginname>.yaml`, the configuration item `doc_url` will automatically be read and used by the 
+output of `help`. This happens internally, so there is no need to define `add_config("doc_url")` in the actual 
+plugin code.

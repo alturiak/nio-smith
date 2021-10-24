@@ -5,3 +5,6 @@
 
 # Optional power level (on rooms in manage_bot_rooms) required to issue commands. Default: 100
 # manage_bot_power_level: 100
+
+# Optional documentation url
+# doc_url: "https://github.com/alturiak/nio-smith/blob/master/plugins/manage_bot/README.md"
