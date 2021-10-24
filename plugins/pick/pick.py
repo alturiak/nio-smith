@@ -114,7 +114,7 @@ async def pick(command):
     else:
         return None
 
-    await plugin.reply(command, msg, delay=200)
+    await plugin.respond_message(command, msg, delay=200)
 
 plugin = Plugin("pick", "General", "Plugin to provide a simple, randomized !pick")
 plugin.add_command("pick", pick, "aids you in those really important life decisions")

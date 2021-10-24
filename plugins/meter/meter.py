@@ -96,11 +96,11 @@ async def meter(command):
             level: int = random.randint(0, 10)
             text: str = f"{condition.replace(' ', '-')}-o-Meter {build_gauge(level)} {display_level(level)} {nick} is " \
                         f"{get_comment(level, nick, condition)}"
-            await plugin.reply(command, text, delay=200)
+            await plugin.respond_message(command, text, delay=200)
 
     except (ValueError, IndexError):
 
-        await plugin.reply_notice(command, "Usage: `meter <target> <condition>`")
+        await plugin.respond_notice(command, "Usage: `meter <target> <condition>`")
 
 
 plugin = Plugin("meter", "General", "Plugin to provide a simple, randomized !meter")

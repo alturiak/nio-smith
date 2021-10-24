@@ -24,8 +24,8 @@ matrix:
   # as described here: https://github.com/poljar/matrix-nio#installation
   enable_encryption: true
   # Define matrix-accounts eligible for certain actions (currently invites), an empty list will allow everybody
-  # botmasters: []
-  botmasters: "[@botmaster:matrix.server,@anotherbotmaster:matrix.server]"
+  # botmasters: ["@botmaster:matrix.server","@anotherbotmaster:matrix.server"]
+  botmasters: []
 
 storage:
   # The path to the database
@@ -51,3 +51,12 @@ logging:
   console_logging:
     # Whether logging to the console is enabled
     enabled: true
+
+# Optional plugin configurations
+# Note: the internal configuration of the actual plugins has to be done within configuration files of plugins.
+plugins:
+  # An optional list of plugins that should be loaded.
+  # if empty, all plugins found will be loaded
+  allowlist: []
+  # An optional list of plugins that must not be loaded
+  denylist: []

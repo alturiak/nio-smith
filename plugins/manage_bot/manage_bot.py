@@ -5,9 +5,12 @@ plugin = Plugin("manage_bot", "General", "Provide functions to manage the bot fr
 
 
 def setup():
-    plugin.add_config("manage_bot_room", default_value=[], is_required=False)
-    plugin.add_command("bot_rooms_list", bot_rooms_list, "Displays a list of rooms the bot is in", [plugin.read_config("manage_bot_room")])
-    plugin.add_command("bot_rooms_cleanup", bot_rooms_cleanup, "Leave rooms the bot is alone in", [plugin.read_config("manage_bot_room")])
+    plugin.add_config("manage_bot_rooms", is_required=True)
+    plugin.add_config("manage_bot_power_level", is_required=False, default_value=100)
+    plugin.add_command("bot_rooms_list", bot_rooms_list, "Displays a list of rooms the bot is in", plugin.read_config("manage_bot_rooms"),
+                       plugin.read_config("manage_bot_power_level"))
+    plugin.add_command("bot_rooms_cleanup", bot_rooms_cleanup, "Leave rooms the bot is alone in", plugin.read_config("manage_bot_rooms"),
+                       plugin.read_config("manage_bot_power_level"))
 
 
 async def bot_rooms_list(command):
@@ -28,7 +31,7 @@ async def bot_rooms_list(command):
         message += f"`{room.display_name}` ({room.room_id}): {room.member_count}  \n"
         if room.member_count == 2:
             message += f"{room.users}  \n"
-    await plugin.reply(command, message)
+    await plugin.respond_message(command, message)
 
 
 async def bot_rooms_cleanup(command):
@@ -46,7 +49,7 @@ async def bot_rooms_cleanup(command):
             message += f"Leaving {room.display_name} ({room.room_id})  \n"
             await client.room_leave(room.room_id)
 
-    await plugin.reply(command, message)
+    await plugin.respond_message(command, message)
 
 
 setup()

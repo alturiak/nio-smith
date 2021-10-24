@@ -69,7 +69,7 @@ async def main():
     )
 
     # instantiate the pluginLoader
-    plugin_loader = PluginLoader()
+    plugin_loader = PluginLoader(config)
     await plugin_loader.load_plugin_data()
     await plugin_loader.load_plugin_state()
 

@@ -17,10 +17,6 @@ copy this file to `config.yaml`, then edit it according to their needs. Be sure
 never to check the edited `config.yaml` into source control since it'll likely
 contain sensitive details like an access token!
 
-#### `plugin.py`
-
-The class used by all plugins, providing plugins with interface methods as described in [PLUGINS.md](PLUGINS.md)
-
 #### `core/bot_commands.py`
 
 Where all the bot's commands used to be defined. They should be provided by plugins now.
@@ -66,6 +62,11 @@ Otherwise the bot can't function.
 
 Custom error types for the bot. Currently there's only one special type that's
 defined for when a error is found while the config file is being processed.
+
+#### `core/plugin.py`
+
+The class used by all plugins, providing plugins with interface methods as described in
+[plugins/PLUGINS.md](../plugins/README.md)
 
 #### `core/pluginloader.py`
 

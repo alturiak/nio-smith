@@ -47,14 +47,24 @@ class Plugin:
         self.config_items: Dict[str, Any] = {}
         self.configuration: Union[Dict[Hashable, Any], list, None] = self.__load_config()
 
-    def is_valid_for_room(self, room_id: str) -> bool:
+    def _is_valid_for_room(self, room_id: str) -> bool:
+        """
+        Determine if at least one of the plugin's commands is allowed to be used in the given room
+        :param room_id: room_id to check for
+        :return:    True, if the plugin is allowed for the room
+                    False, otherwise
+        """
 
-        if self.rooms == [] or room_id in self.rooms:
+        if not self.rooms:
             return True
         else:
+            command: PluginCommand
+            for command in self.commands.values():
+                if not command.room_id or command.room_id and room_id in command.room_id:
+                    return True
             return False
 
-    def get_help_text(self):
+    def _get_help_text(self):
         """
         Extract helptexts from commands
 
@@ -116,7 +126,7 @@ class Plugin:
         else:
             return False
 
-    def get_commands(self):
+    def _get_commands(self):
         """
         Extract called methods from commands
 
@@ -142,13 +152,19 @@ class Plugin:
         if event_type not in self.hooks.keys():
             self.hooks[event_type] = [plugin_hook]
         else:
-            self.hooks[event_type].append(plugin_hook)
+            hook: PluginHook
+            for hook in self.hooks[event_type]:
+                # check if a duplicate hook exists
+                if hook.method == method and hook.room_id == room_id:
+                    break
+            else:
+                self.hooks[event_type].append(plugin_hook)
 
         if hook_type == "dynamic":
             self._save_state()
         logger.debug(f"Added hook for {event_type} to rooms {room_id}")
 
-    def get_hooks(self):
+    def _get_hooks(self):
 
         return self.hooks
 
@@ -163,16 +179,21 @@ class Plugin:
 
         if event_type in self.hooks.keys():
 
+            hook_removed: bool = False
             hooks = self.hooks
             hook: PluginHook
             for hook in hooks.get(event_type):
                 if hook.method == method:
                     if hook.hook_type == "dynamic":
                         self.hooks[event_type].remove(hook)
-                        self._save_state()
-                        return True
+                        hook_removed = True
+
                     else:
                         logger.warning(f"Plugin {self.name} tried to remove static hook for {event_type}.")
+
+            if hook_removed:
+                self._save_state()
+                return True
 
         return False
 
@@ -196,7 +217,7 @@ class Plugin:
         if timer_type == "dynamic":
             self._save_state()
 
-    def get_timers(self) -> List[Timer]:
+    def _get_timers(self) -> List[Timer]:
 
         return self.timers
 
@@ -209,7 +230,7 @@ class Plugin:
         """
 
         timer: Timer
-        timers = self.get_timers()
+        timers = self._get_timers()
         for timer in timers:
             if timer.method == method:
                 return True
@@ -223,11 +244,11 @@ class Plugin:
         """
 
         timer: Timer
-        timers = self.get_timers()
+        timers = self._get_timers()
         for timer in timers:
             if timer.method == method:
                 if timer.timer_type == "dynamic":
-                    self.get_timers().remove(timer)
+                    self._get_timers().remove(timer)
                     self._save_state()
                     return True
                 else:
@@ -421,7 +442,7 @@ class Plugin:
                     logger.critical(f"Could not remove file {self.plugin_dataj_filename}: {err}")
                     return False
 
-    async def message(self, client, room_id, message: str, delay: int = 0) -> str or None:
+    async def send_message(self, client, room_id, message: str, delay: int = 0) -> str or None:
         """
         Send a message to a room, usually utilized by plugins to respond to commands
         :param client: AsyncClient used to send the message
@@ -447,7 +468,14 @@ class Plugin:
         else:
             return None
 
-    async def reply(self, command, message: str, delay: int = 0) -> str or None:
+    async def message(self, client, room_id, message: str, delay: int = 0) -> str or None:
+        """
+        ** DEPRECATED ** Alias for send_message
+        """
+        logger.warning(f"Deprecated function 'message' used - use 'send_message' instead")
+        return await self.send_message(client, room_id, message, delay)
+
+    async def respond_message(self, command, message: str, delay: int = 0) -> str or None:
         """
         Simplified version of self.message() to reply to commands
         :param command: the command object passed by the message we're responding to
@@ -456,9 +484,16 @@ class Plugin:
         :return: the event_id of the sent message or None in case of an error
         """
 
-        return await self.message(command.client, command.room.room_id, message, delay)
+        return await self.send_message(command.client, command.room.room_id, message, delay)
 
-    async def notice(self, client, room_id: str, message: str) -> str or None:
+    async def reply(self, command, message: str, delay: int = 0) -> str or None:
+        """
+        ** DEPRECATED ** Alias for respond
+        """
+        logger.warning(f"Deprecated function 'reply' used - use 'respond_message' instead")
+        return await self.respond_message(command, message, delay)
+
+    async def send_notice(self, client, room_id: str, message: str) -> str or None:
         """
         Send a notice to a room, usually utilized by plugins to post errors, help texts or other messages not warranting pinging users
         :param client: AsyncClient used to send the message
@@ -475,7 +510,14 @@ class Plugin:
         else:
             return None
 
-    async def reply_notice(self, command, message: str) -> str or None:
+    async def notice(self, client, room_id: str, message: str) -> str or None:
+        """
+        ** DEPRECATED ** Alias for send_notice
+        """
+        logger.warning(f"Deprecated function 'notice' used - use 'send_notice' instead")
+        return await self.send_notice(client, room_id, message)
+
+    async def respond_notice(self, command, message: str) -> str or None:
         """
         Simplified version of self.notice() to reply to commands
         :param command: the command object passed by the message we're responding to
@@ -483,9 +525,16 @@ class Plugin:
         :return: the event_id of the sent message or None in case of an error
         """
 
-        return await self.notice(command.client, command.room.room_id, message)
+        return await self.send_notice(command.client, command.room.room_id, message)
 
-    async def react(self, client, room_id: str, event_id: str, reaction: str):
+    async def reply_notice(self, command, message: str) -> str or None:
+        """
+        ** DEPRECATED ** Alias for respond_notice
+        """
+        logger.warning(f"Deprecated function 'reply_notice' used - use 'respond_notice' instead")
+        return await self.respond_notice(command, message)
+
+    async def send_reaction(self, client, room_id: str, event_id: str, reaction: str):
         """
         React to a specific event
         :param client: (nio.AsyncClient) The client to communicate to matrix with
@@ -497,7 +546,14 @@ class Plugin:
 
         await send_reaction(client, room_id, event_id, reaction)
 
-    async def replace(self, client: AsyncClient, room_id: str, event_id: str, message: str) -> str or None:
+    async def react(self, client, room_id: str, event_id: str, reaction: str):
+        """
+        ** DEPRECATED ** Alias for send_redaction
+        """
+        logger.warning(f"Deprecated function 'react' used - use 'send_reaction' instead")
+        await self.send_reaction(client, room_id, event_id, reaction)
+
+    async def replace_message(self, client: AsyncClient, room_id: str, event_id: str, message: str) -> str or None:
         """
         Edits an event. send_replace() will check if the new content actualy differs before really sending the replacement
         :param client: (nio.AsyncClient) The client to communicate to matrix with
@@ -510,7 +566,14 @@ class Plugin:
 
         return await send_replace(client, room_id, event_id, message)
 
-    async def message_redact(self, client: AsyncClient, room_id: str, event_id: str, reason: str = ""):
+    async def replace(self, client: AsyncClient, room_id: str, event_id: str, message: str) -> str or None:
+        """
+        ** DEPRECATED ** Alias for replace_message
+        """
+        logger.warning(f"Deprecated function 'replace' used - use 'replace_message' instead")
+        return await self.replace_message(client, room_id, event_id, message)
+
+    async def redact_message(self, client: AsyncClient, room_id: str, event_id: str, reason: str = ""):
         """
         Redact an event
         :param client: (nio.AsyncClient) The client to communicate to matrix with
@@ -522,11 +585,19 @@ class Plugin:
 
         await client.room_redact(room_id, event_id, reason)
 
+    async def message_redact(self, client: AsyncClient, room_id: str, event_id: str, reason: str = ""):
+        """
+        ** DEPRECATED ** Alias for redact_message
+        """
+        logger.warning(f"Deprecated function 'message_redact' used - use 'redact_message' instead")
+        return await self.redact_message(client, room_id, event_id, reason)
+
     async def message_delete(self, client: AsyncClient, room_id: str, event_id: str, reason: str = ""):
         """
-        Alias for message_redact
+        ** DEPRECATED ** Alias for redact_message
         """
-        await self.message_redact(client, room_id, event_id, reason)
+        logger.warning(f"Deprecated function 'message_delete' used - use 'redact_message' instead")
+        await self.redact_message(client, room_id, event_id, reason)
 
     async def is_user_in_room(self, client: AsyncClient, room_id: str, display_name: str, strictness: str = "loose", fuzziness: int = 75) -> RoomMember or None:
         """
@@ -692,12 +763,12 @@ class Plugin:
         dynamic_hooks: Dict[str, List[PluginHook]] = {}
 
         command: PluginCommand
-        for name, command in self.get_commands().items():
+        for name, command in self._get_commands().items():
             if command.command_type == "dynamic":
                 dynamic_commands[name] = command
 
         hooks_list: List[PluginHook]
-        for event_type, hooks_list in self.get_hooks().items():
+        for event_type, hooks_list in self._get_hooks().items():
             hook: PluginHook
             for hook in hooks_list:
                 if hook.hook_type == "dynamic":
@@ -706,7 +777,7 @@ class Plugin:
                     else:
                         dynamic_hooks[event_type] = [hook]
 
-        plugin_state: Tuple[Dict, Dict, List] = (dynamic_commands, dynamic_hooks, self.get_timers())
+        plugin_state: Tuple[Dict, Dict, List] = (dynamic_commands, dynamic_hooks, self._get_timers())
 
         if plugin_state != ({}, {}, []):
             # we have an actual state to save
@@ -755,13 +826,16 @@ class Plugin:
         event: str
         hooks_list: List[PluginHook]
         for event, hooks_list in dynamic_hooks.items():
-            self.get_hooks()[event] += hooks_list
+            if self.hooks.get(event):
+                self._get_hooks()[event] += hooks_list
+            else:
+                self.hooks[event] = hooks_list
 
         # add last execution for static timers and all dynamic timers
         state_timer: Timer
         static_timer: Timer
         for state_timer in timers:
-            for static_timer in self.get_timers():
+            for static_timer in self._get_timers():
                 if static_timer.name == state_timer.name:
                     # update last execution from state, keep everything else
                     static_timer.last_execution = state_timer.last_execution

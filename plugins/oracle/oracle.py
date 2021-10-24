@@ -44,7 +44,7 @@ async def oracle(command):
         "Die Zeit wird es zeigen.",
     )
     message = "**Antwort:** " + random.choice(oracles)
-    await plugin.reply(command, message, delay=200)
+    await plugin.respond_message(command, message, delay=200)
 
 
 plugin = Plugin("oracle", "General", "Plugin to provide a simple, randomized !oracle")

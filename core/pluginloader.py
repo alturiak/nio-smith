@@ -3,6 +3,7 @@ from nio import UnknownEvent, RoomMessageText
 from core.chat_functions import send_text_to_room
 from core.plugin import Plugin, PluginCommand, PluginHook
 from core.timer import Timer
+from core.config import Config
 from sys import modules
 from re import match
 from time import time
@@ -17,31 +18,48 @@ import traceback
 
 logger = logging.getLogger(__name__)
 
-# import all plugins
-module_all = glob.glob("plugins/*")
-module_dirs: List[str] = [basename(d) for d in module_all if isdir(d) and not d.endswith('__pycache__')]
-module_files: List[str] = [basename(f)[:-3] for f in module_all if isfile(f) and f.endswith('.py') and not f.endswith('__init__.py')]
-
-for module in module_dirs:
-    try:
-        globals()[module] = importlib.import_module(f"plugins.{module}.{module}")
-    except ModuleNotFoundError:
-        logger.error(f"Error importing {module}. Please check requirements: {traceback.format_exc(limit=1)}")
-    except KeyError:
-        logger.error(f"Error importing {module} due to missing configuration items. Skipping.")
-
-for module in module_files:
-    try:
-        logger.warning(f"DEPRECATION WARNING: Single-file plugin {module} detected. This will not be loaded from 0.2.0 onwards.")
-        globals()[module] = importlib.import_module(f"plugins.{module}")
-    except ModuleNotFoundError:
-        logger.error(f"Error importing {module}. Please check requirements: {traceback.format_exc(limit=1)}")
-    except KeyError:
-        logger.error(f"Error importing {module} due to missing configuration items. Skipping.")
 
 class PluginLoader:
 
-    def __init__(self):
+    def __init__(self, config):
+        """
+        Handles importing and running plugins
+        :param config (Config): Bot configuration parameters
+        """
+
+        self.config: Config = config
+        # import all plugins
+        module_all = glob.glob("plugins/*")
+        module_dirs: List[str] = [basename(d) for d in module_all if isdir(d) and not d.endswith('__pycache__')]
+        module_files: List[str] = [basename(f)[:-3] for f in module_all if isfile(f) and f.endswith('.py') and not f.endswith('__init__.py')]
+
+        if self.config.plugins_allowlist:
+            logger.info(f"Plugin allowlist: {self.config.plugins_allowlist}")
+        if self.config.plugins_denylist:
+            logger.info(f"Plugin denylist: {self.config.plugins_denylist}")
+
+        for module in module_dirs:
+            if self.is_allowed_plugin(module):
+                try:
+                    globals()[module] = importlib.import_module(f"plugins.{module}.{module}")
+                except ModuleNotFoundError:
+                    logger.error(f"Error importing {module}. Please check requirements: {traceback.format_exc(limit=1)}")
+                except KeyError:
+                    logger.error(f"Error importing {module} due to missing configuration items. Skipping.")
+            else:
+                logger.info(f"Skipping plugin {module} as it hasn't been allowed by configuration.")
+        for module in module_files:
+            if self.is_allowed_plugin(module):
+                try:
+                    logger.warning(f"DEPRECATION WARNING: Single-file plugin {module} detected. This will not be loaded from 0.2.0 onwards.")
+                    globals()[module] = importlib.import_module(f"plugins.{module}")
+                except ModuleNotFoundError:
+                    logger.error(f"Error importing {module}. Please check requirements: {traceback.format_exc(limit=1)}")
+                except KeyError:
+                    logger.error(f"Error importing {module} due to missing configuration items. Skipping.")
+            else:
+                logger.info(f"Skipping plugin {module} as it hasn't been allowed by configuration.")
+
         # get all loaded plugins from sys.modules and make them available as plugin_list
         self.__plugin_list: Dict[str, Plugin] = {}
 
@@ -53,15 +71,26 @@ class PluginLoader:
         for plugin in self.__plugin_list.values():
             """Display details about the loaded plugins, this does nothing else"""
             logger.info(f"Loaded plugin {plugin.name}:")
-            if plugin.get_commands() != {}:
-                logger.info(f"  Commands: {', '.join([*plugin.get_commands().keys()])}")
-            if plugin.get_hooks() != {}:
-                logger.info(f"  Hooks:    {', '.join([*plugin.get_hooks().keys()])}")
-            if plugin.get_timers():
+            if plugin._get_commands() != {}:
+                logger.info(f"  Commands: {', '.join([*plugin._get_commands().keys()])}")
+            if plugin._get_hooks() != {}:
+                logger.info(f"  Hooks:    {', '.join([*plugin._get_hooks().keys()])}")
+            if plugin._get_timers():
                 timers: List[str] = []
-                for timer in plugin.get_timers():
+                for timer in plugin._get_timers():
                     timers.append(timer.name)
                 logger.info(f"  Timers:   {', '.join(timers)}")
+
+    def is_allowed_plugin(self, plugin: str):
+        """
+        Check if a given plugin is allowed to be loaded
+        :param plugin: (str) Name of the plugin to check
+        :return:    True, if plugin may be loaded
+                    False, otherwise
+        """
+
+        if plugin not in self.config.plugins_denylist:
+            return not self.config.plugins_allowlist or plugin in self.config.plugins_allowlist
 
     async def load_plugin_data(self):
 
@@ -100,7 +129,7 @@ class PluginLoader:
         plugin: Plugin
 
         for plugin in self.get_plugins().values():
-            for event_type, current_plugin_hooks in plugin.get_hooks().items():
+            for event_type, current_plugin_hooks in plugin._get_hooks().items():
                 if event_type in all_plugin_hooks.keys():
                     for plugin_hook in current_plugin_hooks:
                         all_plugin_hooks[event_type].append(plugin_hook)
@@ -119,7 +148,7 @@ class PluginLoader:
         plugin: Plugin
 
         for plugin in self.get_plugins().values():
-            plugin_commands.update(plugin.get_commands())
+            plugin_commands.update(plugin._get_commands())
 
         return plugin_commands
 
@@ -133,7 +162,7 @@ class PluginLoader:
         plugin: Plugin
 
         for plugin in self.get_plugins().values():
-            all_plugin_timers += plugin.get_timers()
+            all_plugin_timers += plugin._get_timers()
 
         return all_plugin_timers
 
@@ -180,7 +209,7 @@ class PluginLoader:
                         traceback.print_exc()
                     return 0
                 else:
-                    await send_text_to_room(command.client, command.room.room_id, f"Required power level for command {command[0]} not met")
+                    await send_text_to_room(command.client, command.room.room_id, f"Required power level for command {command.command} not met")
                     return 2
             else:
                 return 1

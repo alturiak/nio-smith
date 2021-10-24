@@ -3,7 +3,7 @@ import re
 import os
 import yaml
 import sys
-from typing import List, Any
+from typing import List, Any, Optional
 from core.errors import ConfigError
 
 logger = logging.getLogger()
@@ -20,7 +20,7 @@ class Config(object):
 
         # Load in the config file at the given filepath
         with open(filepath) as file_stream:
-            self.config = yaml.safe_load(file_stream.read())
+            self.config_dict = yaml.safe_load(file_stream.read())
 
         # Logging setup
         formatter = logging.Formatter('%(asctime)s | %(name)s [%(levelname)s] %(message)s')
@@ -67,32 +67,35 @@ class Config(object):
 
         self.command_prefix = self._get_cfg(["command_prefix"], default="!c ")
 
+        # plugins
+        self.plugins_allowlist = self._get_cfg(["plugins", "allowlist"], required=False, default=[])
+        self.plugins_denylist = self._get_cfg(["plugins", "denylist"], required=False, default=[])
+
     def _get_cfg(
-            self,
-            path: List[str],
-            default: Any = None,
-            required: bool = True,
+        self,
+        path: List[str],
+        default: Optional[Any] = None,
+        required: Optional[bool] = True,
     ) -> Any:
         """Get a config option from a path and option name, specifying whether it is
         required.
-
         Raises:
-            ConfigError: If required is specified and the object is not found
-                (and there is no default value provided), this error will be raised
+            ConfigError: If required is True and the object is not found (and there is
+                no default value provided), a ConfigError will be raised.
         """
         # Sift through the the config until we reach our option
-        config = self.config
+        config = self.config_dict
         for name in path:
             config = config.get(name)
 
             # If at any point we don't get our expected option...
             if config is None:
                 # Raise an error if it was required
-                if required or not default:
+                if required and not default:
                     raise ConfigError(f"Config option {'.'.join(path)} is required")
 
                 # or return the default value
                 return default
 
-        # We found the option. Return it
+        # We found the option. Return it.
         return config
