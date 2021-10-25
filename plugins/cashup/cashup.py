@@ -1,5 +1,6 @@
 # importing nio-stuff
 from types import AsyncGeneratorType
+from typing import Match
 from core.plugin import Plugin
 import logging
 
@@ -10,6 +11,7 @@ import functools
 # importing regular expressions for parsing numbers
 import re
 
+# TODO get rid of reply methods!
 
 logger = logging.getLogger(__name__)
 plugin = Plugin("cashup", "General", "A very simple cash-up plugin to share expenses in a group")
@@ -17,7 +19,6 @@ plugin = Plugin("cashup", "General", "A very simple cash-up plugin to share expe
 
 def setup():
     # first command will be called when plugin name is called
-    plugin.add_command("cashup-help", help, "cash up help info text")
     plugin.add_command("cashup-register", register, "Resets existing room DB and initializes all group members for sharing expenses.", power_level=100)
     plugin.add_command("cashup-add-expense", add_expense_for_user, "Adds a new expense for the given user-name.")
     plugin.add_command("cashup-print", print_room_state, "debug print function")
@@ -25,8 +26,11 @@ def setup():
     plugin.add_command("cashup-ae", add_expense_for_user, "Short form for `chash-up-add-expense`")
     plugin.add_command("cashup-p", print_room_state, "Short form for `cash-up-print`")
     # TODO shorter - smartphone friendly naming
-    # TODO update help function
+    """Defining a configuration values to be expected in the plugin's configuration file and reading the value
 
+    Defines a currency_sign used for a nice output message
+    """
+    plugin.add_config("currency_sign", "€", is_required=True)
 
 class GroupPayments:
     def __init__(self, splits_evenly: bool):
@@ -98,7 +102,7 @@ class GroupPayments:
         payment_to_increase[0]["expenses"] += new_expense
 
     
-    def to_str(self):
+    def __str__(self):
         """Simple function to get a human readable string of this groups state"""
         group_str: str = f"**Group**: splits_evenly: {self.splits_evenly},  \n"
         for payment in self.payments:
@@ -138,7 +142,7 @@ class PersistentGroups:
 pg = PersistentGroups(plugin)
 
 class Cashup:
-    def __init__(self, group: GroupPayments):
+    def __init__(self, group: GroupPayments, local_currency_sign: str = "€"):
         """Setup Cash_up algorithm
         For a set of people who owe each other some money or none
         this algorithm can settle expense among this group.
@@ -152,6 +156,7 @@ class Cashup:
         """
         self._split_uneven = not group.splits_evenly
         self._payments = group.payments
+        self._currency_sign = local_currency_sign
 
 
     def distribute_expenses(self):
@@ -201,18 +206,13 @@ class Cashup:
             sortedValuesPaid[j] -= debt
             # generate output string
             if debt != 0.0:
-                new_text=str(sortedPeople[i])+" owes "+str(sortedPeople[j])+" "+str(debt)+" €"
+                new_text=str(sortedPeople[i])+" owes "+str(sortedPeople[j])+" "+"{:.2f}".format(debt)+" "+self._currency_sign
                 output_texts.append(new_text)
             if sortedValuesPaid[i] == 0:
                 i+=1
             if sortedValuesPaid[j] ==0:
                 j-=1
         return output_texts
-
-async def help(command):
-    """Echo back the command's arguments"""
-    response = "this is some basic help text for the cash-up plugin"
-    await plugin.reply(command, response)
 
 async def register(command):
     """Register a set of people as a new group to share expenses"""
@@ -286,7 +286,7 @@ async def print_room_state(command):
     loaded_group: GroupPayments = await pg.load_group(command.room.room_id)
     response = "No group registered for this room!"
     if loaded_group is not None:
-        response = loaded_group.to_str()
+        response = loaded_group.__str__()
         await plugin.reply(command, response)
     else:
         await plugin.reply(command, "No data to read!")
@@ -296,33 +296,49 @@ async def add_expense_for_user(command):
     response_input_error = "You need to provide a previously registered user-name and expense value:  \n" \
         "`chash-up-add-expense <user-name> <expense-value>[€/$] [optional]`"
     # TODO if only a number is given, try to increase expense for the user that send the command
-    if len(command.args) != 2:
-        # command should only contain <user-name> and <expense-value>
-        await plugin.reply_notice(command, response_input_error)
-        return
-    else:
+    match_expense_nr: Match
+    user_name: str = ""
+    if len(command.args) == 1:
+        match_expense_nr = re.search('\d*[.,]?\d+',command.args[0])
+        if match_expense_nr:
+            # user seems to have a expense number defined
+            # maybe the user wants to increase for himself
+            # check if display_name of user is registered in the group
+            mxid: str = command.event.sender
+            user_name = command.room.user_name(mxid)
+            #user_link: str = await plugin.link_user(command.client, command.room.room_id, display_name)
+            #await plugin.respond_message(command, f"Command received from {display_name} ({mxid}). Userlink: {user_link}")
+    elif len(command.args) == 2:
         # first command arg is <user-name>
         user_name = command.args[0]
         # second command arg is <expense-value>
         # clean up expense-value from additional currency signs etc
         # find any number in string (eg: 12; 12,1; 12.1)
         match_expense_nr = re.search('\d*[.,]?\d+',command.args[1])
-        if match_expense_nr:
-            # extract match, then replace "," of german numbers by a "." decimal point
-            expense_float = float(match_expense_nr.group().replace(',', '.'))
-            try:
-                # Persistent_groups.load_group throws AttributeError when group not found
-                loaded_group: GroupPayments = await pg.load_group(command.room.room_id)
-                # Group.increase_expense throws IndexError when user_name not found
-                loaded_group.increase_expense(user_name, expense_float)
-            except (AttributeError, IndexError) as e:
-                await plugin.reply(command, response_input_error)
-                return
-            await pg.save_group(command.room.room_id, loaded_group)
-            # TODO make currency sign configureable
-            await plugin.reply(command, f"Successfully added {expense_float}€ expense for {user_name}!")
-        else:
+
+    else:
+        # command should only contain <user-name> and <expense-value>
+        await plugin.reply_notice(command, response_input_error)
+        return
+    if match_expense_nr:
+        # extract match, then replace "," of german numbers by a "." decimal point
+        expense_float = float(match_expense_nr.group().replace(',', '.'))
+        try:
+            # Persistent_groups.load_group throws AttributeError when group not found
+            loaded_group: GroupPayments = await pg.load_group(command.room.room_id)
+            # Group.increase_expense throws IndexError when user_name not found
+            loaded_group.increase_expense(user_name, expense_float)
+        except (AttributeError, IndexError) as e:
             await plugin.reply(command, response_input_error)
+            return
+        await pg.save_group(command.room.room_id, loaded_group)
+        # TODO do I need to wrap it in try except?
+        config_currency_sign: str = plugin.read_config("currency_sign")
+        # TODO use "{:.2f}".format(debt) style to round currency?!
+        await plugin.reply(command, f"Successfully added {expense_float}{config_currency_sign} expense for {user_name}!")
+    else:
+        await plugin.reply(command, response_input_error)
+
 
 async def cash_up(command):
     """Settle all registered expenses among the previously registered group."""
@@ -332,7 +348,9 @@ async def cash_up(command):
         response_error = "No cash-up possible because there was no group registered for this room."
         await plugin.reply(command, response_error)
         return
-    cash_up = Cashup(loaded_group)
+    # TODO do I need to wrap it in try except?
+    config_currency_sign: str = plugin.read_config("currency_sign")
+    cash_up = Cashup(loaded_group, config_currency_sign)
     message: str = ""
     who_owes_who_texts = cash_up.distribute_expenses()
     # check if any payments should be done
