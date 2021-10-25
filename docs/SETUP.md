@@ -6,7 +6,7 @@ Clone the repository to a path of your choice, e.g. `nio-smith`:
 If you're looking for a more stable experience, it's recommended to check out the latest tag:
 ```
 mkdir nio-smith
-git clone --branch v0.0.4 https://github.com/alturiak/nio-smith.git nio-smith
+git clone --branch v0.0.5 https://github.com/alturiak/nio-smith.git nio-smith
 ```
 
 If you really want the latest development commits, e.g. to submit PRs, check out HEAD:
@@ -74,13 +74,21 @@ Then simply run the bot with:
 python main.py
 ```
 
-By default, the bot will run with the config file at `./config.yaml`.
+By default, the bot will run with the config file at `./config.yaml` and load all plugins from the `plugins`-directory.
+You may optionally specify a different config-file and plugins-directory by running:
+```
+python main.py [configfile [plugins_directory]]
+```
+e.g.
+```
+python main.py myconfig.yaml myplugins
+```
 
 ## Upgrading
 If you've checked out a tag in step 1, switch to the latest tag.
 ```
 git fetch
-git checkout v0.0.4
+git checkout v0.0.5
 ```
 
 If you've checked out HEAD, just do

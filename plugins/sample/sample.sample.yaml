@@ -2,3 +2,6 @@
 
 # a string to read from the configuration when `read_configuration` command is used (default: "this is the default message")
 # default_message = "this is the default message"
+
+# Optional documentation url
+# doc_url: "https://github.com/alturiak/nio-smith/blob/master/plugins/sample/README.md"

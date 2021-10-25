@@ -2,3 +2,6 @@
 
 # List of room_ids on which modifications to existing quotes are allowed.
 # manage_quote_rooms: ["!rdBDrHapAsYdvmgGMP:pack.rocks"]
+
+# Optional documentation url
+# doc_url: "https://github.com/alturiak/nio-smith/blob/master/plugins/quote/README.md"

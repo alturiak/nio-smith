@@ -14,3 +14,6 @@
 
 # default to bidirectional translation, if not specified when using !translate
 # default_bidirectional: False
+
+# Optional documentation url
+# doc_url: "https://github.com/alturiak/nio-smith/blob/master/plugins/translate/README.md"

@@ -8,3 +8,6 @@
 
 # mandatory api key to use for connecting to sonarr's api, as configured via Settings -> API Key
 # api_key: ""
+
+# Optional documentation url
+# doc_url: "https://github.com/alturiak/nio-smith/blob/master/plugins/sonarr/README.md"

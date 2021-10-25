@@ -47,6 +47,9 @@ class Plugin:
         self.config_items: Dict[str, Any] = {}
         self.configuration: Union[Dict[Hashable, Any], list, None] = self.__load_config()
 
+        self.add_config("doc_url", is_required=False)
+        self.doc_url: str = self.read_config("doc_url")
+
     def _is_valid_for_room(self, room_id: str) -> bool:
         """
         Determine if at least one of the plugin's commands is allowed to be used in the given room
@@ -866,6 +869,16 @@ class PluginCommand:
         self.power_level: int = power_level
         self.room_id: List[str] = room_id
         self.command_type: str = command_type
+
+    def _is_valid_from_room(self, room_id: str) -> bool:
+        """
+        Check whether the command is valid for the given room
+        :param room_id: room_id to check for
+        :return:    True, if the command is allowed on the given room,
+                    False, otherwise
+        """
+
+        return not self.room_id or room_id in self.room_id
 
 
 class PluginHook:
