@@ -1,0 +1,8 @@
+# Sample configuration of cashup-plugin. Rename to cashup.yaml to use.
+
+# string containing the currency sign of your local currency (eg:"€","$")
+# currency_sign: "€"
+
+# TODO fix URL!!!
+# Optional documentation url
+# doc_url: "https://github.com/alturiak/nio-smith/blob/master/plugins/cashup/README.md"
