@@ -28,7 +28,7 @@ def setup():
     # TODO update help function
 
 
-class Group_payments:
+class GroupPayments:
     def __init__(self, splits_evenly: bool):
         """Setup Group_payments instance
         Represents a group of people that want to share expenses.
@@ -113,7 +113,7 @@ class Group_payments:
         return group_str
 
 
-class Persistent_groups:
+class PersistentGroups:
     """Setup Persistent_groups instance
     Simple wrapper for persisting groups in some kind of data base
 
@@ -131,14 +131,14 @@ class Persistent_groups:
     async def load_group(self, search_room_id: str):
         return await self.store.read_data(search_room_id)
     
-    async def save_group(self, room_id: str, group_to_save: Group_payments):
+    async def save_group(self, room_id: str, group_to_save: GroupPayments):
         return await self.store.store_data(room_id, group_to_save)
 
 
-pg = Persistent_groups(plugin)
+pg = PersistentGroups(plugin)
 
-class Cash_up:
-    def __init__(self, group: Group_payments):
+class Cashup:
+    def __init__(self, group: GroupPayments):
         """Setup Cash_up algorithm
         For a set of people who owe each other some money or none
         this algorithm can settle expense among this group.
@@ -223,7 +223,7 @@ async def register(command):
     # if there is a group registered for this room already
     # run a cash-up so old data will be shown to the users
     # before deleting it
-    previously_persisted_group: Group_payments = await pg.load_group(command.room.room_id)
+    previously_persisted_group: GroupPayments = await pg.load_group(command.room.room_id)
     if previously_persisted_group is not None:
         await plugin.reply_notice(command, "There is already a group registered for this room. " \
             "I will do a quick cash-up so no data will be lost when registering the new group.")
@@ -255,7 +255,7 @@ async def register(command):
                 new_names.append(arg)        
         if (len(new_names) == len(new_percentages) and len(new_names) > 1):
             # every name got a percentage value
-            new_group_not_even = Group_payments(splits_evenly=False)
+            new_group_not_even = GroupPayments(splits_evenly=False)
             for idx, name in enumerate(new_names):
                 # create a new group member with split percentage
                 new_group_not_even.append_new_member(name, new_percentages[idx])
@@ -263,7 +263,7 @@ async def register(command):
             await pg.save_group(command.room.room_id, new_group_not_even)
         elif (len(new_percentages) == 0 and len(new_names) > 1):
             # no name got a percentage value
-            new_group_even = Group_payments(splits_evenly=True)
+            new_group_even = GroupPayments(splits_evenly=True)
             for name in new_names:
                 # create a new group member without split percentage (split expenses equally)
                 new_group_even.append_new_member(name)
@@ -283,7 +283,7 @@ async def register(command):
 
 async def print_room_state(command):
     """Read the database for the group registered for the current room [debugging helper function]"""
-    loaded_group: Group_payments = await pg.load_group(command.room.room_id)
+    loaded_group: GroupPayments = await pg.load_group(command.room.room_id)
     response = "No group registered for this room!"
     if loaded_group is not None:
         response = loaded_group.to_str()
@@ -312,7 +312,7 @@ async def add_expense_for_user(command):
             expense_float = float(match_expense_nr.group().replace(',', '.'))
             try:
                 # Persistent_groups.load_group throws AttributeError when group not found
-                loaded_group: Group_payments = await pg.load_group(command.room.room_id)
+                loaded_group: GroupPayments = await pg.load_group(command.room.room_id)
                 # Group.increase_expense throws IndexError when user_name not found
                 loaded_group.increase_expense(user_name, expense_float)
             except (AttributeError, IndexError) as e:
@@ -327,12 +327,12 @@ async def add_expense_for_user(command):
 async def cash_up(command):
     """Settle all registered expenses among the previously registered group."""
     try:
-        loaded_group: Group_payments = await pg.load_group(command.room.room_id)
+        loaded_group: GroupPayments = await pg.load_group(command.room.room_id)
     except AttributeError:
         response_error = "No cash-up possible because there was no group registered for this room."
         await plugin.reply(command, response_error)
         return
-    cash_up = Cash_up(loaded_group)
+    cash_up = Cashup(loaded_group)
     message: str = ""
     who_owes_who_texts = cash_up.distribute_expenses()
     # check if any payments should be done
@@ -346,7 +346,6 @@ async def cash_up(command):
     loaded_group.reset_all_expenses()
     await pg.save_group(command.room.room_id,loaded_group)
 
-
-    
+  
 
 setup()
