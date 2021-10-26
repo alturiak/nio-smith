@@ -701,7 +701,7 @@ class Plugin:
         """
 
         if config_item in self.config_items.keys():
-            logger.warning(f"{self.name}: Configuration item {config_item} has been defined already")
+            logger.warning(f"{self.name}: Configuration item {config_item} has been defined already, new value not loaded.")
             return False
         else:
             # check for the value in configuration file and apply it if found

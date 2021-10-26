@@ -29,6 +29,7 @@ def setup():
     plugin.add_command("sample_add_command", add_command, "Dynamically adds an active command `sample_remove_command`")
     plugin.add_command("sample_sleep", sample_sleep, "Sleep for five seconds, then post a message, to test parallel execution of commands")
     plugin.add_command("sample_user", sample_user, "Respond with the mxid and displayname of the user issuing the command")
+    plugin.add_command("sample_add_config", sample_add_config, "Dynamically load a configuration option at runtime and read it")
 
     """The following part demonstrates defining a configuration value to be expected in the plugin's configuration file and reading the value
 
@@ -276,5 +277,17 @@ async def sample_user(command: Command):
     user_link: str = await plugin.link_user(command.client, command.room.room_id, display_name)
     await plugin.respond_message(command, f"Command received from {display_name} ({mxid}). Userlink: {user_link}")
 
+
+async def sample_add_config(command: Command):
+    """
+    Dynamically add a configuration option at runtime.
+    There probably isn't any use-case for that and behaviour might not be what is expected.
+    :param command:
+    :return:
+    """
+
+    plugin.add_config("sample_add_config", is_required=True)
+    message: str = plugin.read_config("sample_add_config")
+    await plugin.respond_message(command, f"Loaded from config: {message}")
 
 setup()
