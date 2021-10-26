@@ -11,10 +11,9 @@ import functools
 # importing regular expressions for parsing numbers
 import re
 
-# TODO get rid of reply methods!
 
 logger = logging.getLogger(__name__)
-plugin = Plugin("cashup", "General", "A very simple cash-up plugin to share expenses in a group")
+plugin = Plugin("cashup", "General", "A very simple cashup plugin to share expenses in a group")
 
 
 def setup():
@@ -23,14 +22,21 @@ def setup():
     plugin.add_command("cashup-add-expense", add_expense_for_user, "Adds a new expense for the given user-name.")
     plugin.add_command("cashup-print", print_room_state, "debug print function")
     plugin.add_command("cashup", cash_up, "Settle all registered expenses among the previously registered group.", power_level=50) 
-    plugin.add_command("cashup-ae", add_expense_for_user, "Short form for `chash-up-add-expense`")
-    plugin.add_command("cashup-p", print_room_state, "Short form for `cash-up-print`")
+    plugin.add_command("cashup-ae", add_expense_for_user, "Short form for `cashup-add-expense`")
+    plugin.add_command("cashup-p", print_room_state, "Short form for `cashup-print`")
     # TODO shorter - smartphone friendly naming
     """Defining a configuration values to be expected in the plugin's configuration file and reading the value
 
     Defines a currency_sign used for a nice output message
     """
     plugin.add_config("currency_sign", "€", is_required=True)
+
+def clean_print_currency(value):
+    clean_currency: str = "{:.2f}".format(value)
+    # TODO do I need to wrap it in try except?
+    config_currency_sign: str = plugin.read_config("currency_sign")
+    clean_currency += config_currency_sign
+    return clean_currency
 
 class GroupPayments:
     def __init__(self, splits_evenly: bool):
@@ -70,7 +76,7 @@ class GroupPayments:
                 new_member = {"uid": new_uid, "percentage": new_percentage, "expenses": 0}  
             else:
                 # percentage value is demanded but not given
-                error_msg = "cash-up Group_payments append_new_member failed: members percentage is not defined for a group that does not split evenly"
+                error_msg = "cashup Group_payments append_new_member failed: members percentage is not defined for a group that does not split evenly"
                 logger.error(error_msg)
                 raise ValueError(error_msg, new_member)
         else:
@@ -78,7 +84,6 @@ class GroupPayments:
             new_member = {"uid": new_uid, "expenses": 0}
         # store new member in groups list
         self.payments.append(new_member)
-
 
     def reset_all_expenses(self):
         """Sets all expenses to 0 for every group member.
@@ -101,14 +106,13 @@ class GroupPayments:
         # throws IndexError when search_uid not found
         payment_to_increase[0]["expenses"] += new_expense
 
-    
     def __str__(self):
         """Simple function to get a human readable string of this groups state"""
         group_str: str = f"**Group**: splits_evenly: {self.splits_evenly},  \n"
         for payment in self.payments:
             name = payment["uid"]
             expense = payment["expenses"]
-            group_str += f"{name} spend {expense}"
+            group_str += f"{name} spend {clean_print_currency(expense)}"
             if self.splits_evenly == False:
                 percentage = payment["percentage"] * 100
                 group_str += f" and will pay {percentage}% of the over all cost  \n"
@@ -142,7 +146,7 @@ class PersistentGroups:
 pg = PersistentGroups(plugin)
 
 class Cashup:
-    def __init__(self, group: GroupPayments, local_currency_sign: str = "€"):
+    def __init__(self, group: GroupPayments):
         """Setup Cash_up algorithm
         For a set of people who owe each other some money or none
         this algorithm can settle expense among this group.
@@ -156,8 +160,6 @@ class Cashup:
         """
         self._split_uneven = not group.splits_evenly
         self._payments = group.payments
-        self._currency_sign = local_currency_sign
-
 
     def distribute_expenses(self):
         """distribute the given expenses within the group
@@ -206,7 +208,7 @@ class Cashup:
             sortedValuesPaid[j] -= debt
             # generate output string
             if debt != 0.0:
-                new_text=str(sortedPeople[i])+" owes "+str(sortedPeople[j])+" "+"{:.2f}".format(debt)+" "+self._currency_sign
+                new_text=str(sortedPeople[i])+" owes "+str(sortedPeople[j])+" "+clean_print_currency(debt)
                 output_texts.append(new_text)
             if sortedValuesPaid[i] == 0:
                 i+=1
@@ -217,21 +219,21 @@ class Cashup:
 async def register(command):
     """Register a set of people as a new group to share expenses"""
     response_input_error = f"You need to register at least two users:  \n" \
-        "`chash-up-register <user-name1> [<user1-percentage>]; <user-name2> [<user2-percentage>]; ...` [optional]  \n" \
+        "`cashup-register <user-name1> [<user1-percentage>]; <user-name2> [<user2-percentage>]; ...` [optional]  \n" \
         "examples:  \n" \
-        "`chash-up-register A 0.2; B 0.8;` A pays 20%, B pays 80% or `chash-up-register A; B;` to split expenses evenly"
+        "`cashup-register A 0.2; B 0.8;` A pays 20%, B pays 80% or `cashup-register A; B;` to split expenses evenly"
     # if there is a group registered for this room already
-    # run a cash-up so old data will be shown to the users
+    # run a cashup so old data will be shown to the users
     # before deleting it
     previously_persisted_group: GroupPayments = await pg.load_group(command.room.room_id)
     if previously_persisted_group is not None:
-        await plugin.reply_notice(command, "There is already a group registered for this room. " \
-            "I will do a quick cash-up so no data will be lost when registering the new group.")
+        await plugin.respond_notice(command, "There is already a group registered for this room. " \
+            "I will do a quick cashup so no data will be lost when registering the new group.")
         await cash_up(command)
     if command.args:
-        logger.debug(f"cash-up-register called with {command.args}")
-        # cash-up-register called with ['Marius', '0,7;', 'Andrea', '0.3;']
-        # cash-up-register called with ['Marius;', 'Andrea;']
+        logger.debug(f"cashup-register called with {command.args}")
+        # cashup-register called with ['Marius', '0,7;', 'Andrea', '0.3;']
+        # cashup-register called with ['Marius;', 'Andrea;']
         # generate lists of names and optional percentages
         new_names = []
         new_percentages = []
@@ -249,7 +251,7 @@ async def register(command):
                 if len(new_percentages) == (len(new_names)-1):
                     new_percentages.append(arg_float)
                 else:
-                    await plugin.reply_notice(command, response_input_error)
+                    await plugin.respond_notice(command, response_input_error)
                     return
             else:
                 new_names.append(arg)        
@@ -271,14 +273,14 @@ async def register(command):
             await pg.save_group(command.room.room_id, new_group_even)
         else:
             # sth went terribly wrong
-            await plugin.reply_notice(command, response_input_error)
+            await plugin.respond_notice(command, response_input_error)
             return
     else:
         # no command args defined
-        await plugin.reply_notice(command, response_input_error)
+        await plugin.respond_notice(command, response_input_error)
         return
     response_success = "Successfully registered a new group:"
-    await plugin.reply(command, response_success)
+    await plugin.respond_message(command, response_success)
     await print_room_state(command)
 
 async def print_room_state(command):
@@ -287,15 +289,14 @@ async def print_room_state(command):
     response = "No group registered for this room!"
     if loaded_group is not None:
         response = loaded_group.__str__()
-        await plugin.reply(command, response)
+        await plugin.respond_message(command, response)
     else:
-        await plugin.reply(command, "No data to read!")
+        await plugin.respond_message(command, "No data to read!")
 
 async def add_expense_for_user(command):
     """Adds a new expense for the given username"""
     response_input_error = "You need to provide a previously registered user-name and expense value:  \n" \
-        "`chash-up-add-expense <user-name> <expense-value>[€/$] [optional]`"
-    # TODO if only a number is given, try to increase expense for the user that send the command
+        "`cashup-add-expense <user-name> <expense-value>[€/$] [optional]`"
     match_expense_nr: Match
     user_name: str = ""
     if len(command.args) == 1:
@@ -318,7 +319,7 @@ async def add_expense_for_user(command):
 
     else:
         # command should only contain <user-name> and <expense-value>
-        await plugin.reply_notice(command, response_input_error)
+        await plugin.respond_notice(command, response_input_error)
         return
     if match_expense_nr:
         # extract match, then replace "," of german numbers by a "." decimal point
@@ -329,15 +330,12 @@ async def add_expense_for_user(command):
             # Group.increase_expense throws IndexError when user_name not found
             loaded_group.increase_expense(user_name, expense_float)
         except (AttributeError, IndexError) as e:
-            await plugin.reply(command, response_input_error)
+            await plugin.respond_notice(command, response_input_error)
             return
         await pg.save_group(command.room.room_id, loaded_group)
-        # TODO do I need to wrap it in try except?
-        config_currency_sign: str = plugin.read_config("currency_sign")
-        # TODO use "{:.2f}".format(debt) style to round currency?!
-        await plugin.reply(command, f"Successfully added {expense_float}{config_currency_sign} expense for {user_name}!")
+        await plugin.respond_message(command, f"Successfully added {clean_print_currency(expense_float)} expense for {user_name}!")
     else:
-        await plugin.reply(command, response_input_error)
+        await plugin.respond_notice(command, response_input_error)
 
 
 async def cash_up(command):
@@ -345,25 +343,22 @@ async def cash_up(command):
     try:
         loaded_group: GroupPayments = await pg.load_group(command.room.room_id)
     except AttributeError:
-        response_error = "No cash-up possible because there was no group registered for this room."
-        await plugin.reply(command, response_error)
+        response_error = "No cashup possible because there was no group registered for this room."
+        await plugin.respond_notice(command, response_error)
         return
-    # TODO do I need to wrap it in try except?
-    config_currency_sign: str = plugin.read_config("currency_sign")
-    cash_up = Cashup(loaded_group, config_currency_sign)
+    cash_up = Cashup(loaded_group)
     message: str = ""
     who_owes_who_texts = cash_up.distribute_expenses()
     # check if any payments should be done
     if len(who_owes_who_texts) > 0:
-        message += f"**Result of group cash-up**:  \n"
+        message += f"**Result of group cashup**:  \n"
         for line in who_owes_who_texts:
             message += f"{line}  \n"
-        await plugin.reply(command, message)
+        await plugin.respond_message(command, message)
     else:
-        await plugin.reply(command, "No balancing of expenses needed.")
+        await plugin.respond_message(command, "No balancing of expenses needed.")
     loaded_group.reset_all_expenses()
     await pg.save_group(command.room.room_id,loaded_group)
 
-  
 
 setup()
