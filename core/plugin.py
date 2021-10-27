@@ -685,14 +685,14 @@ class Plugin:
                             fuzzy: fuzzy matching
         :param fuzziness: if strictness == fuzzy, fuzziness determines the required percentage for a match
         :return:    string with the userlink-html-code if found,
-                    None otherwise
+                    given display_name otherwise
         """
 
         user: RoomMember
         if user := await self.is_user_in_room(client, room_id, display_name, strictness=strictness, fuzziness=fuzziness):
             return f"<a href=\"https://matrix.to/#/{user.user_id}\">{user.display_name}</a>"
         else:
-            return None
+            return display_name
 
     async def get_mx_user_id(self, client: AsyncClient, room_id: str, display_name: str, strictness="loose", fuzziness: int = 75) -> str or None:
         """
