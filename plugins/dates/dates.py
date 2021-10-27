@@ -395,11 +395,8 @@ async def post_reminders(client):
     for store_date in dates.values():
         if await store_date.is_today() and await store_date.needs_reminding():
             if store_date.date_type == "birthday":
-                user_link: str or None
-                if (user_link := await plugin.link_user(client, store_date.mx_room, store_date.description)) is not None:
-                    message_id: str = await plugin.send_message(client, store_date.mx_room, f"🎉 @room, it's {user_link}'s birthday! 🎉  \n")
-                else:
-                    message_id: str = await plugin.send_message(client, store_date.mx_room, f"🎉 @room, it's {store_date.description}'s birthday! 🎉  \n")
+                user_link: str = await plugin.link_user(client, store_date.mx_room, store_date.description)
+                message_id: str = await plugin.send_message(client, store_date.mx_room, f"🎉 @room, it's {user_link}'s birthday! 🎉  \n")
 
                 # post 3 to 6 random emoji
                 emoji_list: List[str] = random.sample(celebratory_emoji, random.randint(3, 6))
