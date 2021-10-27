@@ -31,6 +31,7 @@ class PluginLoader:
         self.config: Config = config
         # import all plugins
         module_all = glob.glob(f"{plugins_dir}/*")
+        module_all.sort()
         module_dirs: List[str] = [basename(d) for d in module_all if isdir(d) and not d.endswith('__pycache__')]
         module_files: List[str] = [basename(f)[:-3] for f in module_all if isfile(f) and f.endswith('.py') and not f.endswith('__init__.py')]
 
