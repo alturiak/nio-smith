@@ -39,7 +39,7 @@ def setup():
     The value supplied is a default value that is used if no configuration was found in the configuration file 
     """
     plugin.add_config("default_message", "this is the default message", is_required=True)
-    plugin.add_command("read_configuration", read_configuration, "Reads the value `default_message` from the plugin configuration")
+    plugin.add_command("sample_read_config", sample_read_config, "Reads the value `default_message` from the plugin configuration")
 
     """The following part demonstrates registering timers by fixed interval and timedelta"""
     if timers_enabled:
@@ -185,17 +185,17 @@ async def sample_replace(command):
     await plugin.replace_message(command.client, command.room.room_id, message_id, f"<font color=\"green\">This is an edited test message</font>")
 
 
-async def read_configuration(command):
+async def sample_read_config(command):
     """
     Reads `default_message` from configuration and sends it as message
     :param command:
     :return:
     """
 
-    try:
-        message: str = plugin.read_config("default_message")
+    message: str = plugin.read_config("default_message")
+    if message:
         await plugin.respond_message(command, f"Configuration value: {message}")
-    except KeyError:
+    else:
         await plugin.respond_notice(command, f"Could not read message from configuration")
 
 
