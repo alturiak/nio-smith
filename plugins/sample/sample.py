@@ -29,6 +29,9 @@ def setup():
     plugin.add_command("sample_add_command", add_command, "Dynamically adds an active command `sample_remove_command`")
     plugin.add_command("sample_sleep", sample_sleep, "Sleep for five seconds, then post a message, to test parallel execution of commands")
     plugin.add_command("sample_user", sample_user, "Respond with the mxid and displayname of the user issuing the command")
+    plugin.add_command("sample_add_config", sample_add_config, "Dynamically load a configuration option at runtime and read it")
+    plugin.add_command("sample_expandable_message", sample_expandable_message, "Send a message that can be expanded to view it's full content")
+    plugin.add_command("sample_expandable_notice", sample_expandable_notice, "Send a notice that can be expanded to view it's full content")
 
     """The following part demonstrates defining a configuration value to be expected in the plugin's configuration file and reading the value
 
@@ -36,7 +39,7 @@ def setup():
     The value supplied is a default value that is used if no configuration was found in the configuration file 
     """
     plugin.add_config("default_message", "this is the default message", is_required=True)
-    plugin.add_command("read_configuration", read_configuration, "Reads the value `default_message` from the plugin configuration")
+    plugin.add_command("sample_read_config", sample_read_config, "Reads the value `default_message` from the plugin configuration")
 
     """The following part demonstrates registering timers by fixed interval and timedelta"""
     if timers_enabled:
@@ -81,7 +84,7 @@ async def sample_read(command):
 
     try:
         sample: Sample = await plugin.read_data("sample")
-        await plugin.respond_message(command, f"Message: {sample.message}", 200)
+        await plugin.respond_message(command, f"Message: {sample.message}", delay=200)
     except KeyError:
         await plugin.respond_notice(command, "Message could not be loaded")
 
@@ -182,17 +185,17 @@ async def sample_replace(command):
     await plugin.replace_message(command.client, command.room.room_id, message_id, f"<font color=\"green\">This is an edited test message</font>")
 
 
-async def read_configuration(command):
+async def sample_read_config(command):
     """
     Reads `default_message` from configuration and sends it as message
     :param command:
     :return:
     """
 
-    try:
-        message: str = plugin.read_config("default_message")
+    message: str = plugin.read_config("default_message")
+    if message:
         await plugin.respond_message(command, f"Configuration value: {message}")
-    except KeyError:
+    else:
         await plugin.respond_notice(command, f"Could not read message from configuration")
 
 
@@ -276,5 +279,41 @@ async def sample_user(command: Command):
     user_link: str = await plugin.link_user(command.client, command.room.room_id, display_name)
     await plugin.respond_message(command, f"Command received from {display_name} ({mxid}). Userlink: {user_link}")
 
+
+async def sample_add_config(command: Command):
+    """
+    Dynamically add a configuration option at runtime.
+    There probably isn't any use-case for that and behaviour might not be what is expected.
+    :param command:
+    :return:
+    """
+
+    plugin.add_config("sample_add_config", is_required=True)
+    message: str = plugin.read_config("sample_add_config")
+    await plugin.respond_message(command, f"Loaded from config: {message}")
+
+
+async def sample_expandable_message(command: Command):
+    """
+    Send an expandable message
+    :param command:
+    :return:
+    """
+
+    message: str = "This part is always visible"
+    expanded_message: str = "This part is only visible when the message is expanded."
+    await plugin.respond_message(command, message, expanded_message=expanded_message)
+
+
+async def sample_expandable_notice(command: Command):
+    """
+    Send an expandable message
+    :param command:
+    :return:
+    """
+
+    message: str = "This part is always visible"
+    expanded_message: str = "This part is only visible when the message is expanded."
+    await plugin.respond_notice(command, message, expanded_message=expanded_message)
 
 setup()

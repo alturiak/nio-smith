@@ -12,6 +12,7 @@ from core.timer import Timer
 from fuzzywuzzy import fuzz
 import copy
 import jsonpickle
+import markdown
 logger = logging.getLogger(__name__)
 
 
@@ -445,12 +446,29 @@ class Plugin:
                     logger.critical(f"Could not remove file {self.plugin_dataj_filename}: {err}")
                     return False
 
-    async def send_message(self, client, room_id, message: str, delay: int = 0) -> str or None:
+    async def __expandable_message_body(self, header: str, body: str) -> str:
+        """
+        Generate HTML-code for an expandable message body, used e.g. by
+        - send_expandable_message
+        - respond_expandable_message
+        - send_expandable_notice
+        - respond_expandable_notice
+        :param header: the part of the message that is always displayed
+        :param body: the part of the message that is only displayed after expanding it
+        :return: expandable message
+        """
+
+        markdown_header: str = markdown.markdown(header)
+        markdown_body: str = markdown.markdown(body)
+        return f"<details><summary>{markdown_header}</summary><br>{markdown_body}</details>"
+
+    async def send_message(self, client, room_id, message: str, expanded_message: str = "", delay: int = 0) -> str or None:
         """
         Send a message to a room, usually utilized by plugins to respond to commands
         :param client: AsyncClient used to send the message
         :param room_id: room_id to send to message to
         :param message: the actual message
+        :param expanded_message: an optional part of the message only visible after expanding the message (at least on Element Web)
         :param delay: optional delay with typing notification, 1..1000ms
         :return: the event_id of the sent message or None in case of an error
         """
@@ -463,55 +481,70 @@ class Plugin:
             await sleep(float(delay/1000))
             await client.room_typing(room_id, typing_state=False)
 
-        event_response: RoomSendResponse or RoomSendError
-        event_response = await send_text_to_room(client, room_id, message, notice=False)
+        if expanded_message:
+            message = await self.__expandable_message_body(message, expanded_message)
+        event_response: RoomSendResponse or RoomSendError = await send_text_to_room(client, room_id, message, notice=False)
 
         if isinstance(event_response, RoomSendResponse):
             return event_response.event_id
         else:
             return None
 
+    async def respond_message(self, command, message: str, expanded_message: str = "", delay: int = 0) -> str or None:
+        """
+        Simplified version of self.send_message() to reply to commands
+        :param command: the command object passed by the message we're responding to
+        :param message: the actual message
+        :param expanded_message: an optional part of the message only visible after expanding the message (at least on Element Web)
+        :param delay: optional delay with typing notification, 1..1000ms
+        :return: the event_id of the sent message or None in case of an error
+        """
+
+        return await self.send_message(command.client, command.room.room_id, message, expanded_message=expanded_message, delay=delay)
+
     async def message(self, client, room_id, message: str, delay: int = 0) -> str or None:
         """
         ** DEPRECATED ** Alias for send_message
         """
         logger.warning(f"Deprecated function 'message' used - use 'send_message' instead")
-        return await self.send_message(client, room_id, message, delay)
-
-    async def respond_message(self, command, message: str, delay: int = 0) -> str or None:
-        """
-        Simplified version of self.message() to reply to commands
-        :param command: the command object passed by the message we're responding to
-        :param message: the actual message
-        :param delay: optional delay with typing notification, 1..1000ms
-        :return: the event_id of the sent message or None in case of an error
-        """
-
-        return await self.send_message(command.client, command.room.room_id, message, delay)
+        return await self.send_message(client, room_id, message, delay=delay)
 
     async def reply(self, command, message: str, delay: int = 0) -> str or None:
         """
         ** DEPRECATED ** Alias for respond
         """
         logger.warning(f"Deprecated function 'reply' used - use 'respond_message' instead")
-        return await self.respond_message(command, message, delay)
+        return await self.respond_message(command, message, delay=delay)
 
-    async def send_notice(self, client, room_id: str, message: str) -> str or None:
+    async def send_notice(self, client, room_id: str, message: str, expanded_message: str = "") -> str or None:
         """
         Send a notice to a room, usually utilized by plugins to post errors, help texts or other messages not warranting pinging users
         :param client: AsyncClient used to send the message
         :param room_id: room_id to send to message to
         :param message: the actual message
+        :param expanded_message: an optional part of the message only visible after expanding the message (at least on Element Web)
         :return: the event_id of the sent message or None in case of an error
         """
 
-        event_response: RoomSendResponse
-        event_response = await send_text_to_room(client, room_id, message, notice=True)
+        if expanded_message:
+            message = await self.__expandable_message_body(message, expanded_message)
+        event_response: RoomSendResponse or RoomSendError = await send_text_to_room(client, room_id, message, notice=True)
 
         if event_response:
             return event_response.event_id
         else:
             return None
+
+    async def respond_notice(self, command, message: str, expanded_message: str = "") -> str or None:
+        """
+        Simplified version of self.notice() to reply to commands
+        :param command: the command object passed by the message we're responding to
+        :param message: the actual message
+        :param expanded_message: an optional part of the message only visible after expanding the message (at least on Element Web)
+        :return: the event_id of the sent message or None in case of an error
+        """
+
+        return await self.send_notice(command.client, command.room.room_id, message, expanded_message=expanded_message)
 
     async def notice(self, client, room_id: str, message: str) -> str or None:
         """
@@ -519,16 +552,6 @@ class Plugin:
         """
         logger.warning(f"Deprecated function 'notice' used - use 'send_notice' instead")
         return await self.send_notice(client, room_id, message)
-
-    async def respond_notice(self, command, message: str) -> str or None:
-        """
-        Simplified version of self.notice() to reply to commands
-        :param command: the command object passed by the message we're responding to
-        :param message: the actual message
-        :return: the event_id of the sent message or None in case of an error
-        """
-
-        return await self.send_notice(command.client, command.room.room_id, message)
 
     async def reply_notice(self, command, message: str) -> str or None:
         """
@@ -556,17 +579,20 @@ class Plugin:
         logger.warning(f"Deprecated function 'react' used - use 'send_reaction' instead")
         await self.send_reaction(client, room_id, event_id, reaction)
 
-    async def replace_message(self, client: AsyncClient, room_id: str, event_id: str, message: str) -> str or None:
+    async def replace_message(self, client: AsyncClient, room_id: str, event_id: str, message: str, expanded_message: str = "") -> str or None:
         """
         Edits an event. send_replace() will check if the new content actualy differs before really sending the replacement
         :param client: (nio.AsyncClient) The client to communicate to matrix with
         :param room_id: (str) room_id of the original event
         :param event_id: (str) event_id to edit
         :param message: (str) the new message
+        :param expanded_message: an optional part of the message only visible after expanding the message (at least on Element Web)
         :return:    (str) the event-id of the new room-event, if the original event has been replaced or
                     None, if the event has not been edited
         """
 
+        if expanded_message:
+            message = self.__expandable_message_body(message, expanded_message)
         return await send_replace(client, room_id, event_id, message)
 
     async def replace(self, client: AsyncClient, room_id: str, event_id: str, message: str) -> str or None:
@@ -659,14 +685,14 @@ class Plugin:
                             fuzzy: fuzzy matching
         :param fuzziness: if strictness == fuzzy, fuzziness determines the required percentage for a match
         :return:    string with the userlink-html-code if found,
-                    None otherwise
+                    given display_name otherwise
         """
 
         user: RoomMember
         if user := await self.is_user_in_room(client, room_id, display_name, strictness=strictness, fuzziness=fuzziness):
             return f"<a href=\"https://matrix.to/#/{user.user_id}\">{user.display_name}</a>"
         else:
-            return None
+            return display_name
 
     async def get_mx_user_id(self, client: AsyncClient, room_id: str, display_name: str, strictness="loose", fuzziness: int = 75) -> str or None:
         """
@@ -701,7 +727,7 @@ class Plugin:
         """
 
         if config_item in self.config_items.keys():
-            logger.warning(f"{self.name}: Configuration item {config_item} has been defined already")
+            logger.warning(f"{self.name}: Configuration item {config_item} has been defined already, new value not loaded.")
             return False
         else:
             # check for the value in configuration file and apply it if found
