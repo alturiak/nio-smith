@@ -82,6 +82,8 @@ class StoreDate:
 
         if await self.is_today() and self.date_type == "birthday" and self.mx_room == room_id:
             return (plaintext and self.description.lower() in plaintext.lower()) or (formatted and self.name.lower() in formatted.lower())
+        else:
+            return False
 
     async def needs_reminding(self) -> bool:
         """
@@ -436,8 +438,10 @@ async def birthday_tada(client: AsyncClient, room_id: str, event: RoomMessageTex
         last_tada: datetime.datetime or None = last_tada_dict.get(room_id)
         if last_tada is not None and last_tada > datetime.datetime.now() - datetime.timedelta(hours=1):
             return
+    else:
+        last_tada_dict: Dict[str, datetime.datetime] = {}
 
-    # check if there are actual dates stores
+    # check if there are actual dates stored
     dates: Dict[str, StoreDate] = await plugin.read_data("stored_dates")
     if dates is None:
         return
@@ -449,8 +453,9 @@ async def birthday_tada(client: AsyncClient, room_id: str, event: RoomMessageTex
                 await store_date.is_birthday_person(room_id, plaintext=event.body, formatted=event.formatted_body):
             # sender is birthday person or birthday person is mentioned
             reactions: List[str] = ["🎉", "❄", "🎆"]
-            await plugin.send_message(client, room_id, random.choice(reactions))
-            await plugin.store_data("last_tada", {room_id: datetime.datetime.now()})
+            await plugin.send_message(client, room_id, random.choice(reactions), markdown_convert=False)
+            last_tada_dict[room_id] = datetime.datetime.now()
+            await plugin.store_data("last_tada", last_tada_dict)
             break
 
 setup()
