@@ -517,7 +517,7 @@ class Plugin:
         markdown_body: str = markdown.markdown(body)
         return f"<details><summary>{markdown_header}</summary><br>{markdown_body}</details>"
 
-    async def send_message(self, client, room_id, message: str, expanded_message: str = "", delay: int = 0) -> str or None:
+    async def send_message(self, client, room_id, message: str, expanded_message: str = "", delay: int = 0, markdown_convert: bool = True) -> str or None:
         """
         Send a message to a room, usually utilized by plugins to respond to commands
         :param client: AsyncClient used to send the message
@@ -525,6 +525,7 @@ class Plugin:
         :param message: the actual message
         :param expanded_message: an optional part of the message only visible after expanding the message (at least on Element Web)
         :param delay: optional delay with typing notification, 1..1000ms
+        :param markdown_convert: optional flag if content should be converted to markdown, defaults to True
         :return: the event_id of the sent message or None in case of an error
         """
 
@@ -538,24 +539,25 @@ class Plugin:
 
         if expanded_message:
             message = await self.__expandable_message_body(message, expanded_message)
-        event_response: RoomSendResponse or RoomSendError = await send_text_to_room(client, room_id, message, notice=False)
+        event_response: RoomSendResponse or RoomSendError = await send_text_to_room(client, room_id, message, notice=False, markdown_convert=markdown_convert)
 
         if isinstance(event_response, RoomSendResponse):
             return event_response.event_id
         else:
             return None
 
-    async def respond_message(self, command, message: str, expanded_message: str = "", delay: int = 0) -> str or None:
+    async def respond_message(self, command, message: str, expanded_message: str = "", delay: int = 0, markdown_convert: bool = True) -> str or None:
         """
         Simplified version of self.send_message() to reply to commands
         :param command: the command object passed by the message we're responding to
         :param message: the actual message
         :param expanded_message: an optional part of the message only visible after expanding the message (at least on Element Web)
         :param delay: optional delay with typing notification, 1..1000ms
+        :param markdown_convert: optional flag if content should be converted to markdown, defaults to True
         :return: the event_id of the sent message or None in case of an error
         """
 
-        return await self.send_message(command.client, command.room.room_id, message, expanded_message=expanded_message, delay=delay)
+        return await self.send_message(command.client, command.room.room_id, message, expanded_message=expanded_message, delay=delay, markdown_convert=markdown_convert)
 
     async def message(self, client, room_id, message: str, delay: int = 0) -> str or None:
         """
@@ -571,35 +573,37 @@ class Plugin:
         logger.warning(f"Deprecated function 'reply' used - use 'respond_message' instead")
         return await self.respond_message(command, message, delay=delay)
 
-    async def send_notice(self, client, room_id: str, message: str, expanded_message: str = "") -> str or None:
+    async def send_notice(self, client, room_id: str, message: str, expanded_message: str = "", markdown_convert: bool = True) -> str or None:
         """
         Send a notice to a room, usually utilized by plugins to post errors, help texts or other messages not warranting pinging users
         :param client: AsyncClient used to send the message
         :param room_id: room_id to send to message to
         :param message: the actual message
         :param expanded_message: an optional part of the message only visible after expanding the message (at least on Element Web)
+        :param markdown_convert: optional flag if content should be converted to markdown, defaults to True
         :return: the event_id of the sent message or None in case of an error
         """
 
         if expanded_message:
             message = await self.__expandable_message_body(message, expanded_message)
-        event_response: RoomSendResponse or RoomSendError = await send_text_to_room(client, room_id, message, notice=True)
+        event_response: RoomSendResponse or RoomSendError = await send_text_to_room(client, room_id, message, notice=True, markdown_convert=markdown_convert)
 
         if event_response:
             return event_response.event_id
         else:
             return None
 
-    async def respond_notice(self, command, message: str, expanded_message: str = "") -> str or None:
+    async def respond_notice(self, command, message: str, expanded_message: str = "", markdown_convert: bool = True) -> str or None:
         """
         Simplified version of self.notice() to reply to commands
         :param command: the command object passed by the message we're responding to
         :param message: the actual message
         :param expanded_message: an optional part of the message only visible after expanding the message (at least on Element Web)
+        :param markdown_convert: optional flag if content should be converted to markdown, defaults to True
         :return: the event_id of the sent message or None in case of an error
         """
 
-        return await self.send_notice(command.client, command.room.room_id, message, expanded_message=expanded_message)
+        return await self.send_notice(command.client, command.room.room_id, message, expanded_message=expanded_message, markdown_convert=markdown_convert)
 
     async def notice(self, client, room_id: str, message: str) -> str or None:
         """
