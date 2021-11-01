@@ -1,6 +1,5 @@
-aiohttp~=3.7.4
 fuzzywuzzy~=0.18.0
-matrix-nio[e2e]>=0.18.3
+matrix-nio[e2e]>=0.18.7
 Markdown>=3.3.4
-PyYAML>=5.4.1
-jsonpickle==2.0.0
+PyYAML>=6.0
+jsonpickle>=2.0.0
