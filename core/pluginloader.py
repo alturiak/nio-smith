@@ -1,3 +1,5 @@
+import copy
+
 from nio import UnknownEvent, RoomMessageText
 
 from core.chat_functions import send_text_to_room
@@ -124,7 +126,7 @@ class PluginLoader:
     def get_hooks(self) -> Dict[str, List[PluginHook]]:
         """
         Get all hooks currently registered by all plugins
-        :return: Dict of eventtype and list of PluginHooks for the eventtype
+        :return: Dict of event_type and list of PluginHooks for the event_type
         """
 
         all_plugin_hooks: Dict[str, List[PluginHook]] = {}
@@ -136,7 +138,7 @@ class PluginLoader:
                     for plugin_hook in current_plugin_hooks:
                         all_plugin_hooks[event_type].append(plugin_hook)
                 else:
-                    all_plugin_hooks[event_type] = current_plugin_hooks
+                    all_plugin_hooks[event_type] = copy.deepcopy(current_plugin_hooks)
 
         return all_plugin_hooks
 
