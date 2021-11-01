@@ -232,8 +232,8 @@ class PluginLoader:
             plugin_hook: PluginHook
 
             for plugin_hook in plugin_hooks:
-                if (plugin_hook.room_id is None or room.room_id in plugin_hook.room_id) and \
-                        (plugin_hook.event_ids is None or event.source['content']['m.relates_to']['event_id'] in plugin_hook.event_ids):
+                if (not plugin_hook.room_id_list or room.room_id in plugin_hook.room_id_list) and \
+                        (not plugin_hook.event_ids or event.source['content']['m.relates_to']['event_id'] in plugin_hook.event_ids):
                     # plugin_hook is valid for room of the current event and
                     # event relates to a specified event_id
 

@@ -140,66 +140,120 @@ class Plugin:
 
         return self.commands
 
-    def add_hook(self, event_type: str, method: Callable, room_id: List[str] or None = None, event_ids: List[str] or None = None, hook_type: str = "static"):
+    def add_hook(self, event_type: str, method: Callable, room_id_list: List[str] = [], event_ids: List[str] = [], hook_type: str = "static"):
         """
         Hook into events defined by event_type with `method`.
         Will overwrite existing hooks with the same event_type and method.
         :param event_type: event-type to hook into, currently "m.reaction" and "m.room.message"
         :param method: method to be called when an event is received
-        :param room_id: optional list of room_ids the hook is active on
+        :param room_id_list: optional list of room_ids the hook is active on
         :param event_ids: optional list of event-ids, the hook is applicable for, currently only useful for "m.reaction"-hooks
         :param hook_type: the optional type of the hook, currently "static" (default) or "dynamic"
         :return:
         """
 
-        plugin_hook = PluginHook(event_type, method, room_id=room_id, event_ids=event_ids, hook_type=hook_type)
-        if event_type not in self.hooks.keys():
-            self.hooks[event_type] = [plugin_hook]
-        else:
-            hook: PluginHook
-            for hook in self.hooks[event_type]:
-                # check if a duplicate hook exists
-                if hook.method == method and hook.room_id == room_id:
-                    break
-            else:
-                self.hooks[event_type].append(plugin_hook)
+        if not self.has_hook(event_type, method, room_id_list=room_id_list):
+            # a hook doesn't already exist for the same event_type, method and room_id_list
 
-        if hook_type == "dynamic":
-            self._save_state()
-        logger.debug(f"Added hook for {event_type} to rooms {room_id}")
+            if event_type not in self.hooks.keys():
+                # no hooks for event_type, add a event_type and hook
+                self.hooks[event_type] = [PluginHook(event_type, method, room_id_list=room_id_list, event_ids=event_ids, hook_type=hook_type)]
+
+            else:
+                hook: PluginHook
+                for hook in self.hooks[event_type]:
+                    if hook.method == method:
+                        # hook exists for same event_type and method, adjust rooms if required
+                        if room_id_list:
+                            hook.room_id_list.extend(x for x in room_id_list if x not in hook.room_id_list)
+                        break
+                else:
+                    # no hook for the given method, append a new hook
+                    self.hooks[event_type].append(PluginHook(event_type, method, room_id_list=room_id_list, event_ids=event_ids, hook_type=hook_type))
+
+            if hook_type == "dynamic":
+                self._save_state()
+            logger.info(f"Added hook for event {event_type}, method {method} to rooms {room_id_list}")
 
     def _get_hooks(self):
 
         return self.hooks
 
-    def del_hook(self, event_type: str, method: Callable) -> bool:
+    def del_hook(self, event_type: str, method: Callable, room_id_list: List[str] = []) -> bool:
         """
-        Remove an active hook
-        :param event_type:
-        :param method:
+        Remove an active hook for the given event_type and method and an optional list of rooms
+        :param event_type: event_type: event-type to hook into, currently "m.reaction" and "m.room.message"
+        :param method: method to be called when an event is received
+        :param room_id_list: list of room_ids to remove the hook from
         :return:    True, if hook for given event_type and method has been found and removed
                     False, otherwise
         """
 
-        if event_type in self.hooks.keys():
+        if self.has_hook(event_type, method, room_id_list=room_id_list):
+            # there actually is a matching hook
 
             hook_removed: bool = False
             hooks = self.hooks
             hook: PluginHook
             for hook in hooks.get(event_type):
                 if hook.method == method:
+                    # hook exists for same event_type and method, adjust rooms if required
                     if hook.hook_type == "dynamic":
-                        self.hooks[event_type].remove(hook)
-                        hook_removed = True
+                        if not room_id_list:
+                            # remove the hook for ALL rooms
+                            self.hooks[event_type].remove(hook)
+                            hook_removed = True
+                        else:
+                            if not hook.room_id_list:
+                                # hook is valid for all rooms, we can not remove a specific room
+                                logger.error(f"Plugin {self.name} tried to remove a global hook for a specific room - this is not possible")
+                            else:
+                                # hook is valid for specific rooms, remove the given rooms from the hook
+                                for room_id in room_id_list:
+                                    if room_id in hook.room_id_list:
+                                        hook.room_id_list.remove(room_id)
+                                        hook_removed = True
 
                     else:
                         logger.warning(f"Plugin {self.name} tried to remove static hook for {event_type}.")
 
             if hook_removed:
                 self._save_state()
+                logger.debug(f"Removed hook for event {event_type}, method {method}")
                 return True
 
-        return False
+        else:
+            return False
+
+    def has_hook(self, event_type: str, method: Callable, room_id_list: List[str] = []) -> bool:
+        """
+        Check a hook exists for a given event_type, method and ALL given room_ids
+        :param event_type: event_type: event-type to hook into, currently "m.reaction" and "m.room.message"
+        :param method: method to be called when an event is received
+        :param room_id_list: list of room_ids to remove the hook from
+        :return:    True, if there are any timers for the given method
+                    False, otherwise
+        """
+
+        plugin_hooks = self._get_hooks()
+        plugin_hook: PluginHook
+
+        if event_type in plugin_hooks.keys():
+            for plugin_hook in plugin_hooks.get(event_type):
+                if plugin_hook.method == method:
+                    # found matching method, check rooms
+                    if not plugin_hook.room_id_list:
+                        # hook is valid for all rooms, we don't need to check supplied rooms
+                        return True
+                    else:
+                        # hook has specified rooms, check if all of given room_id_list are contained
+                        if all(elem in plugin_hook.room_id_list for elem in room_id_list):
+                            return True
+                        else:
+                            # hook is not valid for all given room-ids
+                            return False
+        else:
+            return False
 
     def add_timer(self, method: Callable, frequency: str or datetime.timedelta or None = None, timer_type: str = "static"):
         """
@@ -909,17 +963,17 @@ class PluginCommand:
 
 class PluginHook:
 
-    def __init__(self, event_type: str, method: Callable, room_id: List[str] or None = None, event_ids: List[str] or None = None, hook_type: str = "static"):
+    def __init__(self, event_type: str, method: Callable, room_id_list: List[str] = [], event_ids: List[str] = [], hook_type: str = "static"):
         """
         Initialise a PluginHook
         :param event_type: the event_type the hook is being executed for
         :param method: the method that's being called when the hook is called
-        :param room_id: an optional list of room_ids for
+        :param room_id_list: an optional list of room_ids the hook should be active for
         :param event_ids: optional list of event-ids, the hook is applicable for, currently only useful for "m.reaction"-hooks
         :param hook_type: the optional type of the hook, currently "static" (default) or "dynamic"
         """
         self.event_type: str = event_type
         self.method: Callable = method
-        self.room_id: List[str] or None = room_id
-        self.event_ids: List[str] or None = event_ids
+        self.room_id_list: List[str] = room_id_list
+        self.event_ids: List[str] = event_ids
         self.hook_type: str = hook_type

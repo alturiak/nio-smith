@@ -227,7 +227,7 @@ async def add_command(command):
     """
 
     plugin.add_command("sample_remove_command", remove_command, "Dynamically removes an active command `sample_remove_command`", command_type="dynamic")
-    plugin.add_hook("m.reaction", remove_command, room_id=[command.room.room_id], hook_type="dynamic")
+    plugin.add_hook("m.reaction", remove_command, room_id_list=[command.room.room_id], hook_type="dynamic")
     await plugin.respond_message(command, "Dynamic command `sample_remove_command` and dynamic hook for reactions activated.  \n"
                                           "Use `sample_remove_command` or a reaction to disable again")
 

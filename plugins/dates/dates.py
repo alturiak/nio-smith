@@ -209,7 +209,7 @@ async def date_add(command):
         if await store_date.is_today() and not plugin.has_timer_for_method(post_reminders):
             plugin.add_timer(post_reminders, timer_type="dynamic")
 
-        plugin.add_hook("m.room.message", birthday_tada, room_id=[command.room.room_id], hook_type="dynamic")
+        plugin.add_hook("m.room.message", birthday_tada, room_id_list=[command.room.room_id], hook_type="dynamic")
         await plugin.send_reaction(command.client, command.room.room_id, command.event.event_id, "✅")
 
     else:
@@ -377,7 +377,7 @@ async def day_start(client):
             plugin.add_timer(post_reminders, timer_type="dynamic")
 
         if birthdays_today:
-            plugin.add_hook("m.room.message", birthday_tada, room_id=birthday_rooms_today, hook_type="dynamic")
+            plugin.add_hook("m.room.message", birthday_tada, room_id_list=birthday_rooms_today, hook_type="dynamic")
 
 
 async def post_reminders(client):
