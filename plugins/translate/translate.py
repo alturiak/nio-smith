@@ -152,11 +152,9 @@ async def switch(command):
     """
 
     rooms_db: Dict[str, Dict[str, any]] = {}
-    enabled_rooms: List[str] = []
 
     if await plugin.read_data("rooms_db"):
         rooms_db = await plugin.read_data("rooms_db")
-        enabled_rooms = list(rooms_db.keys())
 
     if len(command.args) == 0:
         source_langs: List[str] = plugin.read_config("default_source")
@@ -177,7 +175,8 @@ async def switch(command):
             await plugin.respond_notice(command, "Syntax: `!translate [[bi] source_lang... dest_lang]`")
             return False
 
-    if command.room.room_id in enabled_rooms:
+    if plugin.has_hook("m.room.message", translate_message, [command.room.room_id]):
+        plugin.del_hook("m.room.message", translate_message, room_id_list=[command.room.room_id])
         del rooms_db[command.room.room_id]
         await plugin.store_data("rooms_db", rooms_db)
         await plugin.respond_notice(command, "Translations disabled")
@@ -186,6 +185,7 @@ async def switch(command):
         if dest_lang in LANGUAGES.keys() and source_langs == ['any'] or all(elem in LANGUAGES.keys() for elem in source_langs):
             rooms_db[command.room.room_id] = {"source_langs": source_langs, "dest_lang": dest_lang, "bidirectional": bidirectional}
             await plugin.store_data("rooms_db", rooms_db)
+            plugin.add_hook("m.room.message", translate_message, room_id_list=[command.room.room_id], hook_type="dynamic")
 
             if bidirectional:
                 message = f"Bidirectional translations ({source_langs[0]}<=>{dest_lang}) enabled.  \n"
@@ -209,13 +209,11 @@ async def translate_message(client: AsyncClient, room_id: str, event: RoomMessag
     """
 
     rooms_db: Dict[str, Dict[str, any]] = {}
-    enabled_rooms: List[str] = []
 
     if await plugin.read_data("rooms_db"):
         rooms_db = await plugin.read_data("rooms_db")
-        enabled_rooms = list(rooms_db.keys())
 
-    if room_id in enabled_rooms and (plugin.read_config("allowed_rooms") == "" or room_id in plugin.read_config("allowed_rooms")):
+    if plugin.read_config("allowed_rooms") == [] or room_id in plugin.read_config("allowed_rooms"):
         # Remove special characters before translation
         message = sub(r'[^A-z0-9\-\.\?!:\sÄäÜüÖö]+', '', event.body)
 
@@ -230,6 +228,7 @@ async def translate_message(client: AsyncClient, room_id: str, event: RoomMessag
         except Exception:
             del rooms_db[room_id]
             await plugin.store_data("rooms_db", rooms_db)
+            plugin.del_hook("m.room.message", translate_message, room_id_list=[room_id])
             await plugin.send_notice(client, room_id, "Error in backend translation module. Translations disabled.")
             return
 
