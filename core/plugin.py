@@ -173,7 +173,7 @@ class Plugin:
 
             if hook_type == "dynamic":
                 self._save_state()
-            logger.info(f"Added hook for event {event_type}, method {method} to rooms {room_id_list}")
+            logger.debug(f"Added hook for event {event_type}, method {method} to rooms {room_id_list}")
 
     def _get_hooks(self):
 
@@ -199,8 +199,8 @@ class Plugin:
                 if hook.method == method:
                     # hook exists for same event_type and method, adjust rooms if required
                     if hook.hook_type == "dynamic":
-                        if not room_id_list:
-                            # remove the hook for ALL rooms
+                        if not room_id_list or all(elem in room_id_list for elem in hook.room_id_list):
+                            # completely remove the hook as no rooms have been supplied or all room_ids of the hook are to be removed
                             self.hooks[event_type].remove(hook)
                             hook_removed = True
                         else:
@@ -212,7 +212,8 @@ class Plugin:
                                 for room_id in room_id_list:
                                     if room_id in hook.room_id_list:
                                         hook.room_id_list.remove(room_id)
-                                        hook_removed = True
+
+                                hook_removed = True
 
                     else:
                         logger.warning(f"Plugin {self.name} tried to remove static hook for {event_type}.")
