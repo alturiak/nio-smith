@@ -356,6 +356,19 @@ class Plugin:
         else:
             return False
 
+    async def backup_data(self) -> bool:
+        """
+        Create a backup file of the data currently stored by the plugin. This is not executed automatically and needs to be called by the plugin,
+        preferably before executing potentially destructive operations
+        :return:    True, if backup file was created successfully
+                    False, otherwise
+        """
+
+        if self.plugin_data != {}:
+            return await self.__save_data_to_json_file(self.plugin_data, f"{self.plugin_dataj_filename}.bak.{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}")
+        else:
+            return False
+
     async def __load_pickle_data_from_file(self, filename: str) -> Dict[str, Any]:
         """
         Load data from a pickle-file
