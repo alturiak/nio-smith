@@ -502,6 +502,11 @@ async def quote_replace_command(command):
     """
 
     if len(command.args) > 2 and re.match(r'\d+', command.args[0]) and command.args[0] in (await plugin.read_data("quotes")).keys():
+
+        if not await plugin.backup_data():
+            await plugin.respond_notice(command, f"Error creating backup file, quote not replaced.")
+            return
+
         old_quote_text: str = await (await plugin.read_data("quotes"))[command.args[0]].display_text(command)
         quote: Quote = await quote_add_or_replace(command, command.args[0])
         await plugin.respond_notice(command, f"{await quote.display_text(command)}", expanded_message=f"**Old:**  \n{old_quote_text}  \n\n")
@@ -688,11 +693,11 @@ async def quote_stats_command(command):
             for line in quote.lines:
                 quote_length += len(line.message)
                 if line.nick is not None:
-                    if line.nick.lower() in quote_nicks.keys():
-                        if quote.id not in quote_nicks[line.nick.lower()]:
-                            quote_nicks[line.nick.lower()].append(quote.id)
+                    if line.nick in quote_nicks.keys():
+                        if quote.id not in quote_nicks[line.nick]:
+                            quote_nicks[line.nick].append(quote.id)
                     else:
-                        quote_nicks[line.nick.lower()] = [quote.id]
+                        quote_nicks[line.nick] = [quote.id]
 
             if quote_length > quote_longest[1]:
                 quote_longest = (quote.id, quote_length)
