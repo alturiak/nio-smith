@@ -737,7 +737,7 @@ async def quote_stats_command(command):
 
     if full_output:
         # split stats to build expandable message
-        message: str = "".join(stats_details.splitlines(keepends=True)[0:4])
+        message: str = "".join(stats_details.splitlines(keepends=True)[0:5])
         expanded_message: str = "".join(stats_details.splitlines(keepends=True)[5:])
         await plugin.respond_notice(command, stats_message + message, expanded_message=expanded_message)
     else:
