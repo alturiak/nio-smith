@@ -35,6 +35,9 @@ def setup():
                        power_level=50, room_id=plugin.read_config("manage_quote_rooms"))
     plugin.add_command("quote_replace", quote_replace_command, "Replace a specific quote with the supplied text - destructive, can not be reverted",
                        power_level=50, room_id=plugin.read_config("manage_quote_rooms"))
+    plugin.add_command("quote_replace_nick", quote_replace_nick_command, "Replace a nickname in *ALL QUOTES* with another nickname - destructive, "
+                                                                         "can not be reverted. USE WITH CAUTION!",
+                       power_level=50, room_id=plugin.read_config("manage_quote_rooms"))
 
     plugin.add_command("quote_links", quote_links_command, "Toggle automatic nickname linking",
                        power_level=100, room_id=plugin.read_config("manage_quote_rooms"))
@@ -802,5 +805,53 @@ async def upgrade_quotes(command):
         await plugin.respond_notice(command, f"Success: upgraded {upgraded_quotes} of {len(quotes)} Quotes to Version {current_version}")
     else:
         await plugin.respond_notice(command, f"Error: upgraded {upgraded_quotes} of {len(quotes)} Quotes to Version {current_version}")
+
+
+async def quote_replace_nick_command(command):
+    """
+    Replace a given nickname with another given nickname in ALL QUOTES!
+    This creates a backup of the plugin's data before replacing the nicks.
+
+    :param command:
+    :return:
+    """
+
+    if len(command.args) == 2:
+        quotes: Dict[str, Quote] = await plugin.read_data("quotes")
+        if not quotes:
+            await plugin.respond_notice(command, f"Error: no quotes stored")
+        else:
+            # create a backup file, don't replace anything unless it is successful
+            if not await plugin.backup_data():
+                await plugin.respond_notice(command, f"Error creating backup file, nicks not replaced.")
+                return
+
+            num_quotes: int = 0
+            num_nicks: int = 0
+            quote_ids: List[str] = []
+
+            quote: Quote
+            quote_line: QuoteLine
+            for quote in quotes.values():
+                old_num_nicks: int = num_nicks
+                for quote_line in quote.lines:
+                    if quote_line.nick == command.args[0]:
+                        num_nicks += 1
+                        quote_line.nick = command.args[1]
+
+                # increase number of changed quotes if number of replaced nicks has changed
+                if num_nicks > old_num_nicks:
+                    quote_ids.append(str(quote.id))
+                    num_quotes += 1
+
+            if num_quotes > 0:
+                await plugin.store_data("quotes", quotes)
+            await plugin.respond_notice(command, f"**{num_nicks}** occurrences of **{command.args[0]}** replaced by **{command.args[1]}** in **{num_quotes}** "
+                                                 f"quotes.",
+                                        expanded_message=f"Affected quotes: {', '.join(quote_ids)}")
+
+    else:
+        await plugin.respond_notice(command, f"Usage: `quote_replace_nick <old_nick> <new_nick>`")
+
 
 setup()
