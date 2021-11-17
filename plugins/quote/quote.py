@@ -834,9 +834,13 @@ async def quote_replace_nick_command(command):
             quote_line: QuoteLine
             for quote in quotes.values():
                 old_num_nicks: int = num_nicks
+                replaced_nicks: List[str] = []
                 for quote_line in quote.lines:
                     if quote_line.nick == command.args[0]:
                         num_nicks += 1
+                        if command.args[1] not in replaced_nicks:
+                            quote.lines = [QuoteLine(f"{command.args[1]} as {command.args[0]}", nick=None, message_type="annotation")] + quote.lines
+                            replaced_nicks.append(command.args[1])
                         quote_line.nick = command.args[1]
 
                 # increase number of changed quotes if number of replaced nicks has changed
