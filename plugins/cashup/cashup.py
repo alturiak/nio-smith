@@ -21,7 +21,7 @@ def setup():
     plugin.add_command("cashup-register", register, "Resets existing room DB and initializes all group members for sharing expenses.", power_level=100)
     plugin.add_command("cashup-add-expense", add_expense_for_user, "Adds a new expense for the given user-name.")
     plugin.add_command("cashup-print", print_room_state, "debug print function")
-    plugin.add_command("cashup", cash_up, "Settle all registered expenses among the previously registered group.", power_level=50) 
+    plugin.add_command("cashup", cash_up, "Settle all recorded expenses among the previously registered group.", power_level=50) 
     plugin.add_command("cashup-ae", add_expense_for_user, "Short form for `cashup-add-expense`")
     plugin.add_command("cashup-p", print_room_state, "Short form for `cashup-print`")
     # TODO shorter - smartphone friendly naming
@@ -33,13 +33,12 @@ def setup():
 
 def clean_print_currency(value):
     clean_currency: str = "{:.2f}".format(value)
-    # TODO do I need to wrap it in try except?
     config_currency_sign: str = plugin.read_config("currency_sign")
     clean_currency += config_currency_sign
     return clean_currency
 
 class GroupPayments:
-    def __init__(self, splits_evenly: bool):
+    def __init__(self, splits_evenly: bool = False):
         """Setup Group_payments instance
         Represents a group of people that want to share expenses.
 
@@ -356,7 +355,7 @@ async def cash_up(command):
             message += f"{line}  \n"
         await plugin.respond_message(command, message)
     else:
-        await plugin.respond_message(command, "No balancing of expenses needed.")
+        await plugin.respond_notice(command, "No balancing of expenses needed.")
     loaded_group.reset_all_expenses()
     await pg.save_group(command.room.room_id,loaded_group)
 
