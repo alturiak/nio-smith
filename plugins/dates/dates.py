@@ -82,6 +82,8 @@ class StoreDate:
 
         if await self.is_today() and self.date_type == "birthday" and self.mx_room == room_id:
             return (plaintext and self.description.lower() in plaintext.lower()) or (formatted and self.name.lower() in formatted.lower())
+        else:
+            return False
 
     async def needs_reminding(self) -> bool:
         """
@@ -209,7 +211,7 @@ async def date_add(command):
         if await store_date.is_today() and not plugin.has_timer_for_method(post_reminders):
             plugin.add_timer(post_reminders, timer_type="dynamic")
 
-        plugin.add_hook("m.room.message", birthday_tada, room_id=[command.room.room_id], hook_type="dynamic")
+        plugin.add_hook("m.room.message", birthday_tada, room_id_list=[command.room.room_id], hook_type="dynamic")
         await plugin.send_reaction(command.client, command.room.room_id, command.event.event_id, "✅")
 
     else:
@@ -377,7 +379,7 @@ async def day_start(client):
             plugin.add_timer(post_reminders, timer_type="dynamic")
 
         if birthdays_today:
-            plugin.add_hook("m.room.message", birthday_tada, room_id=birthday_rooms_today, hook_type="dynamic")
+            plugin.add_hook("m.room.message", birthday_tada, room_id_list=birthday_rooms_today, hook_type="dynamic")
 
 
 async def post_reminders(client):
@@ -395,11 +397,8 @@ async def post_reminders(client):
     for store_date in dates.values():
         if await store_date.is_today() and await store_date.needs_reminding():
             if store_date.date_type == "birthday":
-                user_link: str or None
-                if (user_link := await plugin.link_user(client, store_date.mx_room, store_date.description)) is not None:
-                    message_id: str = await plugin.send_message(client, store_date.mx_room, f"🎉 @room, it's {user_link}'s birthday! 🎉  \n")
-                else:
-                    message_id: str = await plugin.send_message(client, store_date.mx_room, f"🎉 @room, it's {store_date.description}'s birthday! 🎉  \n")
+                user_link: str = await plugin.link_user(client, store_date.mx_room, store_date.description)
+                message_id: str = await plugin.send_message(client, store_date.mx_room, f"🎉 @room, it's {user_link}'s birthday! 🎉  \n")
 
                 # post 3 to 6 random emoji
                 emoji_list: List[str] = random.sample(celebratory_emoji, random.randint(3, 6))
@@ -439,8 +438,10 @@ async def birthday_tada(client: AsyncClient, room_id: str, event: RoomMessageTex
         last_tada: datetime.datetime or None = last_tada_dict.get(room_id)
         if last_tada is not None and last_tada > datetime.datetime.now() - datetime.timedelta(hours=1):
             return
+    else:
+        last_tada_dict: Dict[str, datetime.datetime] = {}
 
-    # check if there are actual dates stores
+    # check if there are actual dates stored
     dates: Dict[str, StoreDate] = await plugin.read_data("stored_dates")
     if dates is None:
         return
@@ -452,8 +453,9 @@ async def birthday_tada(client: AsyncClient, room_id: str, event: RoomMessageTex
                 await store_date.is_birthday_person(room_id, plaintext=event.body, formatted=event.formatted_body):
             # sender is birthday person or birthday person is mentioned
             reactions: List[str] = ["🎉", "❄", "🎆"]
-            await plugin.send_message(client, room_id, random.choice(reactions))
-            await plugin.store_data("last_tada", {room_id: datetime.datetime.now()})
+            await plugin.send_message(client, room_id, random.choice(reactions), markdown_convert=False)
+            last_tada_dict[room_id] = datetime.datetime.now()
+            await plugin.store_data("last_tada", last_tada_dict)
             break
 
 setup()

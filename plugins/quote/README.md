@@ -76,6 +76,20 @@ Example:
 `Sheldon`  
 `Nothing!`  
 
+
+### quote_replace_nick (Power Level: 50)
+Replace a nickname in *ALL QUOTES* with another nickname - destructive, can not be reverted. USE WITH CAUTION!  
+Only usable on configured rooms, if `manage_quote_rooms` is set.  
+This creates a backup of the plugin's data before replacing the nicknames.  
+Usage: `quote_replace_nick <old_nick> <new_nick>`
+
+Example:
+```
+<user> !quote_replace_nick VooDoo-NA VooDoo
+<bot> 67 occurrences of VooDoo-NA replaced by VooDoo in 46 quotes.
+```
+
+
 ### quote_upgrade (Power Level: 100)
 Upgrade all Quotes to the most recent version, only needed if there is a change in storing quotes. There will be a 
 warning on startup, should this be required in the future. Only usable on configured rooms, if `manage_quote_rooms` is set.  

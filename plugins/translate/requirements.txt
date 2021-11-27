@@ -1,1 +1,1 @@
-googletrans~=3.0.0
+freetranslate>=0.2.0

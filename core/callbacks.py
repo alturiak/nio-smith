@@ -1,3 +1,5 @@
+from typing import List
+
 from core.bot_commands import Command
 from nio import (
     JoinError, MatrixRoom, UnknownEvent, InviteEvent, RoomMessageText
@@ -37,7 +39,7 @@ class Callbacks(object):
 
         """
         # Extract the message text
-        msg = event.body
+        msg: str = event.body
 
         # Ignore messages from ourselves
         if event.sender == self.client.user:
@@ -48,26 +50,30 @@ class Callbacks(object):
             f"{room.user_name(event.sender)}: {msg}"
         )
 
-        # process each line as separate message to check for commands
-        messages = msg.split("\n\n")
-        for split_message in messages:
-            # Process as message if in a public room without command prefix
-            has_command_prefix = split_message.startswith(self.command_prefix)
-            if not has_command_prefix and not room.is_group:
-                await self.plugin_loader.run_hooks(self.client, "m.room.message", room, event)
-                continue
+        # check if the whole message contains a line with a command
+        # if so, run all lines with commands
+        # otherwise, pass the message as a whole to the hooks
 
-            # Otherwise if this is in a 1-1 with the bot or features a command prefix,
-            # treat it as a command
+        lines: List[str] = msg.split("\n\n")
+        command_lines: List[str] = []
+        line: str
+        for line in lines:
+            has_command_prefix = line.startswith(self.command_prefix)
             if has_command_prefix:
-                # Remove the command prefix
-                split_message = split_message[len(self.command_prefix):]
-                # remove leading spaces
-                split_message = split_message.lstrip()
+                command_lines.append(line)
 
-            if split_message != "":
-                command = Command(self.client, self.store, self.config, split_message, room, event, self.plugin_loader)
-                await self.plugin_loader.run_command(command)
+        if command_lines:
+            # we actually found lines containing commands
+            for line in command_lines:
+                line = line[len(self.command_prefix):]
+                line = line.lstrip()
+                if line != "":
+                    command = Command(self.client, self.store, self.config, line, room, event, self.plugin_loader)
+                    await self.plugin_loader.run_command(command)
+
+        else:
+            # no commands found, pass the message to the hooks
+            await self.plugin_loader.run_hooks(self.client, "m.room.message", room, event)
 
     async def event_unknown(self, room: MatrixRoom, event: UnknownEvent):
         """

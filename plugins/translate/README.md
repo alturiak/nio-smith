@@ -1,6 +1,7 @@
 Plugin: translate
 ===
-Provide translations of all room-messages via Google Translate (using googletrans, may break randomly)
+Provide translations of all room-messages via Google Translate (using 
+[freetranslate](https://pypi.org/project/freetranslate/0.2.0/), may break randomly)
 
 ## Commands
 
@@ -12,10 +13,10 @@ Example: Enable translation using default values (or disable active translation)
 `translate`
 
 Example: Bidirectional translation between german and english:  
-`translate bi ger eng`
+`translate bi de en`
 
 Example: Unidirectional translation from german and english to japanese:
-`translate ger eng jap`
+`translate de en jp`
 
 ## Configuration
 Sensible defaults can be provided in `translate.yaml`:  
@@ -29,4 +30,4 @@ if not specified when using `translate` (default: ['any'])
   False)  
 
 ## External Requirements
-- [googletrans](https://pypi.org/project/googletrans/) for language detection and the actual translation
+- [freetranslate](https://pypi.org/project/freetranslate/0.2.0/) for language detection and the actual translation
