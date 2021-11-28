@@ -13,7 +13,7 @@ Note: automatic loading of plugins can be configured by allow- and denylist in t
 ([README.md](sample/README.md))
 - `sonarr`: provides commands to query sonarr's API
 - `spruch`: famous quotes from even more famous people (german, sorry)
-- `translate`: provide translations of all room-messages via Google Translate (using googletrans, may break randomly) 
+- `translate`: provide translations of all room-messages via Google Translate (using freetranslate, may break randomly) 
 ([README.md](translate/README.md))
 - `cashup`: settle expenses among a group ([README.md](cashup/README.md))
 
@@ -22,7 +22,9 @@ Note: automatic loading of plugins can be configured by allow- and denylist in t
 - `sonarr`:
   - [requests](https://pypi.org/project/requests/) to query sonarr's API
   - [humanize](https://pypi.org/project/humanize/)
-- `translate`: [googletrans](https://pypi.org/project/googletrans/) to provide language detection and translation
+- `translate`:
+  - Python 3.9 
+  - [freetranslate](https://pypi.org/project/freetranslate/) to provide language detection and translation
 
 ## Plugins can
 - ✔ use (almost) arbitrary python-code

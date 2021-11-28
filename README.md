@@ -32,7 +32,7 @@ See [plugins/README.md](plugins/README.md) for further details on plugin capabil
 [docs/SETUP.md](docs/SETUP.md) contains a short guide on getting you started with the bot.
 
 ## Requirements
-- python 3.8 or later
+- python 3.8 or later (be aware that specific plugins might require newer python versions).
 - [libolm](https://gitlab.matrix.org/matrix-org/olm)    
 - [matrix-nio](https://matrix-nio.readthedocs.io/en/latest/nio.html) with end-to-end-encryption enabled
 - [fuzzywuzzy](https://github.com/seatgeek/fuzzywuzzy) for fuzzy command matching and nick linking (yes, it's worth it)

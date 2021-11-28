@@ -1,7 +1,8 @@
 Plugin: translate
 ===
 Provide translations of all room-messages via Google Translate (using 
-[freetranslate](https://pypi.org/project/freetranslate/0.2.0/), may break randomly)
+[freetranslate](https://pypi.org/project/freetranslate/), may break randomly).  
+[freetranslate](https://pypi.org/project/freetranslate/) seems to require Python >= 3.9.
 
 ## Commands
 
