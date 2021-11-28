@@ -50,6 +50,8 @@ class PluginLoader:
                     logger.error(f"Error importing {module}. Please check requirements: {traceback.format_exc(limit=1)}")
                 except KeyError:
                     logger.error(f"Error importing {module} due to missing configuration items. Skipping.")
+                except Exception:
+                    logger.error(f"Error importing {module} due to the following error: {traceback.format_exc(limit=1)}.\nSkipping.")
             else:
                 logger.info(f"Skipping plugin {module} as it hasn't been allowed by configuration.")
         for module in module_files:
@@ -61,6 +63,8 @@ class PluginLoader:
                     logger.error(f"Error importing {module}. Please check requirements: {traceback.format_exc(limit=1)}")
                 except KeyError:
                     logger.error(f"Error importing {module} due to missing configuration items. Skipping.")
+                except Exception:
+                    logger.error(f"Error importing {module} due to the following error: {traceback.format_exc(limit=1)}.\nSkipping.")
             else:
                 logger.info(f"Skipping plugin {module} as it hasn't been allowed by configuration.")
 
