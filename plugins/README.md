@@ -1,7 +1,7 @@
 # Plugins
 ## Included Plugins
 Note: automatic loading of plugins can be configured by allow- and denylist in the bot's configuration.  
-- `dates`: Stores dates and birthdays, posts reminders ([README.md](dates/README.md))
+- `dates`: stores dates and birthdays, posts reminders ([README.md](dates/README.md))
 - `echo`: echoes back text following the command.
 - `help`: lists all available plugins. If called with a plugin as parameter, lists all available commands
 - `meter`: accurately measures someones somethingness
@@ -9,12 +9,13 @@ Note: automatic loading of plugins can be configured by allow- and denylist in t
 - `pick`: aids you in those really important life decisions
 - `quote`: store quotes and provide several means to display them
 - `roll`: the dice giveth and the dice taketh away
-- `sample`: Just a simple sample, demonstrating the current capabilities of the `Plugin` interface
+- `sample`: just a simple sample, demonstrating the current capabilities of the `Plugin` interface
 ([README.md](sample/README.md))
 - `sonarr`: provides commands to query sonarr's API
 - `spruch`: famous quotes from even more famous people (german, sorry)
-- `translate`: Provide translations of all room-messages via Google Translate (using googletrans, may break randomly) 
+- `translate`: provide translations of all room-messages via Google Translate (using googletrans, may break randomly) 
 ([README.md](translate/README.md))
+- `cashup`: settle expenses among a group ([README.md](cashup/README.md))
 
 ## Included plugins' 3rd party requirements
 - `dates`: [dateparser](https://pypi.org/project/dateparser/) to allow for almost arbitrary input format of dates
