@@ -95,7 +95,7 @@ class Quote:
         :param lines: text of the quote in separate lines
         """
 
-        self.id = quote_id
+        self.id: str = quote_id
         """id of the quote, automatically set to currently highest id + 1"""
         self.type: str = quote_type
         self.text: str = text
@@ -123,13 +123,14 @@ class Quote:
     async def set_id(self) -> str:
 
         quotes = await plugin.read_data("quotes")
+        quote_id: str
         if quotes:
             quote_id = str(max(list(map(int, quotes.keys()))) + 1)
         else:
-            quote_id = 1
+            quote_id = str(1)
 
-        self.id = quote_id
-        return quote_id
+        self.id = str(quote_id)
+        return str(quote_id)
 
     async def display_text(self, command) -> str:
         """
