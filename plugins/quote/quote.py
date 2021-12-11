@@ -333,11 +333,13 @@ async def quote_command(command):
     """
 
     """Load all active (quote.deleted == False) quotes"""
-    quotes: Dict[str, Quote] = await plugin.read_data("quotes")
-    if quotes:
-        # TODO: check if this needs fixing
+    try:
+        quotes: Dict[str, Quote] = await plugin.read_data("quotes")
         quotes = dict(filter(lambda item: not item[1].deleted, quotes.items()))
-    else:
+        if not quotes:
+            await plugin.respond_notice(command, "Error: no quotes stored")
+            return False
+    except IndexError:
         await plugin.respond_notice(command, "Error: no quotes stored")
         return False
 
