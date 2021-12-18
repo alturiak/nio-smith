@@ -664,7 +664,7 @@ class Plugin:
         """
 
         if expanded_message:
-            message = self.__expandable_message_body(message, expanded_message)
+            message = await self.__expandable_message_body(message, expanded_message)
         return await send_replace(client, room_id, event_id, message)
 
     async def replace(self, client: AsyncClient, room_id: str, event_id: str, message: str) -> str or None:
