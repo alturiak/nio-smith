@@ -819,7 +819,7 @@ async def quote_replace_nick_command(command):
     :return:
     """
 
-    if len(command.args) == 2:
+    if len(command.args) == 2 or (len(command.args) == 3 and command.args[0] == "-s"):
         quotes: Dict[str, Quote] = await plugin.read_data("quotes")
         if not quotes:
             await plugin.respond_notice(command, f"Error: no quotes stored")
@@ -833,18 +833,28 @@ async def quote_replace_nick_command(command):
             num_nicks: int = 0
             quote_ids: List[str] = []
 
+            if command.args[0] == "-s":
+                no_comment: bool = True
+                orig_nick: str = command.args[1]
+                new_nick: str = command.args[2]
+            else:
+                no_comment: bool = False
+                orig_nick: str = command.args[0]
+                new_nick: str = command.args[1]
+
             quote: Quote
             quote_line: QuoteLine
             for quote in quotes.values():
                 old_num_nicks: int = num_nicks
                 replaced_nicks: List[str] = []
                 for quote_line in quote.lines:
-                    if quote_line.nick == command.args[0]:
+                    if quote_line.nick == orig_nick:
                         num_nicks += 1
-                        if command.args[1] not in replaced_nicks:
-                            quote.lines = [QuoteLine(f"{command.args[1]} as {command.args[0]}", nick=None, message_type="annotation")] + quote.lines
-                            replaced_nicks.append(command.args[1])
-                        quote_line.nick = command.args[1]
+                        if new_nick not in replaced_nicks:
+                            if not no_comment:
+                                quote.lines = [QuoteLine(f"{new_nick} as {repr(orig_nick)}", nick=None, message_type="annotation")] + quote.lines
+                            replaced_nicks.append(new_nick)
+                        quote_line.nick = new_nick
 
                 # increase number of changed quotes if number of replaced nicks has changed
                 if num_nicks > old_num_nicks:
@@ -853,12 +863,12 @@ async def quote_replace_nick_command(command):
 
             if num_quotes > 0:
                 await plugin.store_data("quotes", quotes)
-            await plugin.respond_notice(command, f"**{num_nicks}** occurrences of **{command.args[0]}** replaced by **{command.args[1]}** in **{num_quotes}** "
+            await plugin.respond_notice(command, f"**{num_nicks}** occurrences of **{repr(orig_nick)}** replaced by **{new_nick}** in **{num_quotes}** "
                                                  f"quotes.",
                                         expanded_message=f"Affected quotes: {', '.join(quote_ids)}")
 
     else:
-        await plugin.respond_notice(command, f"Usage: `quote_replace_nick <old_nick> <new_nick>`")
+        await plugin.respond_notice(command, f"Usage: `quote_replace_nick [-s] <old_nick> <new_nick>`  \n`-s` switch skips adding an annotation")
 
 
 setup()

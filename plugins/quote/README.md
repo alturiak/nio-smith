@@ -81,7 +81,12 @@ Example:
 Replace a nickname in *ALL QUOTES* with another nickname - destructive, can not be reverted. USE WITH CAUTION!  
 Only usable on configured rooms, if `manage_quote_rooms` is set.  
 This creates a backup of the plugin's data before replacing the nicknames.  
-Usage: `quote_replace_nick <old_nick> <new_nick>`
+By default, the bot will add an `<new_nick> as <old_nick>`-annotation to the quote to make sure the old nick is not 
+lost (in case it is relevant to the content of the quote). This can be skipped with the `-s`-Switch.  
+The added annotation can also be removed from the affected quotes by editing them afterwards.
+
+Usage: `quote_replace_nick [-s] <old_nick> <new_nick>`  
+(`-s` switch skips adding an annotation)
 
 Example:
 ```
