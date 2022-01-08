@@ -1,5 +1,8 @@
-fuzzywuzzy~=0.18.0
+fuzzywuzzy>=0.18.0
 matrix-nio[e2e]>=0.18.7
 Markdown>=3.3.4
 PyYAML>=6.0
 jsonpickle>=2.0.0
+Pillow>=9.0.0
+aiofiles>=0.6.0
+blurhash-python>=1.1.3

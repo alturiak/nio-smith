@@ -49,6 +49,10 @@ Remove the command added by `sample_add_command`
 Usage: `sample_sleep`
 Sleep for five seconds, then post a message, to test parallel execution of commands
 
+### sample_send_image
+Usage: `sample_send_image`  
+Generate a small image and post it
+
 ## Configuration
 Configuration options in `sample.yaml`  
 - `default_message`: a string to read from the configuration when `read_configuration` command is used (default: "this is the default message")

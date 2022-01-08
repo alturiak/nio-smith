@@ -36,6 +36,9 @@ See [plugins/README.md](plugins/README.md) for further details on plugin capabil
 - [libolm](https://gitlab.matrix.org/matrix-org/olm)    
 - [matrix-nio](https://matrix-nio.readthedocs.io/en/latest/nio.html) with end-to-end-encryption enabled
 - [fuzzywuzzy](https://github.com/seatgeek/fuzzywuzzy) for fuzzy command matching and nick linking (yes, it's worth it)
+- [Pillow](https://pypi.org/project/Pillow/) for image-handling
+- [blurhash-python](https://pypi.org/project/blurhash-python/) to generate blurhashes of image files
+- [aiofiles](https://pypi.org/project/aiofiles/) for file-handling
 
 See [plugins/README.md](plugins/README.md) for further details on additional plugin requirements.
 

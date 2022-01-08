@@ -4,7 +4,7 @@ import pickle
 from typing import List, Any, Dict, Callable, Union, Hashable, Tuple
 import datetime
 import yaml
-from core.chat_functions import send_text_to_room, send_reaction, send_replace
+from core.chat_functions import send_text_to_room, send_reaction, send_replace, send_image
 from asyncio import sleep
 import logging
 from nio import AsyncClient, JoinedMembersResponse, RoomMember, RoomSendResponse, RoomSendError
@@ -13,6 +13,7 @@ from fuzzywuzzy import fuzz
 import copy
 import jsonpickle
 import markdown
+from PIL import Image
 logger = logging.getLogger(__name__)
 
 
@@ -699,6 +700,22 @@ class Plugin:
         """
         logger.warning(f"Deprecated function 'message_delete' used - use 'redact_message' instead")
         await self.redact_message(client, room_id, event_id, reason)
+
+    async def send_image(self, client: AsyncClient, room_id: str, image: Image):
+        """
+        Posts an image to the given room
+        :param client:
+        :param room_id:
+        :param image:
+        :return:
+        """
+
+        event_response: RoomSendResponse or RoomSendError = await send_image(client, room_id, image)
+
+        if isinstance(event_response, RoomSendResponse):
+            return event_response.event_id
+        else:
+            return None
 
     async def is_user_in_room(self, client: AsyncClient, room_id: str, display_name: str, strictness: str = "loose", fuzziness: int = 75) -> RoomMember or None:
         """
