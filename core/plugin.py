@@ -827,7 +827,7 @@ class Plugin:
                 self.config_items[config_item] = self.configuration.get(config_item)
 
             # otherwise apply default
-            elif default_value:
+            elif default_value is not None:
                 self.config_items[config_item] = default_value
 
             # if no value and no default, but item is not required, set it to None
