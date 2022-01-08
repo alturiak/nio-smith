@@ -34,6 +34,7 @@ def setup():
     plugin.add_command("sample_expandable_message", sample_expandable_message, "Send a message that can be expanded to view it's full content")
     plugin.add_command("sample_expandable_notice", sample_expandable_notice, "Send a notice that can be expanded to view it's full content")
     plugin.add_command("sample_send_image", sample_send_image, "Generate a small image and post it")
+    plugin.add_command("sample_fetch_image", sample_fetch_image, "Fetch an image via URL and post it")
 
     """The following part demonstrates defining a configuration value to be expected in the plugin's configuration file and reading the value
 
@@ -328,5 +329,20 @@ async def sample_send_image(command: Command):
 
     image: Image.Image = Image.new("RGBA", (40, 40), (255, 0, 0, 255))
     await plugin.send_image(command.client, command.room.room_id, image)
+
+
+async def sample_fetch_image(command: Command):
+    """
+    Fetch an image via URL and post ist
+    :param command:
+    :return:
+    """
+
+    if len(command.args) == 1:
+        image = await plugin.fetch_image_from_url(command.args[0])
+        await plugin.send_image(command.client, command.room.room_id, image)
+
+    else:
+        await plugin.respond_notice(command, "Usage: `sample_fetch_image <url>`")
 
 setup()

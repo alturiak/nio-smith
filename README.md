@@ -39,6 +39,7 @@ See [plugins/README.md](plugins/README.md) for further details on plugin capabil
 - [Pillow](https://pypi.org/project/Pillow/) for image-handling
 - [blurhash-python](https://pypi.org/project/blurhash-python/) to generate blurhashes of image files
 - [aiofiles](https://pypi.org/project/aiofiles/) for file-handling
+- [requests](https://pypi.org/project/requests/) for fetching images
 
 See [plugins/README.md](plugins/README.md) for further details on additional plugin requirements.
 

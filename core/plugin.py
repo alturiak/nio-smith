@@ -1,8 +1,11 @@
+import io
 import os.path
 from os import remove, path
 import pickle
 from typing import List, Any, Dict, Callable, Union, Hashable, Tuple
 import datetime
+
+import requests
 import yaml
 from core.chat_functions import send_text_to_room, send_reaction, send_replace, send_image
 from asyncio import sleep
@@ -963,6 +966,20 @@ class Plugin:
                 # state_timer not found in static_timers, add if dynamic
                 if state_timer.timer_type == "dynamic":
                     self.timers.append(state_timer)
+
+    async def fetch_image_from_url(self, url: str) -> Image or None:
+        """
+
+        :param url:
+        :return:
+        """
+
+        try:
+            response = requests.get(url)
+            image_bytes = io.BytesIO(response.content)
+            return Image.open(image_bytes)
+        except:
+            return None
 
 
 class PluginCommand:

@@ -53,6 +53,10 @@ Sleep for five seconds, then post a message, to test parallel execution of comma
 Usage: `sample_send_image`  
 Generate a small image and post it
 
+### sample_fetch_image
+Usage: `sample_fetch_image <url>`
+Fetch an image via URL and post it
+
 ## Configuration
 Configuration options in `sample.yaml`  
 - `default_message`: a string to read from the configuration when `read_configuration` command is used (default: "this is the default message")
