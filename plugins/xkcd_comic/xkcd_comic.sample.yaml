@@ -1,0 +1,7 @@
+# Sample configuration of xkcd_comic-plugin. Rename to xkcd_comic.sample.yaml to use.
+
+# Post url only, not the actual image
+# url_only: False
+
+# Optional documentation url
+# doc_url: "https://github.com/alturiak/nio-smith/blob/master/plugins/xkcd/README.md"

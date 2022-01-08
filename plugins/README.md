@@ -16,6 +16,7 @@ Note: automatic loading of plugins can be configured by allow- and denylist in t
 - `translate`: provide translations of all room-messages via Google Translate (using freetranslate, may break randomly) 
 ([README.md](translate/README.md))
 - `cashup`: settle expenses among a group ([README.md](cashup/README.md))
+- `xkcd`: Post an xkcd-comic as image. Use the most recent by default, or a specific one if an ID is given.
 
 ## Included plugins' 3rd party requirements
 - `dates`: [dateparser](https://pypi.org/project/dateparser/) to allow for almost arbitrary input format of dates
@@ -25,6 +26,8 @@ Note: automatic loading of plugins can be configured by allow- and denylist in t
 - `translate`:
   - Python 3.9 
   - [freetranslate](https://pypi.org/project/freetranslate/) to provide language detection and translation
+- `xkcd`:
+  - [xkcd](https://pypi.org/project/xkcd/) to retrieve xkcd-comics
 
 ## Plugins can
 - ✔ use (almost) arbitrary python-code
