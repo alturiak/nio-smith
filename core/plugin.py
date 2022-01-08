@@ -713,11 +713,15 @@ class Plugin:
         :return:
         """
 
-        event_response: RoomSendResponse or RoomSendError = await send_image(client, room_id, image)
+        if image is not None:
+            event_response: RoomSendResponse or RoomSendError = await send_image(client, room_id, image)
 
-        if isinstance(event_response, RoomSendResponse):
-            return event_response.event_id
+            if isinstance(event_response, RoomSendResponse):
+                return event_response.event_id
+            else:
+                return None
         else:
+            logger.warning(f"send_image called without valid image")
             return None
 
     async def is_user_in_room(self, client: AsyncClient, room_id: str, display_name: str, strictness: str = "loose", fuzziness: int = 75) -> RoomMember or None:
@@ -969,9 +973,10 @@ class Plugin:
 
     async def fetch_image_from_url(self, url: str) -> Image or None:
         """
-
-        :param url:
-        :return:
+        Try to get an image from the given url
+        :param url: a url to an image
+        :return:    Image-Object if successfully retrieved,
+                    None otherwise
         """
 
         try:
