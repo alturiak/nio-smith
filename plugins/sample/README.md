@@ -54,8 +54,8 @@ Usage: `sample_send_image`
 Generate a small image and post it
 
 ### sample_fetch_image
-Usage: `sample_fetch_image <url>`
-Fetch an image via URL and post it
+Usage: `sample_fetch_image`
+Fetch a test image and post it
 
 ## Configuration
 Configuration options in `sample.yaml`  
