@@ -86,7 +86,7 @@ class PluginLoader:
             if plugin._get_timers():
                 timers: List[str] = []
                 for timer in plugin._get_timers():
-                    timers.append(timer.name)
+                    timers.append(f"{timer.name} ({timer.frequency})")
                 logger.info(f"  Timers:   {', '.join(timers)}")
 
     def is_allowed_plugin(self, plugin: str):
