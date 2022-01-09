@@ -263,24 +263,24 @@ class PluginLoader:
         if time() >= timestamp+30:
 
             timer: Timer
-            timers_triggered: bool = False
+            affected_plugins: List[str] = []
 
             # check all timers for execution
             for timer in self.get_timers():
                 try:
                     if await timer.trigger(client):
                         logger.debug(f"Timer {timer.name} triggered")
-                        timers_triggered = True
+                        affected_plugins.append(timer.name.split(".")[0])
                 except Exception:
                     logger.critical(f"Plugin failed to catch exception caused by timer {timer.name}:")
                     traceback.print_exc()
 
-            if timers_triggered:
-                # save all plugin-states as we currently do not know, which plugin's timer triggered
-                # TODO: only save state of affected plugins
+            # save state of a plugin if it's timer has triggered
+            if affected_plugins:
                 plugin: Plugin
                 for plugin in self.get_plugins().values():
-                    plugin._save_state()
+                    if plugin.name in affected_plugins:
+                        plugin._save_state()
 
             return time()
         else:
