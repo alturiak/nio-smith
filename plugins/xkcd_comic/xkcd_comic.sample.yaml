@@ -3,5 +3,8 @@
 # Post url only, not the actual image
 # url_only: False
 
+# List of room_ids to post notifications about new xkcd comics to
+# room_list: []
+
 # Optional documentation url
 # doc_url: "https://github.com/alturiak/nio-smith/blob/master/plugins/xkcd/README.md"

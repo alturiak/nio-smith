@@ -1,4 +1,6 @@
 # -*- coding: utf8 -*-
+from typing import List
+
 from PIL import Image
 
 from core.bot_commands import Command
@@ -17,7 +19,9 @@ def setup():
     """
 
     plugin.add_config("url_only", is_required=False, default_value=False)
+    plugin.add_config("room_list", is_required=False, default_value=[])
     plugin.add_command("xkcd", xkcd_command, "Post the most recent or a specific xkcd-comic")
+    plugin.add_timer(xkcd_check, frequency="hourly")
 
 
 async def format_message(comic: xkcd.Comic, link_comic: bool = False) -> str:
@@ -75,5 +79,30 @@ async def xkcd_command(command: Command):
 
     else:
         await plugin.send_message(command.client, command.room.room_id, await format_message(comic, link_comic=True))
+
+
+async def xkcd_check(client):
+    """
+    Check for a new xkcd comic and post a message about its availability if room_list is specified.
+    :param client:
+    :return:
+    """
+
+    room_list: List[str] = plugin.read_config("room_list")
+    if room_list:
+        known_recent: int = await plugin.read_data("known_recent")
+        if known_recent is None:
+            known_recent = 0
+
+        try:
+            comic: xkcd.Comic = xkcd.getLatestComic()
+        except:
+            logger.warning(f"Unable to get latest xkcd-Comic.")
+            return
+
+        if comic.number > known_recent:
+            for room_id in room_list:
+                await plugin.send_notice(client, room_id, f"New xkcd-Comic: [{comic.title} ({comic.number})]({comic.link}). `!xkcd` to display.")
+            await plugin.store_data("known_recent", comic.number)
 
 setup()
