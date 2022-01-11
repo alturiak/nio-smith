@@ -636,6 +636,22 @@ class Plugin:
         logger.warning(f"Deprecated function 'reply_notice' used - use 'respond_notice' instead")
         return await self.respond_notice(command, message)
 
+    async def replace_notice(self, client: AsyncClient, room_id: str, event_id: str, message: str, expanded_message: str = "") -> str or None:
+        """
+        Edits an event. send_replace() will check if the new content actually differs before really sending the replacement
+        :param client: (nio.AsyncClient) The client to communicate to matrix with
+        :param room_id: (str) room_id of the original event
+        :param event_id: (str) event_id to edit
+        :param message: (str) the new message
+        :param expanded_message: an optional part of the message only visible after expanding the message (at least on Element Web)
+        :return:    (str) the event-id of the new room-event, if the original event has been replaced or
+                    None, if the event has not been edited
+        """
+
+        if expanded_message:
+            message = await self.__expandable_message_body(message, expanded_message)
+        return await send_replace(client, room_id, event_id, message, message_type="m.notice")
+
     async def send_reaction(self, client, room_id: str, event_id: str, reaction: str):
         """
         React to a specific event
@@ -669,7 +685,7 @@ class Plugin:
 
         if expanded_message:
             message = await self.__expandable_message_body(message, expanded_message)
-        return await send_replace(client, room_id, event_id, message)
+        return await send_replace(client, room_id, event_id, message, message_type="m.text")
 
     async def replace(self, client: AsyncClient, room_id: str, event_id: str, message: str) -> str or None:
         """

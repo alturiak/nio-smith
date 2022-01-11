@@ -109,10 +109,11 @@ async def send_reaction(client, room_id, event_id: str, reaction: str):
     await client.room_send(room_id, "m.reaction", content, ignore_unverified_devices=True)
 
 
-async def send_replace(client, room_id: str, event_id: str, message: str) -> str or None:
+async def send_replace(client, room_id: str, event_id: str, message: str, message_type: str = "m.text") -> str or None:
     """
     Send a replacement message (edit a previous message).
     Gets the event from the server first and compares old content against new content. Only if the content differs, will the m.replace event be sent
+    :param message_type:
     :param client: (nio.AsyncClient) The client to communicate to matrix with
     :param room_id: (str) room_id to send the edit to
     :param event_id: (str) event_id to react to
@@ -132,7 +133,7 @@ async def send_replace(client, room_id: str, event_id: str, message: str) -> str
 
         new_content = {
             "m.new_content": {
-                "msgtype": "m.text",
+                "msgtype": message_type,
                 "format": "org.matrix.custom.html",
                 "body": strip_tags(message),
                 "formatted_body": markdown(message)

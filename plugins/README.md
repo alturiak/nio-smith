@@ -100,6 +100,7 @@ Please be advised that the plugin interface is about to
 ### Interactions
 #### Messages
 - `replace_message`: replace (edit) a previously sent message
+- `replace_notice`: replace (edit) a previously sent notice
 - `respond_message`: respond to a command with a message
 - `respond_notice`: respond to a command with a notice (also called "bot message")
 - `send_message`: send a message to a room
@@ -109,7 +110,7 @@ Please be advised that the plugin interface is about to
 - `send_reaction`: react to a specific event
 
 #### Deletion
-- `redact_event`: Redact (delete) an event
+- `redact_event`: Redact (delete) an event (e.g. a message, notice or reaction)
 
 #### Other
 - `get_mx_user_id`: given a displayname and a command, returns a mx user id
