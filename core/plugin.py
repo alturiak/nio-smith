@@ -144,7 +144,8 @@ class Plugin:
 
         return self.commands
 
-    def add_hook(self, event_type: str, method: Callable, room_id_list: List[str] = [], event_ids: List[str] = [], hook_type: str = "static"):
+    def add_hook(self, event_type: str, method: Callable, room_id_list: List[str] or None = None, event_ids: List[str] or None = None,
+                 hook_type: str = "static"):
         """
         Hook into events defined by event_type with `method`.
         Will overwrite existing hooks with the same event_type and method.
@@ -183,7 +184,7 @@ class Plugin:
 
         return self.hooks
 
-    def del_hook(self, event_type: str, method: Callable, room_id_list: List[str] = []) -> bool:
+    def del_hook(self, event_type: str, method: Callable, room_id_list: List[str] or None = None) -> bool:
         """
         Remove an active hook for the given event_type and method and an optional list of rooms
         :param event_type: event_type: event-type to hook into, currently "m.reaction" and "m.room.message"
@@ -230,7 +231,7 @@ class Plugin:
         else:
             return False
 
-    def has_hook(self, event_type: str, method: Callable, room_id_list: List[str] = []) -> bool:
+    def has_hook(self, event_type: str, method: Callable, room_id_list: List[str] or None = None) -> bool:
         """
         Check a hook exists for a given event_type, method and ALL given room_ids
         :param event_type: event_type: event-type to hook into, currently "m.reaction" and "m.room.message"
@@ -252,7 +253,7 @@ class Plugin:
                         return True
                     else:
                         # hook has specified rooms, check if all of given room_id_list are contained
-                        if all(elem in plugin_hook.room_id_list for elem in room_id_list):
+                        if not room_id_list or all(elem in plugin_hook.room_id_list for elem in room_id_list):
                             return True
                         else:
                             # hook is not valid for all given room-ids
