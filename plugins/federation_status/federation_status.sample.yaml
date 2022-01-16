@@ -1,0 +1,16 @@
+# Sample configuration of federation_status-plugin. Rename to federation_status.yaml to use.
+
+# Optional list of rooms to enable federation_status on. Active on all rooms by default.
+# room_list: []
+
+# Optional warn time in days before a federating server's cert expires
+# warn_cert_expiry: 7
+
+# Optional maximum age of a server's data in minutes before checking again
+# server_max_age: 60
+
+# Optional url of federationtester-installation (https://github.com/matrix-org/matrix-federation-tester)
+# federation_tester_url: https://federationtester.matrix.org
+
+# Optional documentation url
+# doc_url: "https://github.com/alturiak/nio-smith/blob/master/plugins/federation_watcher/README.md"
