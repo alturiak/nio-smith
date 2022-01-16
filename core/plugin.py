@@ -10,7 +10,7 @@ import yaml
 from core.chat_functions import send_text_to_room, send_reaction, send_replace, send_image
 from asyncio import sleep
 import logging
-from nio import AsyncClient, JoinedMembersResponse, RoomMember, RoomSendResponse, RoomSendError
+from nio import AsyncClient, JoinedMembersResponse, RoomMember, RoomSendResponse, RoomSendError, MatrixRoom
 from core.timer import Timer
 from fuzzywuzzy import fuzz
 import copy
@@ -1002,6 +1002,49 @@ class Plugin:
             return Image.open(image_bytes)
         except:
             return None
+
+    async def get_rooms_for_server(self, client: AsyncClient, server_name: str) -> List[str]:
+        """
+        Get a list of rooms the bot shares with users of the given server
+        :param client:
+        :param server_name:
+        :return:
+        """
+
+        room_list: Dict[str, MatrixRoom] = client.rooms
+        shared_rooms: List[str] = []
+
+        room: MatrixRoom
+        for room in room_list.values():
+            user_id: str
+            for user_id in room.users:
+                if server_name == user_id.split(":")[1] and room not in shared_rooms:
+                    shared_rooms.append(room.room_id)
+
+        return shared_rooms
+
+    async def get_connected_servers(self, client: AsyncClient, room_id_list: List[str]) -> List[str]:
+        """
+        Get a list of connected servers for a list of rooms. Returns all connected servers if room_id_list is empty.
+        :param room_id_list:
+        :param client:
+        :return:
+        """
+
+        connected_servers: List[str] = []
+
+        if not room_id_list:
+            room_id_list = list(client.rooms.keys())
+
+        room_id: str
+        for room_id in room_id_list:
+            user_id: str
+            for user_id in client.rooms[room_id].users:
+                server_name: str = user_id.split(":")[1]
+                if server_name not in connected_servers:
+                    connected_servers.append(server_name)
+
+        return connected_servers
 
 
 class PluginCommand:

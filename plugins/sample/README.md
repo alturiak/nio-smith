@@ -57,6 +57,14 @@ Generate a small image and post it
 Usage: `sample_fetch_image`
 Fetch a test image and post it
 
+### sample_list_servers_on_room
+Usage: `sample_list_servers_on_room`  
+List servers on current room
+
+### sample_list_rooms_for_server
+Usage: `sample_count_rooms_for_server`  
+Post a count of rooms shared with users on a given server
+
 ## Configuration
 Configuration options in `sample.yaml`  
 - `default_message`: a string to read from the configuration when `read_configuration` command is used (default: "this is the default message")

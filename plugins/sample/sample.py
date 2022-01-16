@@ -35,6 +35,8 @@ def setup():
     plugin.add_command("sample_expandable_notice", sample_expandable_notice, "Send a notice that can be expanded to view it's full content")
     plugin.add_command("sample_send_image", sample_send_image, "Generate a small image and post it")
     plugin.add_command("sample_fetch_image", sample_fetch_image, "Fetch a test image and post it")
+    plugin.add_command("sample_list_servers_on_room", sample_list_servers_on_room, "List servers on current room")
+    plugin.add_command("sample_count_rooms_for_server", sample_count_rooms_for_server, "Post a count of rooms shared with users on a given server")
 
     """The following part demonstrates defining a configuration value to be expected in the plugin's configuration file and reading the value
 
@@ -348,4 +350,30 @@ async def sample_fetch_image(command: Command):
     else:
         await plugin.respond_notice(command, "Usage: `sample_fetch_image`")
 
+
+async def sample_list_servers_on_room(command: Command):
+    """
+    List servers on current room
+    :param command:
+    :return:
+    """
+
+    client: AsyncClient = command.client
+    room_id: str = command.room.room_id
+    connected_servers: str = ', '.join(await plugin.get_connected_servers(client, [room_id]))
+    await plugin.respond_notice(command, f"Homeservers in this room: {connected_servers}")
+
+
+async def sample_count_rooms_for_server(command: Command):
+    """
+    Post a count of rooms shared with users on a given server
+    :return:
+    """
+
+    if len(command.args) == 1:
+        client: AsyncClient = command.client
+        rooms_for_server: int = len(await plugin.get_rooms_for_server(client, command.args[0]))
+        await plugin.respond_notice(command, f"I'm sharing {rooms_for_server} rooms with users on {command.args[0]}")
+    else:
+        await plugin.respond_notice(command, "Usage: sample_list_rooms_for_server <server_name>")
 setup()

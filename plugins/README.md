@@ -116,6 +116,8 @@ Please be advised that the plugin interface is about to
 - `get_mx_user_id`: given a displayname and a command, returns a mx user id
 - `is_user_in_room`: checks if a given displayname is a member of the current room
 - `link_user`: given a displayname, returns a link to the user (rendered as userpill in [Element](https://element.io))
+- `get_connected_servers`: Get a list of connected servers for a list of rooms. Returns all connected servers if room_id_list is empty.
+- `get_rooms_for_server`: Get a list of rooms the bot shares with users of the given server.
 
 ### Data persistence
 - `store_data`: persistently store data for later use
