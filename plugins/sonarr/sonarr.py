@@ -3,12 +3,11 @@ from __future__ import annotations
 import datetime
 from dateutil.parser import isoparse
 import logging
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import requests
 from humanize import naturalsize
 from nio import AsyncClient
-from requests import Response
 
 from core.bot_commands import Command
 from core.plugin import Plugin
@@ -16,8 +15,10 @@ from core.plugin import Plugin
 logger = logging.getLogger(__name__)
 plugin = Plugin("sonarr", "TV-Shows", "Provides commands to query sonarr's API")
 
-suppressed_series_attributes: List[str] = ['lastInfoSync', 'previousAiring']
-suppressed_season_attributes: List[str] = []
+suppressed_series_attributes: List[str] = ['lastInfoSync', 'previousAiring', 'episodeCount', 'episodeFileCount', 'sizeOnDisk', 'runtime', 'tag_ids',
+                                           'profile_id', 'qualityProfileId', 'images', 'genres']
+suppressed_season_attributes: List[str] = ['percentOfEpisodes', 'episodeFileCount']
+debug: bool = False
 
 
 def setup():
@@ -39,7 +40,31 @@ def setup():
     # check for updates to the episodes' status and update the message accordingly
     plugin.add_timer(update_current_episodes, frequency=datetime.timedelta(minutes=5))
     # check for changes to currently tracked series
-    plugin.add_timer(check_series_changes, frequency="hourly")
+    plugin.add_timer(check_series_changes, frequency="daily")
+
+
+class Profile:
+    def __init__(self, profile_id: int, name: str):
+        self.profile_id: int = profile_id
+        self.name: str = name
+
+    def __str__(self):
+        return self.name
+
+    def __ne__(self, other: Profile) -> bool:
+        return self.profile_id != other.profile_id
+
+
+class Tag:
+    def __init__(self, tag_id: int, label: str):
+        self.tag_id: int = tag_id
+        self.label: str = label
+
+    def __str__(self):
+        return self.label
+
+    def __ne__(self, other: Tag) -> bool:
+        return self.tag_id != other.tag_id
 
 
 class Season:
@@ -50,11 +75,17 @@ class Season:
         self.episodeFileCount: int = season_dict['statistics']['episodeFileCount']
         self.episodeCount: int = season_dict['statistics']['episodeCount']
         self.totalEpisodeCount: int = season_dict['statistics']['totalEpisodeCount']
-        self.sizeOnDisk: str = naturalsize(season_dict['statistics']['sizeOnDisk'])
+        self.sizeOnDisk: int = season_dict['statistics']['sizeOnDisk']
         self.percentOfEpisodes: float = season_dict['statistics']['percentOfEpisodes']
 
     def __str__(self):
         return f"{self.seasonNumber}"
+
+    def __ne__(self, other_season) -> bool:
+        if self.list_diffs(other_season):
+            return True
+        else:
+            return False
 
     async def get(self, attribute: str) -> any:
         """
@@ -68,10 +99,10 @@ class Season:
         else:
             return None
 
-    async def compare(self, other_season: Season) -> List[str] or None:
+    def list_diffs(self, new_season: Season) -> List[str]:
         """
         Compare two seasons for differences in relevant attributes. Returns a list of attributes in which the compared seasons differ
-        :param other_season:
+        :param new_season:
         :return:
         """
 
@@ -79,17 +110,28 @@ class Season:
 
         for key in self.__dict__.keys():
             if key not in suppressed_season_attributes:
-                if self.__dict__.get(key) != other_season.__dict__.get(key):
+                if self.__dict__.get(key) != new_season.__dict__.get(key):
                     changed_attributes.append(key)
 
-        if changed_attributes:
-            return changed_attributes
-        else:
-            return None
+        return changed_attributes
+
+    async def print_diff(self, new_season: Season) -> str:
+        """
+
+        :param new_season:
+        :return:
+        """
+
+        change_message: str = ""
+        changed_season_attributes: List[str] = self.list_diffs(new_season)
+        for changed_season_attribute in changed_season_attributes:
+            change_message += await print_diff(changed_season_attribute, await self.get(changed_season_attribute), await new_season.get(changed_season_attribute))
+
+        return change_message
 
 
 class Series:
-    def __init__(self, series_dict: Dict):
+    def __init__(self, series_dict: Dict, tags: Dict[int, Tag], profiles: Dict[int, Profile]):
         self.title: str = series_dict['title']
         self.alternateTitles: List[Dict] = series_dict['alternateTitles']
         self.sortTitle: str = series_dict['sortTitle']
@@ -97,7 +139,7 @@ class Series:
         self.totalEpisodeCount: int = series_dict['totalEpisodeCount']
         self.episodeCount: int = series_dict['episodeCount']
         self.episodeFileCount: int = series_dict['episodeFileCount']
-        self.sizeOnDisk: str = naturalsize(series_dict['sizeOnDisk'])
+        self.sizeOnDisk: str = series_dict['sizeOnDisk']
         self.status: str = series_dict['status']
         self.overview: str = series_dict['overview']
         try:
@@ -109,7 +151,8 @@ class Series:
         self.images: List[Dict] = series_dict['images']
         self.year: datetime.date.year = series_dict['year']
         self.path: str = series_dict['path']
-        self.profileId: int = series_dict['profileId']
+        self.profile_id = series_dict['profileId']
+        self.profile: Profile = profiles[self.profile_id]
         self.languageProfileId: int = series_dict['languageProfileId']
         self.seasonFolder: bool = series_dict['seasonFolder']
         self.monitored: bool = series_dict['monitored']
@@ -129,13 +172,19 @@ class Series:
         except KeyError:
             self.certification: None = None
         self.genres: List[str] = series_dict['genres']
-        self.tags: List[int] = series_dict['tags']
+        self.tag_ids: List[int] = series_dict['tags']
+        self.tags: List[Tag] = []
+        for tag_id in self.tag_ids:
+            self.tags.append(tags[tag_id])
         self.added: datetime.datetime = isoparse(series_dict['added'])
         self.ratings: Dict[str, any] = series_dict['ratings']
         self.qualityProfileId: int = series_dict['qualityProfileId']
         self.id: int = series_dict['id']
 
         self.seasons: List[Season] = [Season(x) for x in series_dict['seasons']]
+
+    def __str__(self):
+        return self.title
 
     async def get(self, attribute: str) -> any:
         """
@@ -149,58 +198,231 @@ class Series:
         else:
             return None
 
-    async def compare(self, other_series: Series) -> List[str] or None:
+    async def list_diffs(self, new_series: Series) -> List[str]:
         """
         Compare two series for differences in relevant attributes. Returns a list of attributes in which the compared seasons differ
-        :param other_series:
+        :param new_series:
         :return:
         """
 
         changed_attributes: List[str] = []
 
         for key in self.__dict__.keys():
-            if key == "seasons":
-                season: Season
-                other_season: Season
-                for season in self.seasons:
-                    for other_season in other_series.seasons:
-                        if not await season.compare(other_season):
-                            break
-                    else:
-                        if key not in changed_attributes:
-                            changed_attributes.append(key)
-                            break
-
-            elif key not in suppressed_series_attributes:
-                if self.__dict__.get(key) != other_series.__dict__.get(key):
-                    if key not in changed_attributes:
+            if key not in suppressed_series_attributes and key not in changed_attributes:
+                if isinstance(self.__dict__.get(key), list) and key in ['seasons', 'tags']:
+                    if len(self.__dict__.get(key)) != len(new_series.__dict__.get(key)):
                         changed_attributes.append(key)
+                    else:
+                        i = 0
+                        while i < len(self.__dict__.get(key)):
+                            if self.__dict__.get(key)[i] != new_series.__dict__.get(key)[i]:
+                                changed_attributes.append(key)
+                                break
+                            i += 1
+
+                elif self.__dict__.get(key) != new_series.__dict__.get(key):
+                    changed_attributes.append(key)
+
+        return changed_attributes
+
+    async def print_diff(self, new_series: Series) -> str:
+        """
+
+        :param new_series:
+        :return:
+        """
+
+        change_message: str = ""
+        changed_attributes: List[str] or None = await self.list_diffs(new_series)
         if changed_attributes:
-            return changed_attributes
+            # change to existing series detected
+            changed_attribute: str
+            for changed_attribute in changed_attributes:
+                if changed_attribute == "seasons":
+                    if len(self.seasons) != len(new_series.seasons):
+                        change_message += await print_diff("Seasons", len(self.seasons), len(new_series.seasons))
+                    else:
+                        i: int = 0
+                        while i < len(self.seasons):
+                            season_change: str = await self.seasons[i].print_diff(new_series.seasons[i])
+                            if season_change:
+                                change_message += f"<li>Season {new_series.seasons[i]}:<ul>{season_change}</ul></li>"
+                            i += 1
+
+                elif changed_attribute == "tags":
+                    old_tags: List[str] = [x.label for x in self.tags]
+                    new_tags: List[str] = [x.label for x in new_series.tags]
+                    change_message += await print_diff("Tags", old_tags, new_tags)
+
+                # list changed series attributes
+                else:
+                    change_message += await print_diff(changed_attribute, await self.get(changed_attribute), await new_series.get(changed_attribute))
+        return change_message
+
+
+class SeriesList:
+    def __init__(self, series_json: List[Dict[str, any]], tags_json: List[Dict[str, any]], profiles_json: List[Dict[str, any]]):
+        """
+
+        :param series_json:
+        """
+
+        self.series: Dict[str, Series] = {}
+        tags: Dict[int, Tag] = {}
+        tag_json: Dict[str, any]
+        for tag_json in tags_json:
+            tags[tag_json.get('id')] = Tag(tag_json.get('id'), tag_json.get('label'))
+
+        profiles: Dict[int, Profile] = {}
+        profile_json: Dict[str, any]
+        for profile_json in profiles_json:
+            profiles[profile_json.get('id')] = Profile(profile_json.get('id'), profile_json.get('name'))
+
+        series: Series
+        for show_json in series_json:
+            series = Series(show_json, tags, profiles)
+            self.series[series.titleSlug] = series
+
+    def find_series_by_titleslug(self, titleSlug: str) -> Series or None:
+        """
+
+        :param titleSlug:
+        :return:
+        """
+
+        try:
+            return self.series[titleSlug]
+        except KeyError:
+            return None
+
+    async def list_diffs(self, new_series_list: SeriesList) -> Tuple[List[Series], List[Series], List[Series]] or None:
+        """
+
+        :param new_series_list:
+        :return:
+        """
+
+        added_series: List[Series] = []
+        removed_series: List[Series] = []
+        changed_series: List[Series] = []
+
+        series: Series
+        for series in new_series_list.series.values():
+            if series.titleSlug not in self.series.keys():
+                added_series.append(series)
+
+        for series in self.series.values():
+            if series.titleSlug not in new_series_list.series.keys():
+                removed_series.append(series)
+            elif await series.list_diffs(new_series_list.series.get(series.titleSlug)):
+                changed_series.append(series)
+
+        if added_series or removed_series or changed_series:
+            return (
+                added_series,
+                removed_series,
+                changed_series
+            )
         else:
             return None
 
+    async def print_diff(self, new_series_list: SeriesList) -> str:
+        """
 
-async def get_series_json() -> List[str] or None:
-    """
-    Retrieve currently tracked series from sonarr
-    :return: (str) sorted JSON of currently tracked series
+        :param new_series_list:
+        :return:
+        """
+
+        change_message: str = ""
+
+        if await self.list_diffs(new_series_list):
+            added_series: List[Series]
+            removed_series: List[Series]
+            changed_series: List[Series]
+            (added_series, removed_series, changed_series) = await self.list_diffs(new_series_list)
+
+            series: Series
+            for series in added_series:
+                change_message += f"<li>Added <a href=\"https://www.imdb.com/title/{series.imdbId}\">{series.title}</a></li>"
+
+            for series in removed_series:
+                change_message += f"<li>Removed <a href=\"https://www.imdb.com/title/{series.imdbId}\">{series.title}</a><li>"
+
+            for series in changed_series:
+                change_message += f"<li>Changed <a href=\"https://www.imdb.com/title/{series.imdbId}\">{series.title}</a>:<ul>"
+                change_message += await series.print_diff(new_series_list.series.get(series.titleSlug))
+                change_message += "</ul></li>"
+            change_message = f"<ul>{change_message}</ul>"
+
+        return change_message
+
+    async def print_html_table(self) -> str:
+        """
+
+        :return:
+        """
+        pass
+
+
+async def print_diff(name: str, old_value: int or str, new_value: int or str) -> str:
     """
 
-    api_path = "/series"
+    :param name:
+    :param old_value:
+    :param new_value:
+    :return:
+    """
+
+    sign: str = "➡"
+    # make sure, old_value and new_value are not bool and are int or float
+    if not (isinstance(old_value, bool) or isinstance(new_value, bool)) and (isinstance(old_value, (int, float)) and isinstance(new_value, (int, float))):
+        if new_value > old_value:
+            sign: str = "📈"
+        elif old_value > new_value:
+            sign: str = "📉"
+
+    if name == "sizeOnDisk":
+        old_value = naturalsize(old_value, binary=True)
+        new_value = naturalsize(new_value, binary=True)
+
+    return f"<li>{name}: {old_value} {sign} {new_value}</li>"
+
+
+async def fetch_sonarr_api(api_path: str) -> List[str] or None:
+    """
+
+    :param api_path:
+    :return:
+    """
     api_parameters = {"apikey": plugin.read_config("api_key")}
 
     try:
-        shows: Response = requests.get(plugin.read_config("api_base") + api_path, params=api_parameters)
+        response: requests.Response = requests.get(plugin.read_config("api_base") + f"/{api_path}", params=api_parameters)
     except requests.exceptions.ConnectionError as err:
         logger.warning(f"Connection to sonarr failed: {err}")
-        return
+        return None
 
-    if shows.status_code == 200:
-        sorted_shows = sorted(shows.json(), key=lambda i: i['sortTitle'])
-        return sorted_shows
+    if response.status_code == 200:
+        return response.json()
     else:
         return None
+
+
+async def fetch_sonarr_data() -> Dict[str, List[Dict[str, any]]] or None:
+    """
+    Retrieve currently tracked series and other required data from sonarr
+    :return: (str) sorted JSON of currently tracked series
+    """
+
+    series_json: List[Dict[str, any]] = sorted(await fetch_sonarr_api('series'), key=lambda i: i['sortTitle'])
+    tags_json: List[Dict[str, any]] = await fetch_sonarr_api('tag')
+    profiles_json: List[Dict[str, any]] = await fetch_sonarr_api('profile')
+
+    return {
+        'series_json': series_json,
+        'tags_json': tags_json,
+        'profiles_json': profiles_json
+    }
 
 
 async def check_series_changes(client):
@@ -210,81 +432,30 @@ async def check_series_changes(client):
     :return:
     """
 
-    change_message: str = ""
-
-    tracked_series_json: List[Dict[str, any]] or None = await get_series_json()
-    tracked_series_dict: Dict[str, Series] = {}
     stored_series_json: List[Dict[str, any]] = await plugin.read_data("stored_shows")
-    stored_series_dict: Dict[str, Series] = {}
+    stored_tags_json: List[Dict[str, any]] = await plugin.read_data("stored_tags")
+    stored_profiles_json: List[Dict[str, any]] = await plugin.read_data("stored_profiles")
+    tracked_data: Dict[str, List[Dict[str, any]]] = await fetch_sonarr_data()
 
-    if not stored_series_json:
-        await plugin.store_data("stored_shows", tracked_series_json)
-        return
+    if not stored_series_json or not stored_profiles_json:
+        await plugin.store_data("stored_shows", tracked_data.get('series_json'))
+        await plugin.store_data("stored_tags", tracked_data.get('tags_json'))
+        await plugin.store_data("stored_profiles", tracked_data.get('profiles_json'))
 
-    elif tracked_series_json:
-        series_json: Dict[str, any]
-        series: Series
-        for series_json in tracked_series_json:
-            series = Series(series_json)
-            tracked_series_dict[series.titleSlug] = series
+    else:
+        tracked_series: SeriesList = SeriesList(tracked_data.get('series_json'), tracked_data.get('tags_json'), tracked_data.get('profiles_json'))
+        stored_series: SeriesList = SeriesList(stored_series_json, stored_tags_json, stored_profiles_json)
 
-        for series_json in stored_series_json:
-            series = Series(series_json)
-            stored_series_dict[series.titleSlug] = series
-
-        # tracked series retrieved and stored series present, check for differences
-        for series in tracked_series_dict.values():
-            if series.titleSlug not in stored_series_dict.keys():
-                # tracked series not in stored series
-                change_message += f"<li>Added <a href=\"https://www.imdb.com/title/{series.imdbId}\">{series.title}</a></li>  \n"
-
+        if await stored_series.list_diffs(tracked_series):
+            change_message: str = f"{await stored_series.print_diff(tracked_series)}"
+            if not debug:
+                await plugin.send_notice(client, plugin.read_config("room_id"), change_message)
             else:
-                stored_series: Series = stored_series_dict[series.titleSlug]
-                changed_attributes: List[str] or None = await series.compare(stored_series)
-                if changed_attributes:
-                    # change to existing series detected
-                    change_message += f"<li>Changed <a href=\"https://www.imdb.com/title/{series.imdbId}\">{series.title}</a>:  \n<ul>  \n"
-                    changed_attribute: str
-                    for changed_attribute in changed_attributes:
+                print(change_message)
 
-                        # check for changes in season and list each season's changes individually
-                        # TODO: Refactoring
-                        if changed_attribute == "seasons":
-                            if len(stored_series.seasons) != len(series.seasons):
-                                change_message += f"<li>Seasons: {len(stored_series.seasons)} ➡ {len(series.seasons)}"
-                            else:
-                                tracked_season: Season
-                                stored_season: Season
-                                i: int = 0
-                                while i < len(series.seasons):
-                                    tracked_season = series.seasons[i]
-                                    stored_season = stored_series.seasons[i]
-                                    changed_season_attributes: List[str] or None = await tracked_season.compare(stored_season)
-                                    if changed_season_attributes:
-                                        change_message += f"<li>Season {tracked_season}:<ul>"
-                                        changed_season_attribute: str
-                                        for changed_season_attribute in changed_season_attributes:
-                                            change_message += f"<li>{changed_season_attribute}: {await stored_season.get(changed_season_attribute)} ➡️ " \
-                                                              f"{await tracked_season.get(changed_season_attribute)}</li>\n"
-
-                                        change_message += f"</ul></li>"
-                                    i += 1
-
-                        # list changed series attributes
-                        else:
-                            change_message += f"<li>{changed_attribute}: {await stored_series.get(changed_attribute)} ➡️ " \
-                                              f"{await series.get(changed_attribute)}</li>\n"
-                    change_message += "</ul></li>"
-
-        for series in stored_series_dict.values():
-            if series.titleSlug not in tracked_series_dict.keys():
-                # stored series not in tracked series
-                change_message += f"<li>Removed <a href=\"https://www.imdb.com/title/{series.imdbId}\">{series.title}</a><li>  \n"
-
-        if change_message:
-            change_message = f"**Changes to tracked series:**  \n<ul>{change_message}</ul>"
-            await plugin.send_notice(client, plugin.read_config("room_id"), change_message)
-            await plugin.store_data("stored_shows", tracked_series_json)
+            await plugin.store_data("stored_shows", tracked_data.get('series_json'))
+            await plugin.store_data("stored_tags", tracked_data.get('tags_json'))
+            await plugin.store_data("stored_profiles", tracked_data.get('profiles_json'))
 
 
 async def print_series(command):
@@ -295,7 +466,7 @@ async def print_series(command):
     :return:
     """
 
-    shows: List[str] or None = await get_series_json()
+    shows: List[str] or None = (await fetch_sonarr_data())['series_json']
 
     if shows:
         message = "<table><tr>"
@@ -307,7 +478,7 @@ async def print_series(command):
             cols = [f"<a href=\"https://www.imdb.com/title/{show['imdbId']}\">{show['title']}</a>",
                     f"{str(show['seasonCount'])}",
                     f"{str(show['episodeCount'])}",
-                    f"{str(naturalsize(show['sizeOnDisk']))}",
+                    f"{str(naturalsize(show['sizeOnDisk'], binary=True))}",
                     f"{str(show['status'])}",
                     f"{str(show['ratings']['value'])}"]
             message = message + "<tr>"
@@ -423,7 +594,7 @@ async def current_episodes(command_client: Command or AsyncClient):
 
     if message != "":
         # store event_id for later editing
-        event_id = await plugin.send_message(client, plugin.read_config("room_id"), message)
+        event_id = await plugin.send_notice(client, plugin.read_config("room_id"), message)
         await plugin.store_data("today_message", event_id)
         await plugin.store_data("today_message_text", message)
 
@@ -439,7 +610,7 @@ async def update_current_episodes(client):
     message: str = await compose_upcoming(week_start, week_end)
 
     if message != "" and message != await plugin.read_data("today_message_text"):
-        message_id: str or None = await plugin.replace_message(client, plugin.read_config("room_id"), await plugin.read_data("today_message"), message)
+        message_id: str or None = await plugin.replace_notice(client, plugin.read_config("room_id"), await plugin.read_data("today_message"), message)
         if not message_id:
             await current_episodes(client)
         else:
