@@ -181,7 +181,7 @@ class Quote:
                     if line.message_type == "action":
                         quote_text += f"* {nick} {message}  \n"
                     else:
-                        if nick[0] == "<":
+                        if len(nick) > 0 and nick[0] == "<":
                             # nick linking successful
                             quote_text += f"{nick} {message}  \n"
                         else:
