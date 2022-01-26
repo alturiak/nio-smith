@@ -250,12 +250,11 @@ class PluginLoader:
                         logger.critical(f"Plugin failed to catch exception caused by hook {plugin_hook.method} on {room} for {event}:")
                         traceback.print_exc()
 
-    async def run_timers(self, client, timestamp: float, filepath: str) -> float:
+    async def run_timers(self, client, timestamp: float) -> float:
         """
         Checks all timers if their execution is due and executes them
         :param client:
         :param timestamp: timestamp of last execution to make sure we're not running more than once every 30s
-        :param filepath: path to the file to store all timers' last execution dates for persistence
         :return:
         """
 

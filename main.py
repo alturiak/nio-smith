@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 client: AsyncClient
 plugin_loader: PluginLoader
 timestamp: float = time()
-timers_filepath: str = ""
 
 
 async def run_plugins(response):
@@ -34,9 +33,8 @@ async def run_plugins(response):
     global plugin_loader
     global client
     global timestamp
-    global timers_filepath
 
-    timestamp = await plugin_loader.run_timers(client, timestamp, timers_filepath)
+    timestamp = await plugin_loader.run_timers(client, timestamp)
 
 
 async def main():
@@ -45,7 +43,6 @@ async def main():
     # probably using https://docs.python.org/3.8/library/functools.html#functools.partial
     global client
     global plugin_loader
-    global timers_filepath
 
     # Read user-configured options from a config file.
     # A different config file path can be specified as the first command line argument
