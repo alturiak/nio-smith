@@ -786,7 +786,26 @@ class Plugin:
             else:
                 return None
 
-    async def link_user(self, client: AsyncClient, room_id: str, display_name: str, strictness: str = "loose", fuzziness: int = 75) -> str or None:
+    async def is_user_id_in_room(self, client: AsyncClient, room_id: str, user_id: str) -> RoomMember or None:
+        """
+        Try to determine if a diven displayname is currently a member of the room
+        :param client: AsyncClient
+        :param room_id: id of the room to check for a user
+        :param user_id: id of the user to check for
+        :return:    RoomMember matching the user_id if found,
+                    None otherwise
+        """
+
+        room_members: JoinedMembersResponse = await client.joined_members(room_id)
+        room_member: RoomMember
+
+        for room_member in room_members.members:
+            if room_member.user_id == user_id:
+                return room_member
+
+        return None
+
+    async def link_user(self, client: AsyncClient, room_id: str, display_name: str, strictness: str = "loose", fuzziness: int = 75) -> str:
         """
         Given a displayname and a command, returns a userlink
         :param client: AsyncClient
@@ -806,6 +825,21 @@ class Plugin:
             return f"<a href=\"https://matrix.to/#/{user.user_id}\">{user.display_name}</a>"
         else:
             return display_name
+
+    async def link_user_by_id(self, client: AsyncClient, room_id: str, user_id: str) -> str:
+        """
+        Given a user_id, returns a userlink if the user has been found. Returns the unchanged user_id otherwise.
+        :param client:
+        :param room_id:
+        :param user_id:
+        :return:
+        """
+
+        user: RoomMember
+        if user := await self.is_user_id_in_room(client, room_id, user_id):
+            return f"<a href=\"https://matrix.to/#/{user.user_id}\">{user.display_name}</a>"
+        else:
+            return user_id
 
     async def get_mx_user_id(self, client: AsyncClient, room_id: str, display_name: str, strictness="loose", fuzziness: int = 75) -> str or None:
         """
@@ -1045,6 +1079,33 @@ class Plugin:
                     connected_servers.append(server_name)
 
         return connected_servers
+
+    async def get_users_on_servers(self, client: AsyncClient, home_servers: List[str], room_id_list: List[str]) -> Dict[str, List[str]]:
+        """
+        Get a list of users on a specific homeserver in a list of rooms. Returns all known users if room_id_list is empty.
+        :param home_servers: the homeservers to test for
+        :param client:
+        :param room_id_list: List of rooms to check users in.
+        :return:
+        """
+
+        home_server_users: Dict[str, List[str]] = {}
+        if not room_id_list:
+            room_id_list = list(client.rooms.keys())
+
+        room_id: str
+        for room_id in room_id_list:
+            user_id: str
+            for user_id in client.rooms[room_id].users:
+                user_server_name: str = user_id.split(":")[1]
+                if user_server_name in home_servers:
+                    if user_server_name in home_server_users.keys():
+                        if user_id not in home_server_users[user_server_name]:
+                            home_server_users[user_server_name].append(user_id)
+                    else:
+                        home_server_users[user_server_name] = [user_id]
+
+        return home_server_users
 
 
 class PluginCommand:

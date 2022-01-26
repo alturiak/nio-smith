@@ -46,7 +46,7 @@ Usage: `sample_remove_command`
 Remove the command added by `sample_add_command`
 
 ### sample_sleep
-Usage: `sample_sleep`
+Usage: `sample_sleep`  
 Sleep for five seconds, then post a message, to test parallel execution of commands
 
 ### sample_send_image
@@ -54,7 +54,7 @@ Usage: `sample_send_image`
 Generate a small image and post it
 
 ### sample_fetch_image
-Usage: `sample_fetch_image`
+Usage: `sample_fetch_image`  
 Fetch a test image and post it
 
 ### sample_list_servers_on_room
@@ -64,6 +64,10 @@ List servers on current room
 ### sample_list_rooms_for_server
 Usage: `sample_count_rooms_for_server`  
 Post a count of rooms shared with users on a given server
+
+### sample_link_users_per_server
+Usage: `sample_link_users_per_server`  
+List all users in the room by their homeserver
 
 ## Configuration
 Configuration options in `sample.yaml`  

@@ -1,5 +1,6 @@
 import asyncio
 from random import randrange
+from typing import List, Dict
 
 from nio import AsyncClient, UnknownEvent
 
@@ -37,6 +38,7 @@ def setup():
     plugin.add_command("sample_fetch_image", sample_fetch_image, "Fetch a test image and post it")
     plugin.add_command("sample_list_servers_on_room", sample_list_servers_on_room, "List servers on current room")
     plugin.add_command("sample_count_rooms_for_server", sample_count_rooms_for_server, "Post a count of rooms shared with users on a given server")
+    plugin.add_command("sample_link_users_per_server", sample_link_users_per_server, "List all users in the room by their homeserver")
 
     """The following part demonstrates defining a configuration value to be expected in the plugin's configuration file and reading the value
 
@@ -376,4 +378,29 @@ async def sample_count_rooms_for_server(command: Command):
         await plugin.respond_notice(command, f"I'm sharing {rooms_for_server} rooms with users on {command.args[0]}")
     else:
         await plugin.respond_notice(command, "Usage: sample_list_rooms_for_server <server_name>")
+
+
+async def sample_link_users_per_server(command: Command):
+    """
+    List all users in the room by their homeserver
+    :param command:
+    :return:
+    """
+
+    client: AsyncClient = command.client
+    room_id: str = command.room.room_id
+    connected_servers: List[str] = await plugin.get_connected_servers(client, [room_id])
+    connected_user_ids: Dict[str, List[str]] = await plugin.get_users_on_servers(client, connected_servers, [room_id])
+
+    message: str = ""
+    user_ids: List[str]
+    for server, user_ids in connected_user_ids.items():
+        user_id: str
+        message += f"Server: {server}  \n  "
+        message += ", ".join([await plugin.link_user_by_id(client, room_id, user_id) for user_id in user_ids])
+        message += "  \n"
+
+    await plugin.respond_notice(command, message)
+
+
 setup()
