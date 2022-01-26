@@ -322,7 +322,40 @@ async def command_federation_status(command: Command):
     :param command:
     :return:
     """
-    pass
+
+    message: str = ""
+    room_list: List[str] = []
+
+    if len(command.args) == 1 and command.args[0] == "global":
+        message += f"Federation status (all known rooms):  \n"
+    elif len(command.args) == 0:
+        message += f"Federation status (this room only):  \n"
+        room_list = [command.room.room_id]
+    else:
+        await plugin.respond_notice(command, "Usage: `federation [global]`")
+        return
+
+    server_list_saved: Dict[str, Server] or None = await plugin.read_data("server_list")
+    server: Server
+    server_name: str
+
+    for server_name in await plugin.get_connected_servers(command.client, room_list):
+        server = server_list_saved[server_name]
+        if not server.currently_alive:
+            message += f"<font color=red>{server.server_name} offline</font>. "
+        elif (datetime.datetime.now() + datetime.timedelta(days=plugin.read_config("warn_cert_expiry"))) > server.cert_expiry:
+            message += f"<font color=yellow>{server.server_name} warning</font>. "
+        else:
+            message += f"<font color=green>{server.server_name} online</font>. "
+        if server.software:
+            message += f"Server: {server.software} ({server.version}). "
+        if server.cert_expiry:
+            message += f"Certificate expiry: {server.cert_expiry} ({server.cert_expiry - datetime.datetime.now()}). "
+
+        num_users: int = len((await plugin.get_users_on_servers(command.client, [server.server_name], room_list))[server_name])
+        message += f"Users: {num_users}.  \n"
+
+    await plugin.respond_notice(command, message)
 
 
 setup()
