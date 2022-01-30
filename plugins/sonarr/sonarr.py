@@ -132,20 +132,17 @@ class Season:
 
 class Series:
     def __init__(self, series_dict: Dict, tags: Dict[int, Tag], profiles: Dict[int, Profile]):
-        self.title: str = series_dict['title']
-        self.alternateTitles: List[Dict] = series_dict['alternateTitles']
-        self.sortTitle: str = series_dict['sortTitle']
-        self.seasonCount: int = series_dict['seasonCount']
-        self.totalEpisodeCount: int = series_dict['totalEpisodeCount']
+        self.title: str = series_dict.get('title')
+        self.alternateTitles: List[Dict] or None = series_dict.get('alternateTitles')
+        self.sortTitle: str or None = series_dict.get('sortTitle')
+        self.seasonCount: int or None = series_dict.get('seasonCount')
+        self.totalEpisodeCount: int or None = series_dict.get('totalEpisodeCount')
         self.episodeCount: int = series_dict['episodeCount']
         self.episodeFileCount: int = series_dict['episodeFileCount']
         self.sizeOnDisk: str = series_dict['sizeOnDisk']
         self.status: str = series_dict['status']
         self.overview: str = series_dict['overview']
-        try:
-            self.previousAiring: datetime.datetime = isoparse(series_dict['previousAiring'])
-        except KeyError:
-            self.previousAiring: None = None
+        self.previousAiring: datetime.datetime or None = isoparse(series_dict.get('previousAiring'))
         self.network: str = series_dict['network']
         self.airTime: str = series_dict['airTime']
         self.images: List[Dict] = series_dict['images']
@@ -165,12 +162,9 @@ class Series:
         self.lastInfoSync: datetime.datetime = isoparse(series_dict['lastInfoSync'])
         self.seriesType: str = series_dict['seriesType']
         self.cleanTitle: str = series_dict['cleanTitle']
-        self.imdbId: str = series_dict['imdbId']
+        self.imdbId: str = series_dict.get('imdbId')
         self.titleSlug: str = series_dict['titleSlug']
-        try:
-            self.certification: str = series_dict['certification']
-        except KeyError:
-            self.certification: None = None
+        self.certification: str or None = series_dict.get('certification')
         self.genres: List[str] = series_dict['genres']
         self.tag_ids: List[int] = series_dict['tags']
         self.tags: List[Tag] = []
@@ -346,7 +340,7 @@ class SeriesList:
                 change_message += f"<li>Added <a href=\"https://www.imdb.com/title/{series.imdbId}\">{series.title}</a></li>"
 
             for series in removed_series:
-                change_message += f"<li>Removed <a href=\"https://www.imdb.com/title/{series.imdbId}\">{series.title}</a><li>"
+                change_message += f"<li>Removed <a href=\"https://www.imdb.com/title/{series.imdbId}\">{series.title}</a></li>"
 
             for series in changed_series:
                 change_message += f"<li>Changed <a href=\"https://www.imdb.com/title/{series.imdbId}\">{series.title}</a>:<ul>"
@@ -418,11 +412,14 @@ async def fetch_sonarr_data() -> Dict[str, List[Dict[str, any]]] or None:
     tags_json: List[Dict[str, any]] = await fetch_sonarr_api('tag')
     profiles_json: List[Dict[str, any]] = await fetch_sonarr_api('profile')
 
-    return {
-        'series_json': series_json,
-        'tags_json': tags_json,
-        'profiles_json': profiles_json
-    }
+    if series_json and tags_json and profiles_json:
+        return {
+            'series_json': series_json,
+            'tags_json': tags_json,
+            'profiles_json': profiles_json
+        }
+    else:
+        return None
 
 
 async def check_series_changes(client):
@@ -442,7 +439,7 @@ async def check_series_changes(client):
         await plugin.store_data("stored_tags", tracked_data.get('tags_json'))
         await plugin.store_data("stored_profiles", tracked_data.get('profiles_json'))
 
-    else:
+    elif tracked_data:
         tracked_series: SeriesList = SeriesList(tracked_data.get('series_json'), tracked_data.get('tags_json'), tracked_data.get('profiles_json'))
         stored_series: SeriesList = SeriesList(stored_series_json, stored_tags_json, stored_profiles_json)
 
