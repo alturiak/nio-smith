@@ -10,5 +10,6 @@ async def spruch(command):
     message = random.choice(sprueche)
     await plugin.respond_message(command, message, delay=200)
 
+
 plugin = Plugin("spruch", "General", "Plugin to provide a simple, randomized !spruch")
 plugin.add_command("spruch", spruch, "famous quotes from even more famous people")

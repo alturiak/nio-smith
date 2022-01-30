@@ -1,9 +1,7 @@
 from typing import List
 
 from core.bot_commands import Command
-from nio import (
-    JoinError, MatrixRoom, UnknownEvent, InviteEvent, RoomMessageText
-)
+from nio import JoinError, MatrixRoom, UnknownEvent, InviteEvent, RoomMessageText
 
 import logging
 
@@ -13,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 class Callbacks(object):
-
     def __init__(self, client, store, config, plugin_loader):
         """
         Args:
@@ -45,10 +42,7 @@ class Callbacks(object):
         if event.sender == self.client.user:
             return
 
-        logger.debug(
-            f"Bot message received for room {room.display_name} | "
-            f"{room.user_name(event.sender)}: {msg}"
-        )
+        logger.debug(f"Bot message received for room {room.display_name} | " f"{room.user_name(event.sender)}: {msg}")
 
         # check if the whole message contains a line with a command
         # if so, run all lines with commands
@@ -65,10 +59,18 @@ class Callbacks(object):
         if command_lines:
             # we actually found lines containing commands
             for line in command_lines:
-                line = line[len(self.command_prefix):]
+                line = line[len(self.command_prefix) :]
                 line = line.lstrip()
                 if line != "":
-                    command = Command(self.client, self.store, self.config, line, room, event, self.plugin_loader)
+                    command = Command(
+                        self.client,
+                        self.store,
+                        self.config,
+                        line,
+                        room,
+                        event,
+                        self.plugin_loader,
+                    )
                     await self.plugin_loader.run_command(command)
 
         else:

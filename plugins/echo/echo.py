@@ -12,4 +12,5 @@ async def echo(command):
     response = " ".join(command.args)
     await plugin.respond_message(command, response)
 
+
 setup()

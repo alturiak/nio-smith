@@ -4,6 +4,7 @@ import logging
 import asyncio
 import os
 import sys
+import traceback
 from time import time
 from asyncio import sleep
 
@@ -12,13 +13,14 @@ from nio import (
     AsyncClientConfig,
     RoomMessageText,
     InviteEvent,
-    LocalProtocolError, LoginError, UnknownEvent)
+    LocalProtocolError,
+    LoginError,
+    UnknownEvent,
+)
 from core.callbacks import Callbacks
 from core.config import Config
 from core.storage import Storage
-from aiohttp.client_exceptions import (
-    ServerDisconnectedError,
-    ClientConnectionError)
+from aiohttp.client_exceptions import ServerDisconnectedError, ClientConnectionError
 
 from core.pluginloader import PluginLoader
 
@@ -146,8 +148,14 @@ async def main():
             logger.info(f"Logged in as {config.user_id}")
             await client.sync_forever(timeout=30000, full_state=True)
 
-        except (ClientConnectionError, ServerDisconnectedError, AttributeError, asyncio.TimeoutError) as err:
+        except (
+            ClientConnectionError,
+            ServerDisconnectedError,
+            AttributeError,
+            asyncio.TimeoutError,
+        ) as err:
             logger.debug(err)
+            logger.debug(traceback.print_exc())
             logger.warning(f"Unable to connect to homeserver, retrying in 15s...")
 
             # Sleep so we don't bombard the server with login requests

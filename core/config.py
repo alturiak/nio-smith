@@ -23,7 +23,7 @@ class Config(object):
             self.config_dict = yaml.safe_load(file_stream.read())
 
         # Logging setup
-        formatter = logging.Formatter('%(asctime)s | %(name)s [%(levelname)s] %(message)s')
+        formatter = logging.Formatter("%(asctime)s | %(name)s [%(levelname)s] %(message)s")
 
         log_level = self._get_cfg(["logging", "level"], default="INFO")
         logger.setLevel(log_level)

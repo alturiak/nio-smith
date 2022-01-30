@@ -7,20 +7,28 @@ import logging
 from freetranslate.googletranslate import GoogleTranslate
 
 logger = logging.getLogger(__name__)
-plugin = Plugin("translate", "General", "Provide translations of all room-messages via Google Translate")
+plugin = Plugin(
+    "translate",
+    "General",
+    "Provide translations of all room-messages via Google Translate",
+)
 
 
 def setup():
     # Change settings in translate.yaml if required
     plugin.add_config("allowed_rooms", [], is_required=False)
     plugin.add_config("min_power_level", 50, is_required=False)
-    plugin.add_config("default_source", ['any'], is_required=False)
-    plugin.add_config("default_dest", 'en', is_required=False)
+    plugin.add_config("default_source", ["any"], is_required=False)
+    plugin.add_config("default_dest", "en", is_required=False)
     plugin.add_config("default_bidirectional", False, is_required=False)
 
-    plugin.add_command("translate", switch, "`translate [[bi] source_lang... dest_lang]` - translate text from one or more source_lang to dest_lang",
-                       room_id=plugin.read_config("allowed_rooms"),
-                       power_level=plugin.read_config("min_power_level"))
+    plugin.add_command(
+        "translate",
+        switch,
+        "`translate [[bi] source_lang... dest_lang]` - translate text from one or more source_lang to dest_lang",
+        room_id=plugin.read_config("allowed_rooms"),
+        power_level=plugin.read_config("min_power_level"),
+    )
 
 
 """
@@ -34,113 +42,113 @@ roomsdb = {
 """
 
 LANGUAGES = {
-    'af': 'afrikaans',
-    'sq': 'albanian',
-    'am': 'amharic',
-    'ar': 'arabic',
-    'hy': 'armenian',
-    'az': 'azerbaijani',
-    'eu': 'basque',
-    'be': 'belarusian',
-    'bn': 'bengali',
-    'bs': 'bosnian',
-    'bg': 'bulgarian',
-    'ca': 'catalan',
-    'ceb': 'cebuano',
-    'ny': 'chichewa',
-    'zh-cn': 'chinese (simplified)',
-    'zh-tw': 'chinese (traditional)',
-    'co': 'corsican',
-    'hr': 'croatian',
-    'cs': 'czech',
-    'da': 'danish',
-    'nl': 'dutch',
-    'en': 'english',
-    'eo': 'esperanto',
-    'et': 'estonian',
-    'tl': 'filipino',
-    'fi': 'finnish',
-    'fr': 'french',
-    'fy': 'frisian',
-    'gl': 'galician',
-    'ka': 'georgian',
-    'de': 'german',
-    'el': 'greek',
-    'gu': 'gujarati',
-    'ht': 'haitian creole',
-    'ha': 'hausa',
-    'haw': 'hawaiian',
-    'iw': 'hebrew',
-    'he': 'hebrew',
-    'hi': 'hindi',
-    'hmn': 'hmong',
-    'hu': 'hungarian',
-    'is': 'icelandic',
-    'ig': 'igbo',
-    'id': 'indonesian',
-    'ga': 'irish',
-    'it': 'italian',
-    'ja': 'japanese',
-    'jw': 'javanese',
-    'kn': 'kannada',
-    'kk': 'kazakh',
-    'km': 'khmer',
-    'ko': 'korean',
-    'ku': 'kurdish (kurmanji)',
-    'ky': 'kyrgyz',
-    'lo': 'lao',
-    'la': 'latin',
-    'lv': 'latvian',
-    'lt': 'lithuanian',
-    'lb': 'luxembourgish',
-    'mk': 'macedonian',
-    'mg': 'malagasy',
-    'ms': 'malay',
-    'ml': 'malayalam',
-    'mt': 'maltese',
-    'mi': 'maori',
-    'mr': 'marathi',
-    'mn': 'mongolian',
-    'my': 'myanmar (burmese)',
-    'ne': 'nepali',
-    'no': 'norwegian',
-    'or': 'odia',
-    'ps': 'pashto',
-    'fa': 'persian',
-    'pl': 'polish',
-    'pt': 'portuguese',
-    'pa': 'punjabi',
-    'ro': 'romanian',
-    'ru': 'russian',
-    'sm': 'samoan',
-    'gd': 'scots gaelic',
-    'sr': 'serbian',
-    'st': 'sesotho',
-    'sn': 'shona',
-    'sd': 'sindhi',
-    'si': 'sinhala',
-    'sk': 'slovak',
-    'sl': 'slovenian',
-    'so': 'somali',
-    'es': 'spanish',
-    'su': 'sundanese',
-    'sw': 'swahili',
-    'sv': 'swedish',
-    'tg': 'tajik',
-    'ta': 'tamil',
-    'te': 'telugu',
-    'th': 'thai',
-    'tr': 'turkish',
-    'uk': 'ukrainian',
-    'ur': 'urdu',
-    'ug': 'uyghur',
-    'uz': 'uzbek',
-    'vi': 'vietnamese',
-    'cy': 'welsh',
-    'xh': 'xhosa',
-    'yi': 'yiddish',
-    'yo': 'yoruba',
-    'zu': 'zulu',
+    "af": "afrikaans",
+    "sq": "albanian",
+    "am": "amharic",
+    "ar": "arabic",
+    "hy": "armenian",
+    "az": "azerbaijani",
+    "eu": "basque",
+    "be": "belarusian",
+    "bn": "bengali",
+    "bs": "bosnian",
+    "bg": "bulgarian",
+    "ca": "catalan",
+    "ceb": "cebuano",
+    "ny": "chichewa",
+    "zh-cn": "chinese (simplified)",
+    "zh-tw": "chinese (traditional)",
+    "co": "corsican",
+    "hr": "croatian",
+    "cs": "czech",
+    "da": "danish",
+    "nl": "dutch",
+    "en": "english",
+    "eo": "esperanto",
+    "et": "estonian",
+    "tl": "filipino",
+    "fi": "finnish",
+    "fr": "french",
+    "fy": "frisian",
+    "gl": "galician",
+    "ka": "georgian",
+    "de": "german",
+    "el": "greek",
+    "gu": "gujarati",
+    "ht": "haitian creole",
+    "ha": "hausa",
+    "haw": "hawaiian",
+    "iw": "hebrew",
+    "he": "hebrew",
+    "hi": "hindi",
+    "hmn": "hmong",
+    "hu": "hungarian",
+    "is": "icelandic",
+    "ig": "igbo",
+    "id": "indonesian",
+    "ga": "irish",
+    "it": "italian",
+    "ja": "japanese",
+    "jw": "javanese",
+    "kn": "kannada",
+    "kk": "kazakh",
+    "km": "khmer",
+    "ko": "korean",
+    "ku": "kurdish (kurmanji)",
+    "ky": "kyrgyz",
+    "lo": "lao",
+    "la": "latin",
+    "lv": "latvian",
+    "lt": "lithuanian",
+    "lb": "luxembourgish",
+    "mk": "macedonian",
+    "mg": "malagasy",
+    "ms": "malay",
+    "ml": "malayalam",
+    "mt": "maltese",
+    "mi": "maori",
+    "mr": "marathi",
+    "mn": "mongolian",
+    "my": "myanmar (burmese)",
+    "ne": "nepali",
+    "no": "norwegian",
+    "or": "odia",
+    "ps": "pashto",
+    "fa": "persian",
+    "pl": "polish",
+    "pt": "portuguese",
+    "pa": "punjabi",
+    "ro": "romanian",
+    "ru": "russian",
+    "sm": "samoan",
+    "gd": "scots gaelic",
+    "sr": "serbian",
+    "st": "sesotho",
+    "sn": "shona",
+    "sd": "sindhi",
+    "si": "sinhala",
+    "sk": "slovak",
+    "sl": "slovenian",
+    "so": "somali",
+    "es": "spanish",
+    "su": "sundanese",
+    "sw": "swahili",
+    "sv": "swedish",
+    "tg": "tajik",
+    "ta": "tamil",
+    "te": "telugu",
+    "th": "thai",
+    "tr": "turkish",
+    "uk": "ukrainian",
+    "ur": "urdu",
+    "ug": "uyghur",
+    "uz": "uzbek",
+    "vi": "vietnamese",
+    "cy": "welsh",
+    "xh": "xhosa",
+    "yi": "yiddish",
+    "yo": "yoruba",
+    "zu": "zulu",
 }
 
 
@@ -163,7 +171,7 @@ async def switch(command):
 
     else:
         try:
-            if command.args[0] == 'bi':
+            if command.args[0] == "bi":
                 bidirectional = True
                 source_langs = [command.args[1]]
                 dest_lang = command.args[2]
@@ -182,10 +190,19 @@ async def switch(command):
         await plugin.respond_notice(command, "Translations disabled")
 
     elif plugin.read_config("allowed_rooms") == [] or command.room.room_id in plugin.read_config("allowed_rooms"):
-        if dest_lang in LANGUAGES.keys() and source_langs == ['any'] or all(elem in LANGUAGES.keys() for elem in source_langs):
-            rooms_db[command.room.room_id] = {"source_langs": source_langs, "dest_lang": dest_lang, "bidirectional": bidirectional}
+        if dest_lang in LANGUAGES.keys() and source_langs == ["any"] or all(elem in LANGUAGES.keys() for elem in source_langs):
+            rooms_db[command.room.room_id] = {
+                "source_langs": source_langs,
+                "dest_lang": dest_lang,
+                "bidirectional": bidirectional,
+            }
             await plugin.store_data("rooms_db", rooms_db)
-            plugin.add_hook("m.room.message", translate_message, room_id_list=[command.room.room_id], hook_type="dynamic")
+            plugin.add_hook(
+                "m.room.message",
+                translate_message,
+                room_id_list=[command.room.room_id],
+                hook_type="dynamic",
+            )
 
             if bidirectional:
                 message = f"Bidirectional translations ({source_langs[0]}<=>{dest_lang}) enabled.  \n"
@@ -215,7 +232,7 @@ async def translate_message(client: AsyncClient, room_id: str, event: RoomMessag
 
     if plugin.read_config("allowed_rooms") == [] or room_id in plugin.read_config("allowed_rooms"):
         # Remove special characters before translation
-        message = sub(r'[^A-z0-9\-\.\?!:\sÄäÜüÖö]+', '', event.body)
+        message = sub(r"[^A-z0-9\-\.\?!:\sÄäÜüÖö]+", "", event.body)
 
         # Replace line breaks by spaces as freetrans doesn't seem to handle them
         message = message.replace("\n", " ")
@@ -229,11 +246,18 @@ async def translate_message(client: AsyncClient, room_id: str, event: RoomMessag
             del rooms_db[room_id]
             await plugin.store_data("rooms_db", rooms_db)
             plugin.del_hook("m.room.message", translate_message, room_id_list=[room_id])
-            await plugin.send_notice(client, room_id, "Error in backend translation module. Translations disabled.")
+            await plugin.send_notice(
+                client,
+                room_id,
+                "Error in backend translation module. Translations disabled.",
+            )
             return
 
         if rooms_db[room_id]["bidirectional"]:
-            languages: List[str] = [rooms_db[room_id]["source_langs"][0], rooms_db[room_id["dest_lang"]]]
+            languages: List[str] = [
+                rooms_db[room_id]["source_langs"][0],
+                rooms_db[room_id["dest_lang"]],
+            ]
 
             if message_source_lang in languages:
                 languages.remove(message_source_lang)
@@ -242,8 +266,9 @@ async def translate_message(client: AsyncClient, room_id: str, event: RoomMessag
                 await plugin.send_notice(client, room_id, translated)
 
         else:
-            if message_source_lang != rooms_db[room_id]["dest_lang"] and \
-                    (rooms_db[room_id]["source_langs"] == ['any'] or message_source_lang in rooms_db[room_id]["source_langs"]):
+            if message_source_lang != rooms_db[room_id]["dest_lang"] and (
+                rooms_db[room_id]["source_langs"] == ["any"] or message_source_lang in rooms_db[room_id]["source_langs"]
+            ):
                 translated = (await googletrans.translate(message, rooms_db[room_id]["dest_lang"])).translated_text
                 await plugin.send_notice(client, room_id, translated)
 

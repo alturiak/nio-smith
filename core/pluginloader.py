@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 
 
 class PluginLoader:
-
     def __init__(self, config, plugins_dir: str = "plugins"):
         """
         Handles importing and running plugins
@@ -34,8 +33,8 @@ class PluginLoader:
         # import all plugins
         module_all = glob.glob(f"{plugins_dir}/*")
         module_all.sort()
-        module_dirs: List[str] = [basename(d) for d in module_all if isdir(d) and not d.endswith('__pycache__')]
-        module_files: List[str] = [basename(f)[:-3] for f in module_all if isfile(f) and f.endswith('.py') and not f.endswith('__init__.py')]
+        module_dirs: List[str] = [basename(d) for d in module_all if isdir(d) and not d.endswith("__pycache__")]
+        module_files: List[str] = [basename(f)[:-3] for f in module_all if isfile(f) and f.endswith(".py") and not f.endswith("__init__.py")]
 
         if self.config.plugins_allowlist:
             logger.info(f"Plugin allowlist: {self.config.plugins_allowlist}")
@@ -217,7 +216,11 @@ class PluginLoader:
                         traceback.print_exc()
                     return 0
                 else:
-                    await send_text_to_room(command.client, command.room.room_id, f"Required power level for command {command.command} not met")
+                    await send_text_to_room(
+                        command.client,
+                        command.room.room_id,
+                        f"Required power level for command {command.command} not met",
+                    )
                     return 2
             else:
                 return 1
@@ -238,8 +241,9 @@ class PluginLoader:
             plugin_hook: PluginHook
 
             for plugin_hook in plugin_hooks:
-                if (not plugin_hook.room_id_list or room.room_id in plugin_hook.room_id_list) and \
-                        (not plugin_hook.event_ids or event.source['content']['m.relates_to']['event_id'] in plugin_hook.event_ids):
+                if (not plugin_hook.room_id_list or room.room_id in plugin_hook.room_id_list) and (
+                    not plugin_hook.event_ids or event.source["content"]["m.relates_to"]["event_id"] in plugin_hook.event_ids
+                ):
                     # plugin_hook is valid for room of the current event and
                     # event relates to a specified event_id
 
@@ -259,7 +263,7 @@ class PluginLoader:
         """
 
         """Do not run timers more often than every 30s"""
-        if time() >= timestamp+30:
+        if time() >= timestamp + 30:
 
             timer: Timer
             affected_plugins: List[str] = []
@@ -284,4 +288,3 @@ class PluginLoader:
             return time()
         else:
             return timestamp
-

@@ -10,7 +10,12 @@ import uuid
 import blurhash
 
 from nio import (
-    SendRetryError, RoomSendResponse, Event, RoomGetEventResponse, RoomGetEventError, UploadResponse
+    SendRetryError,
+    RoomSendResponse,
+    Event,
+    RoomGetEventResponse,
+    RoomGetEventError,
+    UploadResponse,
 )
 from markdown import markdown
 
@@ -18,7 +23,6 @@ logger = logging.getLogger(__name__)
 
 
 class MLStripper(HTMLParser):
-
     def __init__(self):
         super().__init__()
         self.reset()
@@ -39,13 +43,7 @@ def strip_tags(html):
     return s.get_data()
 
 
-async def send_text_to_room(
-    client,
-    room_id,
-    message,
-    notice=True,
-    markdown_convert=True
-) -> RoomSendResponse or None:
+async def send_text_to_room(client, room_id, message, notice=True, markdown_convert=True) -> RoomSendResponse or None:
     """Send text to a matrix room
 
     Args:
@@ -136,16 +134,13 @@ async def send_replace(client, room_id: str, event_id: str, message: str, messag
                 "msgtype": message_type,
                 "format": "org.matrix.custom.html",
                 "body": strip_tags(message),
-                "formatted_body": markdown(message)
+                "formatted_body": markdown(message),
             },
-            "m.relates_to": {
-                "rel_type": "m.replace",
-                "event_id": event_id
-            },
+            "m.relates_to": {"rel_type": "m.replace", "event_id": event_id},
             "msgtype": "m.text",
             "format": "org.matrix.custom.html",
             "body": strip_tags(message),
-            "formatted_body": markdown(message)
+            "formatted_body": markdown(message),
         }
 
         # check if there are any differences in body or formatted_body before actually sending the m.replace-event
@@ -183,7 +178,12 @@ async def send_image(client, room_id: str, image: Image.Image) -> str or None:
 
     try:
         async with aiofiles.open(temp_filename, "r+b") as f:
-            resp, maybe_keys = await client.upload(f, content_type=mime_type, filename=os.path.basename(temp_filename), filesize=file_stat.st_size)
+            resp, maybe_keys = await client.upload(
+                f,
+                content_type=mime_type,
+                filename=os.path.basename(temp_filename),
+                filesize=file_stat.st_size,
+            )
         os.remove(temp_filename)
     except OSError:
         logger.warning(f"Failed to remove temporary image file {temp_filename}")
@@ -196,7 +196,7 @@ async def send_image(client, room_id: str, image: Image.Image) -> str or None:
                 "mimetype": mime_type,
                 "w": width,  # width in pixel
                 "h": height,  # height in pixel
-                "xyz.amorgan.blurhash": image_hash
+                "xyz.amorgan.blurhash": image_hash,
             },
             "msgtype": "m.image",
             "url": resp.content_uri,

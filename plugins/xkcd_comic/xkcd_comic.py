@@ -146,13 +146,23 @@ async def xkcd_check(client):
             plugin.del_hook("m.reaction", xkcd_react)
             message_ids: List[str] = []
             for room_id in room_list:
-                message_id: str or None = await plugin.send_notice(client, room_id, f"New xkcd-Comic: [{comic.title} ({comic.number})]({comic.link}). "
-                                                                                    f"`!xkcd` or 👀 to display.")
+                message_id: str or None = await plugin.send_notice(
+                    client,
+                    room_id,
+                    f"New xkcd-Comic: [{comic.title} ({comic.number})]({comic.link}). " f"`!xkcd` or 👀 to display.",
+                )
                 await plugin.send_reaction(client, room_id, message_id, "👀")
                 message_ids.append(message_id)
 
             if message_ids:
-                plugin.add_hook("m.reaction", xkcd_react, room_list, message_ids, hook_type="dynamic")
+                plugin.add_hook(
+                    "m.reaction",
+                    xkcd_react,
+                    room_list,
+                    message_ids,
+                    hook_type="dynamic",
+                )
             await plugin.store_data("known_recent", comic.number)
+
 
 setup()

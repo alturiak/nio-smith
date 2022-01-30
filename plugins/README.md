@@ -65,6 +65,7 @@ Note: automatic loading of plugins can be configured by allow- and denylist in t
 - ✔ adhere to [PEP 8](https://www.python.org/dev/peps/pep-0008/) (except for
 [maximum-line-length](https://www.python.org/dev/peps/pep-0008/#maximum-line-length) - anything up to 160 is fine by
  me)
+- ✔ be formatted with `black -l 160` (See [black](https://pypi.org/project/black/) for details)
 - ✔ contain a README.md in their directory for a detailed description about
     - their intended use,
     - usage of commands and

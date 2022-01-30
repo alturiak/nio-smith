@@ -3,14 +3,14 @@ from typing import List, Callable
 
 
 class Timer:
-
-    def __init__(self,
-                 name: str,
-                 method: Callable,
-                 frequency: str or datetime.timedelta or None = None,
-                 last_execution: datetime.datetime or None = None,
-                 timer_type: str = "static"
-                 ):
+    def __init__(
+        self,
+        name: str,
+        method: Callable,
+        frequency: str or datetime.timedelta or None = None,
+        last_execution: datetime.datetime or None = None,
+        timer_type: str = "static",
+    ):
 
         """
         A class for storing timers that call a specific method in a specified interval

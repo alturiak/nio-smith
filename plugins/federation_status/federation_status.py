@@ -13,7 +13,11 @@ from core.plugin import Plugin
 import logging
 
 logger = logging.getLogger(__name__)
-plugin = Plugin("federation_status", "Matrix", "Keeps track of federation status with all homeservers in the bot's rooms")
+plugin = Plugin(
+    "federation_status",
+    "Matrix",
+    "Keeps track of federation status with all homeservers in the bot's rooms",
+)
 
 
 def setup():
@@ -25,9 +29,17 @@ def setup():
     plugin.add_config("room_list", default_value=None, is_required=False)
     plugin.add_config("warn_cert_expiry", default_value=7, is_required=True)
     plugin.add_config("server_max_age", default_value=60, is_required=True)
-    plugin.add_config("federation_tester_url", default_value="https://federationtester.matrix.org", is_required=True)
-    plugin.add_command("federation", command_federation_status, "Displays the current status of all federating servers in the room",
-                       room_id=plugin.read_config("room_list"))
+    plugin.add_config(
+        "federation_tester_url",
+        default_value="https://federationtester.matrix.org",
+        is_required=True,
+    )
+    plugin.add_command(
+        "federation",
+        command_federation_status,
+        "Displays the current status of all federating servers in the room",
+        room_id=plugin.read_config("room_list"),
+    )
     plugin.add_command("federation_update", update_federation_status, "Update all known server's data")
 
     plugin.add_timer(update_federation_status, frequency=datetime.timedelta(minutes=5))
@@ -95,7 +107,7 @@ class Server:
             return True
 
         # server hasn't been updated for more than server_max_age (+-5 minutes to distribute updates a little)
-        elif not await self.last_updated_within(datetime.timedelta(minutes=plugin.read_config("server_max_age")+random.randint(-5, 5))):
+        elif not await self.last_updated_within(datetime.timedelta(minutes=plugin.read_config("server_max_age") + random.randint(-5, 5))):
             return True
 
         else:
@@ -112,7 +124,7 @@ class Server:
         warn_steps: List[datetime.timedelta] = [
             datetime.timedelta(minutes=10),
             datetime.timedelta(days=1),
-            datetime.timedelta(days=plugin.read_config("warn_cert_expiry"))
+            datetime.timedelta(days=plugin.read_config("warn_cert_expiry")),
         ]
 
         step: datetime.timedelta
@@ -120,7 +132,9 @@ class Server:
             return False
         else:
             for step in warn_steps:
-                if datetime.datetime.now() < self.cert_expiry < (datetime.datetime.now() + step) and self.last_posted_warning < (datetime.datetime.now() - step):
+                if datetime.datetime.now() < self.cert_expiry < (datetime.datetime.now() + step) and self.last_posted_warning < (
+                    datetime.datetime.now() - step
+                ):
                     return True
             return False
 
@@ -136,7 +150,10 @@ class Server:
         logger.debug(f"Updating {self.server_name}")
 
         try:
-            response: requests.Response = requests.get(plugin.read_config("federation_tester_url") + "/api/report", params=api_parameters)
+            response: requests.Response = requests.get(
+                plugin.read_config("federation_tester_url") + "/api/report",
+                params=api_parameters,
+            )
         except requests.exceptions.ConnectionError as err:
             logger.warning(f"Connection to federation-tester failed: {err}")
             return
@@ -152,7 +169,7 @@ class Server:
             hosts: List[Tuple[str, int]] = []
             if federation_data.get("WellKnownResult").get("m.server"):
                 # read host and port from well-known, strip trailing '.' from host
-                host = federation_data.get("WellKnownResult").get("m.server").split(":")[0].rstrip('.')
+                host = federation_data.get("WellKnownResult").get("m.server").split(":")[0].rstrip(".")
                 if len(federation_data.get("WellKnownResult").get("m.server").split(":")) > 1:
                     port = int(federation_data.get("WellKnownResult").get("m.server").split(":")[1])
                 else:
@@ -161,7 +178,7 @@ class Server:
             else:
                 # read hosts from DNS-Result, strip trailing '.', default to Port 8448 for now
                 for host in federation_data.get("DNSResult").get("Hosts").keys():
-                    hosts.append((host.rstrip('.'), 8448))
+                    hosts.append((host.rstrip("."), 8448))
 
             min_expire_date: datetime.datetime = datetime.datetime(year=2500, month=1, day=1)
             for (host, port) in hosts:
@@ -188,7 +205,7 @@ def ssl_expiry_datetime(host: str, port=8448) -> datetime.datetime or None:
     :return: datetime.datime of the certificates expiration
     """
 
-    ssl_date_fmt: str = r'%b %d %H:%M:%S %Y %Z'
+    ssl_date_fmt: str = r"%b %d %H:%M:%S %Y %Z"
     context: ssl.SSLContext = ssl.create_default_context()
     conn: ssl.SSLSocket = context.wrap_socket(socket.socket(socket.AF_INET), server_hostname=host)
     # 3 second timeout because Lambda has runtime limitations
@@ -197,9 +214,9 @@ def ssl_expiry_datetime(host: str, port=8448) -> datetime.datetime or None:
         conn.connect((host, port))
         ssl_info: Dict or Tuple or None = conn.getpeercert()
         if ssl_info:
-            expiry_date: datetime.datetime = datetime.datetime.strptime(ssl_info['notAfter'], ssl_date_fmt)
+            expiry_date: datetime.datetime = datetime.datetime.strptime(ssl_info["notAfter"], ssl_date_fmt)
             # add timezone offset
-            timezone = pytz.timezone('CET')
+            timezone = pytz.timezone("CET")
             offset = timezone.utcoffset(expiry_date)
             expiry_date = expiry_date + offset
             return expiry_date
@@ -311,8 +328,10 @@ async def update_federation_status(client_or_command: AsyncClient or Command):
                 try:
                     user_ids: List[str] = (await plugin.get_users_on_servers(client, [server], [room_id]))[server]
                     message: str = f"Federation warning: {server}'s certificate will expire on {expire_date} (in {expire_date - datetime.datetime.now()})  \n"
-                    message += f"{', '.join([await plugin.link_user_by_id(client, room_id, user_id) for user_id in user_ids])} will be isolated until " \
-                               f"the server's certificate has been renewed."
+                    message += (
+                        f"{', '.join([await plugin.link_user_by_id(client, room_id, user_id) for user_id in user_ids])} will be isolated until "
+                        f"the server's certificate has been renewed."
+                    )
                     await plugin.send_message(client, room_id, message)
                 except KeyError:
                     pass

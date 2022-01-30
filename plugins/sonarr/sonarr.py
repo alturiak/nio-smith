@@ -15,9 +15,20 @@ from core.plugin import Plugin
 logger = logging.getLogger(__name__)
 plugin = Plugin("sonarr", "TV-Shows", "Provides commands to query sonarr's API")
 
-suppressed_series_attributes: List[str] = ['lastInfoSync', 'previousAiring', 'episodeCount', 'episodeFileCount', 'sizeOnDisk', 'runtime', 'tag_ids',
-                                           'profile_id', 'qualityProfileId', 'images', 'genres']
-suppressed_season_attributes: List[str] = ['percentOfEpisodes', 'episodeFileCount']
+suppressed_series_attributes: List[str] = [
+    "lastInfoSync",
+    "previousAiring",
+    "episodeCount",
+    "episodeFileCount",
+    "sizeOnDisk",
+    "runtime",
+    "tag_ids",
+    "profile_id",
+    "qualityProfileId",
+    "images",
+    "genres",
+]
+suppressed_season_attributes: List[str] = ["percentOfEpisodes", "episodeFileCount"]
 debug: bool = False
 
 
@@ -32,8 +43,18 @@ def setup():
     plugin.add_config("room_id", is_required=True)
     plugin.add_config("series_tracking", is_required=False, default_value=True)
 
-    plugin.add_command("series", print_series, "Get a list of currently tracked series", room_id=[plugin.read_config("room_id")])
-    plugin.add_command("episodes", current_episodes, "Post a new message that is tracking episodes", room_id=[plugin.read_config("room_id")])
+    plugin.add_command(
+        "series",
+        print_series,
+        "Get a list of currently tracked series",
+        room_id=[plugin.read_config("room_id")],
+    )
+    plugin.add_command(
+        "episodes",
+        current_episodes,
+        "Post a new message that is tracking episodes",
+        room_id=[plugin.read_config("room_id")],
+    )
 
     # initially post current episodes at the start of the week
     plugin.add_timer(current_episodes, frequency="weekly")
@@ -69,14 +90,14 @@ class Tag:
 
 class Season:
     def __init__(self, season_dict: Dict):
-        self.seasonNumber: int = season_dict['seasonNumber']
-        self.monitored: bool = season_dict['monitored']
+        self.seasonNumber: int = season_dict["seasonNumber"]
+        self.monitored: bool = season_dict["monitored"]
         # self.previousAiring: datetime.datetime = datetime.datetime.fromisoformat(season_dict['statistics']['previousAiring'][:-1])
-        self.episodeFileCount: int = season_dict['statistics']['episodeFileCount']
-        self.episodeCount: int = season_dict['statistics']['episodeCount']
-        self.totalEpisodeCount: int = season_dict['statistics']['totalEpisodeCount']
-        self.sizeOnDisk: int = season_dict['statistics']['sizeOnDisk']
-        self.percentOfEpisodes: float = season_dict['statistics']['percentOfEpisodes']
+        self.episodeFileCount: int = season_dict["statistics"]["episodeFileCount"]
+        self.episodeCount: int = season_dict["statistics"]["episodeCount"]
+        self.totalEpisodeCount: int = season_dict["statistics"]["totalEpisodeCount"]
+        self.sizeOnDisk: int = season_dict["statistics"]["sizeOnDisk"]
+        self.percentOfEpisodes: float = season_dict["statistics"]["percentOfEpisodes"]
 
     def __str__(self):
         return f"{self.seasonNumber}"
@@ -125,57 +146,61 @@ class Season:
         change_message: str = ""
         changed_season_attributes: List[str] = self.list_diffs(new_season)
         for changed_season_attribute in changed_season_attributes:
-            change_message += await print_diff(changed_season_attribute, await self.get(changed_season_attribute), await new_season.get(changed_season_attribute))
+            change_message += await print_diff(
+                changed_season_attribute,
+                await self.get(changed_season_attribute),
+                await new_season.get(changed_season_attribute),
+            )
 
         return change_message
 
 
 class Series:
     def __init__(self, series_dict: Dict, tags: Dict[int, Tag], profiles: Dict[int, Profile]):
-        self.title: str = series_dict.get('title')
-        self.alternateTitles: List[Dict] or None = series_dict.get('alternateTitles')
-        self.sortTitle: str or None = series_dict.get('sortTitle')
-        self.seasonCount: int or None = series_dict.get('seasonCount')
-        self.totalEpisodeCount: int or None = series_dict.get('totalEpisodeCount')
-        self.episodeCount: int = series_dict['episodeCount']
-        self.episodeFileCount: int = series_dict['episodeFileCount']
-        self.sizeOnDisk: str = series_dict['sizeOnDisk']
-        self.status: str = series_dict['status']
-        self.overview: str = series_dict['overview']
-        self.previousAiring: datetime.datetime or None = isoparse(series_dict.get('previousAiring'))
-        self.network: str = series_dict['network']
-        self.airTime: str = series_dict['airTime']
-        self.images: List[Dict] = series_dict['images']
-        self.year: datetime.date.year = series_dict['year']
-        self.path: str = series_dict['path']
-        self.profile_id = series_dict['profileId']
+        self.title: str = series_dict.get("title")
+        self.alternateTitles: List[Dict] or None = series_dict.get("alternateTitles")
+        self.sortTitle: str or None = series_dict.get("sortTitle")
+        self.seasonCount: int or None = series_dict.get("seasonCount")
+        self.totalEpisodeCount: int or None = series_dict.get("totalEpisodeCount")
+        self.episodeCount: int = series_dict["episodeCount"]
+        self.episodeFileCount: int = series_dict["episodeFileCount"]
+        self.sizeOnDisk: str = series_dict["sizeOnDisk"]
+        self.status: str = series_dict["status"]
+        self.overview: str = series_dict["overview"]
+        self.previousAiring: datetime.datetime or None = isoparse(series_dict.get("previousAiring"))
+        self.network: str = series_dict["network"]
+        self.airTime: str = series_dict["airTime"]
+        self.images: List[Dict] = series_dict["images"]
+        self.year: datetime.date.year = series_dict["year"]
+        self.path: str = series_dict["path"]
+        self.profile_id = series_dict["profileId"]
         self.profile: Profile = profiles[self.profile_id]
-        self.languageProfileId: int = series_dict['languageProfileId']
-        self.seasonFolder: bool = series_dict['seasonFolder']
-        self.monitored: bool = series_dict['monitored']
-        self.useSceneNumbering: bool = series_dict['useSceneNumbering']
-        self.runtime: int = series_dict['runtime']
-        self.tvdbId: int = series_dict['tvdbId']
-        self.tvRageId: int = series_dict['tvRageId']
-        self.tvMazeId: int = series_dict['tvMazeId']
-        self.firstAired: datetime.datetime = isoparse(series_dict['firstAired'])
-        self.lastInfoSync: datetime.datetime = isoparse(series_dict['lastInfoSync'])
-        self.seriesType: str = series_dict['seriesType']
-        self.cleanTitle: str = series_dict['cleanTitle']
-        self.imdbId: str = series_dict.get('imdbId')
-        self.titleSlug: str = series_dict['titleSlug']
-        self.certification: str or None = series_dict.get('certification')
-        self.genres: List[str] = series_dict['genres']
-        self.tag_ids: List[int] = series_dict['tags']
+        self.languageProfileId: int = series_dict["languageProfileId"]
+        self.seasonFolder: bool = series_dict["seasonFolder"]
+        self.monitored: bool = series_dict["monitored"]
+        self.useSceneNumbering: bool = series_dict["useSceneNumbering"]
+        self.runtime: int = series_dict["runtime"]
+        self.tvdbId: int = series_dict["tvdbId"]
+        self.tvRageId: int = series_dict["tvRageId"]
+        self.tvMazeId: int = series_dict["tvMazeId"]
+        self.firstAired: datetime.datetime = isoparse(series_dict["firstAired"])
+        self.lastInfoSync: datetime.datetime = isoparse(series_dict["lastInfoSync"])
+        self.seriesType: str = series_dict["seriesType"]
+        self.cleanTitle: str = series_dict["cleanTitle"]
+        self.imdbId: str = series_dict.get("imdbId")
+        self.titleSlug: str = series_dict["titleSlug"]
+        self.certification: str or None = series_dict.get("certification")
+        self.genres: List[str] = series_dict["genres"]
+        self.tag_ids: List[int] = series_dict["tags"]
         self.tags: List[Tag] = []
         for tag_id in self.tag_ids:
             self.tags.append(tags[tag_id])
-        self.added: datetime.datetime = isoparse(series_dict['added'])
-        self.ratings: Dict[str, any] = series_dict['ratings']
-        self.qualityProfileId: int = series_dict['qualityProfileId']
-        self.id: int = series_dict['id']
+        self.added: datetime.datetime = isoparse(series_dict["added"])
+        self.ratings: Dict[str, any] = series_dict["ratings"]
+        self.qualityProfileId: int = series_dict["qualityProfileId"]
+        self.id: int = series_dict["id"]
 
-        self.seasons: List[Season] = [Season(x) for x in series_dict['seasons']]
+        self.seasons: List[Season] = [Season(x) for x in series_dict["seasons"]]
 
     def __str__(self):
         return self.title
@@ -203,7 +228,10 @@ class Series:
 
         for key in self.__dict__.keys():
             if key not in suppressed_series_attributes and key not in changed_attributes:
-                if isinstance(self.__dict__.get(key), list) and key in ['seasons', 'tags']:
+                if isinstance(self.__dict__.get(key), list) and key in [
+                    "seasons",
+                    "tags",
+                ]:
                     if len(self.__dict__.get(key)) != len(new_series.__dict__.get(key)):
                         changed_attributes.append(key)
                     else:
@@ -250,12 +278,21 @@ class Series:
 
                 # list changed series attributes
                 else:
-                    change_message += await print_diff(changed_attribute, await self.get(changed_attribute), await new_series.get(changed_attribute))
+                    change_message += await print_diff(
+                        changed_attribute,
+                        await self.get(changed_attribute),
+                        await new_series.get(changed_attribute),
+                    )
         return change_message
 
 
 class SeriesList:
-    def __init__(self, series_json: List[Dict[str, any]], tags_json: List[Dict[str, any]], profiles_json: List[Dict[str, any]]):
+    def __init__(
+        self,
+        series_json: List[Dict[str, any]],
+        tags_json: List[Dict[str, any]],
+        profiles_json: List[Dict[str, any]],
+    ):
         """
 
         :param series_json:
@@ -265,12 +302,12 @@ class SeriesList:
         tags: Dict[int, Tag] = {}
         tag_json: Dict[str, any]
         for tag_json in tags_json:
-            tags[tag_json.get('id')] = Tag(tag_json.get('id'), tag_json.get('label'))
+            tags[tag_json.get("id")] = Tag(tag_json.get("id"), tag_json.get("label"))
 
         profiles: Dict[int, Profile] = {}
         profile_json: Dict[str, any]
         for profile_json in profiles_json:
-            profiles[profile_json.get('id')] = Profile(profile_json.get('id'), profile_json.get('name'))
+            profiles[profile_json.get("id")] = Profile(profile_json.get("id"), profile_json.get("name"))
 
         series: Series
         for show_json in series_json:
@@ -312,11 +349,7 @@ class SeriesList:
                 changed_series.append(series)
 
         if added_series or removed_series or changed_series:
-            return (
-                added_series,
-                removed_series,
-                changed_series
-            )
+            return (added_series, removed_series, changed_series)
         else:
             return None
 
@@ -337,13 +370,13 @@ class SeriesList:
 
             series: Series
             for series in added_series:
-                change_message += f"<li>Added <a href=\"https://www.imdb.com/title/{series.imdbId}\">{series.title}</a></li>"
+                change_message += f'<li>Added <a href="https://www.imdb.com/title/{series.imdbId}">{series.title}</a></li>'
 
             for series in removed_series:
-                change_message += f"<li>Removed <a href=\"https://www.imdb.com/title/{series.imdbId}\">{series.title}</a></li>"
+                change_message += f'<li>Removed <a href="https://www.imdb.com/title/{series.imdbId}">{series.title}</a></li>'
 
             for series in changed_series:
-                change_message += f"<li>Changed <a href=\"https://www.imdb.com/title/{series.imdbId}\">{series.title}</a>:<ul>"
+                change_message += f'<li>Changed <a href="https://www.imdb.com/title/{series.imdbId}">{series.title}</a>:<ul>'
                 change_message += await series.print_diff(new_series_list.series.get(series.titleSlug))
                 change_message += "</ul></li>"
             change_message = f"<ul>{change_message}</ul>"
@@ -408,15 +441,15 @@ async def fetch_sonarr_data() -> Dict[str, List[Dict[str, any]]] or None:
     :return: (str) sorted JSON of currently tracked series
     """
 
-    series_json: List[Dict[str, any]] = sorted(await fetch_sonarr_api('series'), key=lambda i: i['sortTitle'])
-    tags_json: List[Dict[str, any]] = await fetch_sonarr_api('tag')
-    profiles_json: List[Dict[str, any]] = await fetch_sonarr_api('profile')
+    series_json: List[Dict[str, any]] = sorted(await fetch_sonarr_api("series"), key=lambda i: i["sortTitle"])
+    tags_json: List[Dict[str, any]] = await fetch_sonarr_api("tag")
+    profiles_json: List[Dict[str, any]] = await fetch_sonarr_api("profile")
 
     if series_json and tags_json and profiles_json:
         return {
-            'series_json': series_json,
-            'tags_json': tags_json,
-            'profiles_json': profiles_json
+            "series_json": series_json,
+            "tags_json": tags_json,
+            "profiles_json": profiles_json,
         }
     else:
         return None
@@ -435,12 +468,16 @@ async def check_series_changes(client):
     tracked_data: Dict[str, List[Dict[str, any]]] = await fetch_sonarr_data()
 
     if not stored_series_json or not stored_profiles_json:
-        await plugin.store_data("stored_shows", tracked_data.get('series_json'))
-        await plugin.store_data("stored_tags", tracked_data.get('tags_json'))
-        await plugin.store_data("stored_profiles", tracked_data.get('profiles_json'))
+        await plugin.store_data("stored_shows", tracked_data.get("series_json"))
+        await plugin.store_data("stored_tags", tracked_data.get("tags_json"))
+        await plugin.store_data("stored_profiles", tracked_data.get("profiles_json"))
 
     elif tracked_data:
-        tracked_series: SeriesList = SeriesList(tracked_data.get('series_json'), tracked_data.get('tags_json'), tracked_data.get('profiles_json'))
+        tracked_series: SeriesList = SeriesList(
+            tracked_data.get("series_json"),
+            tracked_data.get("tags_json"),
+            tracked_data.get("profiles_json"),
+        )
         stored_series: SeriesList = SeriesList(stored_series_json, stored_tags_json, stored_profiles_json)
 
         if await stored_series.list_diffs(tracked_series):
@@ -450,9 +487,9 @@ async def check_series_changes(client):
             else:
                 print(change_message)
 
-            await plugin.store_data("stored_shows", tracked_data.get('series_json'))
-            await plugin.store_data("stored_tags", tracked_data.get('tags_json'))
-            await plugin.store_data("stored_profiles", tracked_data.get('profiles_json'))
+            await plugin.store_data("stored_shows", tracked_data.get("series_json"))
+            await plugin.store_data("stored_tags", tracked_data.get("tags_json"))
+            await plugin.store_data("stored_profiles", tracked_data.get("profiles_json"))
 
 
 async def print_series(command):
@@ -463,7 +500,7 @@ async def print_series(command):
     :return:
     """
 
-    shows: List[str] or None = (await fetch_sonarr_data())['series_json']
+    shows: List[str] or None = (await fetch_sonarr_data())["series_json"]
 
     if shows:
         message = "<table><tr>"
@@ -472,12 +509,14 @@ async def print_series(command):
             message = message + f"<td><b>{col}</b></td>"
         message = message + "</tr>"
         for show in shows:
-            cols = [f"<a href=\"https://www.imdb.com/title/{show['imdbId']}\">{show['title']}</a>",
-                    f"{str(show['seasonCount'])}",
-                    f"{str(show['episodeCount'])}",
-                    f"{str(naturalsize(show['sizeOnDisk'], binary=True))}",
-                    f"{str(show['status'])}",
-                    f"{str(show['ratings']['value'])}"]
+            cols = [
+                f"<a href=\"https://www.imdb.com/title/{show['imdbId']}\">{show['title']}</a>",
+                f"{str(show['seasonCount'])}",
+                f"{str(show['episodeCount'])}",
+                f"{str(naturalsize(show['sizeOnDisk'], binary=True))}",
+                f"{str(show['status'])}",
+                f"{str(show['ratings']['value'])}",
+            ]
             message = message + "<tr>"
             for col in cols:
                 message = message + "<td>" + col + "</td>"
@@ -497,7 +536,7 @@ async def current_week_dates() -> (str, str):
 
     weekday: int = datetime.date.today().weekday()
     week_start: str = datetime.date.isoformat(datetime.date.today() - datetime.timedelta(days=weekday))
-    week_end: str = datetime.date.isoformat(datetime.date.today() + datetime.timedelta(days=7-weekday))
+    week_end: str = datetime.date.isoformat(datetime.date.today() + datetime.timedelta(days=7 - weekday))
 
     return week_start, week_end
 
@@ -511,10 +550,11 @@ async def get_calendar_episodes(start_date: str, end_date: str) -> list or None:
     """
 
     api_path = "/calendar"
-    api_parameters = {"apikey": plugin.read_config("api_key"),
-                      "start": start_date,
-                      "end": end_date
-                      }
+    api_parameters = {
+        "apikey": plugin.read_config("api_key"),
+        "start": start_date,
+        "end": end_date,
+    }
     try:
         response: requests.Response = requests.get(plugin.read_config("api_base") + api_path, params=api_parameters)
     except requests.exceptions.ConnectionError as err:
@@ -522,7 +562,7 @@ async def get_calendar_episodes(start_date: str, end_date: str) -> list or None:
         return None
 
     if response.status_code == 200:
-        return sorted(response.json(), key=lambda i: i['airDateUtc'])
+        return sorted(response.json(), key=lambda i: i["airDateUtc"])
     else:
         return None
 
@@ -543,15 +583,15 @@ async def compose_upcoming(start_date: str, end_date: str) -> str:
 
         for episode in episodes:
 
-            day: str = datetime.datetime.fromisoformat(episode['airDateUtc'].rstrip('Z')).strftime('%A')
+            day: str = datetime.datetime.fromisoformat(episode["airDateUtc"].rstrip("Z")).strftime("%A")
             if day not in episodes_by_day.keys():
                 episodes_by_day[day] = [episode]
             else:
                 episodes_by_day.get(day).append(episode)
 
         for day, episode_list in episodes_by_day.items():
-            if day == datetime.datetime.today().strftime('%A'):
-                message += f"**<font color=\"orange\">{day}</font>**  \n"
+            if day == datetime.datetime.today().strftime("%A"):
+                message += f'**<font color="orange">{day}</font>**  \n'
             else:
                 message += f"**{day}**  \n"
 
@@ -560,17 +600,19 @@ async def compose_upcoming(start_date: str, end_date: str) -> str:
                 format_begin: str = ""
                 format_end: str = ""
 
-                if episode['hasFile']:
-                    format_begin = "<font color=\"green\">"
+                if episode["hasFile"]:
+                    format_begin = '<font color="green">'
                     format_end = "</font>"
-                elif datetime.datetime.fromisoformat(episode['airDateUtc'].rstrip('Z')) < datetime.datetime.now():
+                elif datetime.datetime.fromisoformat(episode["airDateUtc"].rstrip("Z")) < datetime.datetime.now():
                     # airdate is in the past, mark file missing
-                    format_begin = "<font color=\"red\">"
+                    format_begin = '<font color="red">'
                     format_end = "</font>"
 
-                message += f"{format_begin}{str(episode['series']['title'])} " \
-                           f"S{str(episode['seasonNumber']).zfill(2)}E{str(episode['episodeNumber']).zfill(2)} " \
-                           f"{str(episode['title'])}{format_end}  \n"
+                message += (
+                    f"{format_begin}{str(episode['series']['title'])} "
+                    f"S{str(episode['seasonNumber']).zfill(2)}E{str(episode['episodeNumber']).zfill(2)} "
+                    f"{str(episode['title'])}{format_end}  \n"
+                )
     return message
 
 
@@ -607,7 +649,12 @@ async def update_current_episodes(client):
     message: str = await compose_upcoming(week_start, week_end)
 
     if message != "" and message != await plugin.read_data("today_message_text"):
-        message_id: str or None = await plugin.replace_notice(client, plugin.read_config("room_id"), await plugin.read_data("today_message"), message)
+        message_id: str or None = await plugin.replace_notice(
+            client,
+            plugin.read_config("room_id"),
+            await plugin.read_data("today_message"),
+            message,
+        )
         if not message_id:
             await current_episodes(client)
         else:

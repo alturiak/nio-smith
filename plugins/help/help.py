@@ -55,9 +55,18 @@ async def print_help(command):
                     additional_commands: bool = False
 
                     # Iterate through all commands of requested plugin and add descriptions
-                    for (plugin_command_name, plugin_command) in requested_plugin._get_commands().items():
+                    for (
+                        plugin_command_name,
+                        plugin_command,
+                    ) in requested_plugin._get_commands().items():
                         if plugin_command._is_valid_from_room(current_room_id):
-                            command_texts.append((plugin_command_name, plugin_command.help_text, plugin_command.power_level))
+                            command_texts.append(
+                                (
+                                    plugin_command_name,
+                                    plugin_command.help_text,
+                                    plugin_command.power_level,
+                                )
+                            )
                         else:
                             additional_commands = True
 
