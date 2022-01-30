@@ -1,6 +1,7 @@
 Nio Smith
 ===
 [![Built with matrix-nio](https://img.shields.io/badge/built%20with-matrix--nio-brightgreen)](https://github.com/poljar/matrix-nio)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![#nio-smith](https://img.shields.io/matrix/nio-smith:matrix.org?color=blue&label=Join%20%23nio-smith)](https://matrix.to/#/!rdBDrHapAsYdvmgGMP:pack.rocks?via=pack.rocks)
 
 A plugin-based bot for [@matrix-org](https://github.com/matrix-org),  
