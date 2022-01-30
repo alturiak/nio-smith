@@ -1,5 +1,6 @@
 # -*- coding: utf8 -*-
 import datetime
+import random
 import ssl
 import socket
 from typing import Dict, List, Tuple
@@ -68,7 +69,7 @@ class Server:
         :return:
         """
 
-        return await self.time_until_expire() < datetime.timedelta(0)
+        return await self.cert_expiry < datetime.datetime.now()
 
     async def last_updated_within(self, timeframe: datetime.timedelta) -> bool:
         """
@@ -85,15 +86,43 @@ class Server:
         :return:
         """
 
-        return not await self.last_updated_within(datetime.timedelta(minutes=plugin.read_config("server_max_age")))
+        # server is currently offline and hasn't been offline for more than a week
+        if not self.currently_alive and self.last_alive and self.last_alive > datetime.datetime.now() - datetime.timedelta(days=7):
+            return True
+
+        # certificate will expire in less than 10 minutes
+        elif self.cert_expiry < datetime.datetime.now() + datetime.timedelta(minutes=10):
+            return True
+
+        # server hasn't been updated for more than server_max_age (+-5 minutes to distribute updates a little)
+        elif not await self.last_updated_within(datetime.timedelta(minutes=plugin.read_config("server_max_age")+random.randint(-5, 5))):
+            return True
+
+        else:
+            return False
 
     async def needs_warning(self) -> bool:
         """
-        Check whether a new warning is warranted
+        Warn once, if a certificate expiration date is known, is in the future, but less than warn_steps away
         :return:
         """
 
-        return self.last_posted_warning < self.last_alive
+        # TODO: only report servers that have been offline for more than 5 minutes, but report expired certs immediately?
+
+        warn_steps: List[datetime.timedelta] = [
+            datetime.timedelta(minutes=10),
+            datetime.timedelta(days=1),
+            datetime.timedelta(days=plugin.read_config("warn_cert_expiry"))
+        ]
+
+        step: datetime.timedelta
+        if not self.cert_expiry:
+            return False
+        else:
+            for step in warn_steps:
+                if datetime.datetime.now() < self.cert_expiry < (datetime.datetime.now() + step) and self.last_posted_warning < (datetime.datetime.now() - step):
+                    return True
+            return False
 
     def federation_test(self):
         """
@@ -104,6 +133,7 @@ class Server:
         """
 
         api_parameters = {"server_name": self.server_name}
+        logger.debug(f"Updating {self.server_name}")
 
         try:
             response: requests.Response = requests.get(plugin.read_config("federation_tester_url") + "/api/report", params=api_parameters)
@@ -195,6 +225,7 @@ async def update_federation_status(client_or_command: AsyncClient or Command):
         # we're called by command, force an update
         client = client_or_command.client
         forced_update = True
+
     # get a list of shared servers on rooms the plugin is active for
     shared_servers: List[str] = await plugin.get_connected_servers(client, plugin.read_config("room_list"))
     server_list_saved: Dict[str, Server] or None = await plugin.read_data("server_list")
@@ -238,11 +269,7 @@ async def update_federation_status(client_or_command: AsyncClient or Command):
         # update servers' status if required
         server_list_new: Dict[str, Server] = server_list_saved
         for server in server_list_new.values():
-            if forced_update or server.cert_expiry < datetime.datetime.now() + datetime.timedelta(minutes=10) or not server.currently_alive or await \
-                    server.needs_update():
-                # check status of server, always update if server was dead before or cert is about to expire
-                # TODO: only check dead servers all the time for a week?
-
+            if forced_update or await server.needs_update():
                 server.federation_test()
                 data_changed = True
                 if server.currently_alive and server.server_name not in previously_alive_servers:
@@ -251,29 +278,7 @@ async def update_federation_status(client_or_command: AsyncClient or Command):
                 if not server.currently_alive and server.server_name not in previously_dead_servers:
                     new_dead_servers.append(server.server_name)
 
-                # TODO: refactor in Server.needs_warning()
-                # TODO: only report servers that have been offline for more than 5 minutes, but report expired certs immediately?
-                if server.cert_expiry \
-                        and server.cert_expiry > datetime.datetime.now() \
-                        and server.cert_expiry < (datetime.datetime.now() + datetime.timedelta(minutes=10)) \
-                        and server.last_posted_warning < datetime.datetime.now() - datetime.timedelta(minutes=10):
-                    # warn if expiry in the future but in less than 1 day and a warning has not been posted within the last 10 minutes
-                    need_warning_servers.append((server.server_name, server.cert_expiry))
-                    server.last_posted_warning = datetime.datetime.now()
-
-                elif server.cert_expiry \
-                        and server.cert_expiry > datetime.datetime.now() \
-                        and server.cert_expiry < (datetime.datetime.now() + datetime.timedelta(days=1)) \
-                        and server.last_posted_warning < datetime.datetime.now() - datetime.timedelta(days=1):
-                    # warn if expiry in the future but in less than 1 day and a warning has not been posted within the last day
-                    need_warning_servers.append((server.server_name, server.cert_expiry))
-                    server.last_posted_warning = datetime.datetime.now()
-
-                elif server.cert_expiry \
-                        and server.cert_expiry > datetime.datetime.now() \
-                        and server.cert_expiry < (datetime.datetime.now() + datetime.timedelta(days=plugin.read_config("warn_cert_expiry"))) \
-                        and server.last_posted_warning < datetime.datetime.now() - datetime.timedelta(days=plugin.read_config("warn_cert_expiry")):
-                    # warn if expiry in the future, but in less than 7 days and a warning has not been posted within the last 7 days
+                if await server.needs_warning():
                     need_warning_servers.append((server.server_name, server.cert_expiry))
                     server.last_posted_warning = datetime.datetime.now()
 
@@ -342,18 +347,18 @@ async def command_federation_status(command: Command):
     for server_name in await plugin.get_connected_servers(command.client, room_list):
         server = server_list_saved[server_name]
         if not server.currently_alive:
-            message += f"<font color=red>{server.server_name} offline</font>. "
+            message += f"<font color=red>{server.server_name} offline (last alive: {server.last_alive})</font>. "
         elif (datetime.datetime.now() + datetime.timedelta(days=plugin.read_config("warn_cert_expiry"))) > server.cert_expiry:
             message += f"<font color=yellow>{server.server_name} warning</font>. "
         else:
             message += f"<font color=green>{server.server_name} online</font>. "
         if server.software:
-            message += f"Server: {server.software} ({server.version}). "
+            message += f"**Server**: {server.software} ({server.version}). "
         if server.cert_expiry:
-            message += f"Certificate expiry: {server.cert_expiry} ({server.cert_expiry - datetime.datetime.now()}). "
+            message += f"**Cert expiry**: {server.cert_expiry} ({server.cert_expiry - datetime.datetime.now()}). "
 
         num_users: int = len((await plugin.get_users_on_servers(command.client, [server.server_name], room_list))[server_name])
-        message += f"Users: {num_users}.  \n"
+        message += f"**Users**: {num_users}.  \n"
 
     await plugin.respond_notice(command, message)
 
