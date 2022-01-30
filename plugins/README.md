@@ -1,32 +1,33 @@
 # Plugins
 ## Included Plugins
 Note: automatic loading of plugins can be configured by allow- and denylist in the bot's configuration.  
+- `cashup`: settle expenses among a group ([README.md](cashup/README.md)) (Contributed by [JimmyPesto](https://github.com/JimmyPesto/nio-smith))
 - `dates`: stores dates and birthdays, posts reminders ([README.md](dates/README.md))
-- `echo`: echoes back text following the command.
-- `help`: lists all available plugins. If called with a plugin as parameter, lists all available commands
-- `meter`: accurately measures someones somethingness
-- `oracle`: predicts the inevitable future (german, sorry)
-- `pick`: aids you in those really important life decisions
-- `quote`: store quotes and provide several means to display them
-- `roll`: the dice giveth and the dice taketh away
-- `sample`: just a simple sample, demonstrating the current capabilities of the `Plugin` interface
-([README.md](sample/README.md))
-- `sonarr`: provides commands to query sonarr's API
-- `spruch`: famous quotes from even more famous people (german, sorry)
-- `translate`: provide translations of all room-messages via Google Translate (using freetranslate, may break randomly) 
-([README.md](translate/README.md))
-- `cashup`: settle expenses among a group ([README.md](cashup/README.md))
-- `xkcd`: Post an xkcd-comic as image. Use the most recent by default, or a specific one if an ID is given.
+- `echo`: echoes back text following the command. ([README.md](echo/README.md))
+- `federation_status`: Checks federation-status of all connected homeservers ([README.md](federation_status/README.md))
+- `help`: lists all available plugins. If called with a plugin as parameter, lists all available commands ([README.md](help/README.md))
+- `manage_bot`: Various commands to manage the bot interactively. ([README.md](manage_bot/README.md))
+- `meter`: Plugin to provide a simple, randomized meter ([README.md](meter/README.md))
+- `oracle`: predicts the inevitable future (german, sorry) ([README.md](oracle/README.md))
+- `pick`: Pick a random item from a given list of items. ([README.md](pick/README.md))
+- `quote`: Store conversations as quotes to be displayed later. ([README.md](quote/README.md))
+- `roll`: Roll one or more dice. The trigger is 'roll'. ([README.mde](roll/README.md))
+- `sample`: Collection of several sample commands to illustrate usage and maybe serve as a plugin template. ([README.md](sample/README.md))
+- `sonarr`: Provides commands to query sonarr's API. ([README.md](sonarr/README.md))
+- `spruch`: Posts a random quote by more or less famous persons. (german, sorry) ([README.md](spruch/README.md))
+- `translate`: Provide translations of all room-messages via Google Translate ([README.md](translate/README.md))
+- `xkcd_comic`: Post an xkcd-comic as image or url. ([README.md](xkcd_comic/README.md))
 
 ## Included plugins' 3rd party requirements
-- `dates`: [dateparser](https://pypi.org/project/dateparser/) to allow for almost arbitrary input format of dates
+- `dates`:
+  - [dateparser](https://pypi.org/project/dateparser/) to allow for almost arbitrary input format of dates
 - `sonarr`:
   - [requests](https://pypi.org/project/requests/) to query sonarr's API
   - [humanize](https://pypi.org/project/humanize/)
 - `translate`:
   - Python 3.9 
   - [freetranslate](https://pypi.org/project/freetranslate/) to provide language detection and translation
-- `xkcd`:
+- `xkcd_comic`:
   - [xkcd](https://pypi.org/project/xkcd/) to retrieve xkcd-comics
 
 ## Plugins can
