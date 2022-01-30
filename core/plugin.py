@@ -1078,6 +1078,7 @@ class Plugin:
                 if server_name not in connected_servers:
                     connected_servers.append(server_name)
 
+        connected_servers.sort()
         return connected_servers
 
     async def get_users_on_servers(self, client: AsyncClient, home_servers: List[str], room_id_list: List[str]) -> Dict[str, List[str]]:
