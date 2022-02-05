@@ -38,8 +38,10 @@ async def lookup_wikipedia(command: Command, lang: str or None = None):
     if not lang and len(command.args) > 1 and len(command.args[0]) == 2:
         lang: str = command.args[0]
         query: str = " ".join(command.args[1:])
-
+    elif lang:
+        query: str = " ".join(command.args)
     else:
+        lang: str = plugin.read_config("default_lang")
         query: str = " ".join(command.args)
 
     if lang in wiki.languages():
@@ -51,7 +53,7 @@ async def lookup_wikipedia(command: Command, lang: str or None = None):
     try:
         page: wikipedia.WikipediaPage = wiki.page(query)
     except wikipedia.exceptions.DisambiguationError as e:
-        await plugin.respond_notice(command, f"Error: Disambiguation. You may want to try {', '.join(e.options)}")
+        await plugin.respond_notice(command, f"Error: Disambiguation. You may want to try {' | '.join(e.options[:10])}. ")
         return
     except wikipedia.exceptions.PageError:
         await plugin.respond_notice(command, "Error: No article found.")
@@ -60,7 +62,7 @@ async def lookup_wikipedia(command: Command, lang: str or None = None):
         await plugin.respond_notice(command, "Error: Error connecting to wikipedia.")
         return
 
-    await plugin.respond_notice(command, f"{page.title}: {wiki.summary(query, sentences=3)}  \n{page.url}")
+    await plugin.respond_notice(command, f"[{page.title}]({page.url}): {wiki.summary(query, sentences=3)}")
 
 
 async def lookup_wikipedia_en(command: Command):
