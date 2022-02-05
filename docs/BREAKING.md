@@ -1,5 +1,5 @@
 ## Current
-### v0.0.6 (not released yet but already on master)
+### v0.0.6
 #### Expandable messages
 The optional arguments for
 - `Plugin.send_message()`
