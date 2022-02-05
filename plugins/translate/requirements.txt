@@ -1,1 +1,1 @@
-freetranslate>=0.2.0
+freetranslate>=0.2.2
