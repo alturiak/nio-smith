@@ -1,6 +1,7 @@
 Plugin: pick
 ===
-Pick a random item from a given list of items.
+Pick a random item from a given list of items.  
+Ported from Hydralisk/Pyrate. Original author: [Dingo](https://matrix.to/#/@dingo:pack.rocks).
 
 ## Commands
 

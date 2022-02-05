@@ -1,6 +1,7 @@
 Plugin: oracle (german)
 ===
-Plugin to provide a simple, randomized oracle (german)
+Plugin to provide a simple, randomized oracle (german)  
+Ported from Hydralisk/Pyrate. Original author: [VooDoo](https://matrix.to/#/@voodoo:pack.rocks).
 
 ## Commands
 

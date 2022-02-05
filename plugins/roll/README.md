@@ -1,6 +1,7 @@
 Plugin: roll
 ===
-Roll one or more dice. The trigger is 'roll'.
+Roll one or more dice. The trigger is 'roll'.  
+Ported from Hydralisk/Pyrate. Original author: [Dingo](https://matrix.to/#/@dingo:pack.rocks).
 
 ## Commands
 ### roll
