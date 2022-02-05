@@ -2,18 +2,21 @@
 ### v0.0.6 (not released yet but already on master)
 #### Expandable messages
 The optional arguments for
-- `Plugin.send_messae()`
+- `Plugin.send_message()`
 - `Plugin.respond_message()`
 
 have changed.  
 `expanded_mesage` has been added as a new optional argument, moving optional argument `delay` by one 
   position. It is recommended to always use optional arguments explicitly, e.g. `plugin.respond_message(command, 
-  "short text", expanded_message="long text", delay=200)`
+  "short text", expanded_message="long text", delay=200)` (https://github.com/alturiak/nio-smith/commit/1195cbb2633f1fb3f1fc8bf2f90d8a3e2f62fb26)
 
 #### Nick linking
 `Plugin.link_user()` now returns the unmodified `display_name` it has been originally given instead of `None` if the 
 user is not on the room. This ensures that it always returns a valid nickname and removes the need for special 
-handling within the plugin.
+handling within the plugin. (https://github.com/alturiak/nio-smith/commit/5a2af262da562f453c8414812c7e6b5b200b2085)
+
+#### Renamed parameter of hooks
+Optional parameter `room_id` of `Plugin.add_hook()`, `Plugin.del_hook()` and `Plugin.has_hook()` has been renamed to `room_id_list` to better reflect its usage.
 
 ## Upcoming
 ### Simplify plugins-interface
