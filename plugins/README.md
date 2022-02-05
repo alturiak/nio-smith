@@ -16,6 +16,8 @@ Note: automatic loading of plugins can be configured by allow- and denylist in t
 - `sonarr`: Provides commands to query sonarr's API. ([README.md](sonarr/README.md))
 - `spruch`: Posts a random quote by more or less famous persons. (german, sorry) ([README.md](spruch/README.md))
 - `translate`: Provide translations of all room-messages via Google Translate ([README.md](translate/README.md))
+- `wiki`: Lookup keywords in various online encyclopedias. ([README.md](wiki/README.md))
+- `wissen`: Post a random or specific entry of the database of useless knowledge. (german, sorry) ([README.md](wissen/README.md))
 - `xkcd_comic`: Post an xkcd-comic as image or url. ([README.md](xkcd_comic/README.md))
 
 ## Included plugins' 3rd party requirements
