@@ -1,0 +1,4 @@
+# Sample configuration of wiki-plugin. Rename to wiki.yaml to use.
+
+# Optional documentation url
+# doc_url: "https://github.com/alturiak/nio-smith/blob/master/plugins/wiki/README.md"
