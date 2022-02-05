@@ -167,7 +167,9 @@ class Series:
         self.sizeOnDisk: str = series_dict["sizeOnDisk"]
         self.status: str = series_dict["status"]
         self.overview: str = series_dict["overview"]
-        self.previousAiring: datetime.datetime or None = isoparse(series_dict.get("previousAiring"))
+        self.previousAiring: datetime.datetime or None = None
+        if series_dict.get("previousAiring"):
+            self.previousAiring = isoparse(series_dict.get("previousAiring"))
         self.network: str = series_dict["network"]
         self.airTime: str = series_dict["airTime"]
         self.images: List[Dict] = series_dict["images"]
@@ -183,7 +185,12 @@ class Series:
         self.tvdbId: int = series_dict["tvdbId"]
         self.tvRageId: int = series_dict["tvRageId"]
         self.tvMazeId: int = series_dict["tvMazeId"]
-        self.firstAired: datetime.datetime = isoparse(series_dict["firstAired"])
+        self.firstAired: datetime.datetime or None = None
+        if series_dict.get("firstAired"):
+            self.firstAired = isoparse(series_dict.get("firstAired"))
+        self.lastInfoSync: datetime.datetime or None = None
+        if series_dict.get("lastInfoSync"):
+            self.lastInfoSync = isoparse(series_dict.get("lastInfoSync"))
         self.lastInfoSync: datetime.datetime = isoparse(series_dict["lastInfoSync"])
         self.seriesType: str = series_dict["seriesType"]
         self.cleanTitle: str = series_dict["cleanTitle"]
