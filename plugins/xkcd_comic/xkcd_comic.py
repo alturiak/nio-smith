@@ -1,4 +1,5 @@
 # -*- coding: utf8 -*-
+import datetime
 from typing import List
 
 from PIL import Image
@@ -22,7 +23,7 @@ def setup():
     plugin.add_config("url_only", is_required=False, default_value=False)
     plugin.add_config("room_list", is_required=False, default_value=[])
     plugin.add_command("xkcd", xkcd_command, "Post the most recent or a specific xkcd-comic")
-    plugin.add_timer(xkcd_check, frequency="hourly")
+    plugin.add_timer(xkcd_check, datetime.timedelta(hours=1))
 
 
 async def format_message(comic: xkcd.Comic, link_comic: bool = False) -> str:
