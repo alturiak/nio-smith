@@ -1,4 +1,4 @@
-# Sample configuration of xkcd_comic-plugin. Rename to xkcd_comic.sample.yaml to use.
+# Sample configuration of xkcd_comic-plugin. Rename to xkcd_comic.yaml to use.
 
 # Post url only, not the actual image
 # url_only: False
