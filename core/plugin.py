@@ -637,6 +637,7 @@ class Plugin:
         event_response: RoomSendResponse or RoomSendError = await send_text_to_room(client, room_id, message, notice=False, markdown_convert=markdown_convert)
 
         if isinstance(event_response, RoomSendResponse):
+            logger.warning(f"Error sending {message} to {room_id}: {event_response}")
             return event_response.event_id
         else:
             return None
@@ -704,9 +705,10 @@ class Plugin:
             message = await self.__expandable_message_body(message, expanded_message)
         event_response: RoomSendResponse or RoomSendError = await send_text_to_room(client, room_id, message, notice=True, markdown_convert=markdown_convert)
 
-        if event_response:
+        if isinstance(event_response, RoomSendResponse):
             return event_response.event_id
         else:
+            logger.warning(f"Error sending {message} to {room_id}: {event_response}")
             return None
 
     async def respond_notice(
