@@ -29,6 +29,8 @@ Note: automatic loading of plugins can be configured by allow- and denylist in t
 - `translate`:
   - Python 3.9 
   - [freetranslate](https://pypi.org/project/freetranslate/) to provide language detection and translation
+- `wiki`:
+  - [wikipedia](https://pypi.org/project/wikipedia/) to interact with wikipedia
 - `xkcd_comic`:
   - [xkcd](https://pypi.org/project/xkcd/) to retrieve xkcd-comics
 
