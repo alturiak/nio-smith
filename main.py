@@ -20,7 +20,7 @@ from nio import (
 from core.callbacks import Callbacks
 from core.config import Config
 from core.storage import Storage
-from aiohttp.client_exceptions import ServerDisconnectedError, ClientConnectionError
+from aiohttp.client_exceptions import ServerDisconnectedError, ClientConnectionError, ClientConnectorError
 
 from core.pluginloader import PluginLoader
 
@@ -153,6 +153,7 @@ async def main():
             ServerDisconnectedError,
             AttributeError,
             asyncio.TimeoutError,
+            ClientConnectorError
         ) as err:
             logger.debug(err)
             logger.debug(traceback.print_exc())
