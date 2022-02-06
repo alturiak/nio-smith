@@ -7,7 +7,7 @@ from core.bot_commands import Command
 from core.plugin import Plugin
 
 logger = logging.getLogger(__name__)
-plugin = Plugin("wissen", "Lookup", "Lookup keywords in various online encyclopedias")
+plugin = Plugin("wissen", "Fun", "Post a random or specific entry of the database of useless knowledge.")
 
 
 def setup():
