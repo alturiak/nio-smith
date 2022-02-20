@@ -338,17 +338,20 @@ async def date_next(command):
         return
 
     dates: Dict[str, StoreDate] = await plugin.read_data("stored_dates")
-    sorted_dates: List[StoreDate] = sorted(dates.values(), key=lambda x: x.date)
+    if dates:
+        sorted_dates: List[StoreDate] = sorted(dates.values(), key=lambda x: x.date)
 
-    date: StoreDate
-    for date in sorted_dates:
-        # iterate through the sorted dates until we find the first upcoming date
-        if date.mx_room and date.mx_room == command.room.room_id and date.date > datetime.datetime.now():
-            await plugin.respond_message(command, f"{date}")
-            return
+        date: StoreDate
+        for date in sorted_dates:
+            # iterate through the sorted dates until we find the first upcoming date
+            if date.mx_room and date.mx_room == command.room.room_id and date.date > datetime.datetime.now():
+                await plugin.respond_message(command, f"{date}")
+                return
 
+        else:
+            await plugin.respond_notice(command, f"No upcoming dates for this room.")
     else:
-        await plugin.respond_notice(command, f"No upcoming dates for this room.")
+        await plugin.respond_notice(command, f"No dates stored. Try `date_add`.")
 
 
 async def date_list(command):
