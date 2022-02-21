@@ -98,15 +98,7 @@ class Plugin:
 
         return command_help
 
-    def add_command(
-        self,
-        command: str,
-        method: Callable,
-        help_text: str,
-        room_id: List[str] = None,
-        power_level: int = 0,
-        command_type: str = "static",
-    ):
+    def add_command(self, command: str, method: Callable, help_text: str, room_id: List[str] = None, power_level: int = 0, command_type: str = "static"):
         """
         Adds a new command
         :param command: the actual name of the command, e.g. !help
@@ -118,14 +110,7 @@ class Plugin:
         :return:
         """
 
-        plugin_command = PluginCommand(
-            command,
-            method,
-            help_text,
-            power_level=power_level,
-            room_id=room_id,
-            command_type=command_type,
-        )
+        plugin_command = PluginCommand(command, method, help_text, power_level=power_level, room_id=room_id, command_type=command_type)
         if command not in self.commands.keys():
             self.commands[command] = plugin_command
             self.help_texts[command] = help_text

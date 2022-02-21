@@ -62,15 +62,7 @@ class Callbacks(object):
                 line = line[len(self.command_prefix) :]
                 line = line.lstrip()
                 if line != "":
-                    command = Command(
-                        self.client,
-                        self.store,
-                        self.config,
-                        line,
-                        room,
-                        event,
-                        self.plugin_loader,
-                    )
+                    command = Command(self.client, self.store, self.config, line, room, event, self.plugin_loader)
                     await self.plugin_loader.run_command(command)
 
         else:
