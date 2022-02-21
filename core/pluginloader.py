@@ -203,7 +203,7 @@ class PluginLoader:
 
         # check if we did actually find a matching command
         if run_command != "":
-            if self.get_commands()[run_command].room_id is None or command.room.room_id in self.get_commands()[run_command].room_id:
+            if not self.get_commands()[run_command].room_id or command.room.room_id in self.get_commands()[run_command].room_id:
 
                 # check if the user's power_level matches the command's requirement
                 if command.room.power_levels.get_user_level(command.event.sender) >= self.get_commands()[run_command].power_level:
