@@ -255,7 +255,7 @@ async def translate_message(client: AsyncClient, room_id: str, event: RoomMessag
         if rooms_db[room_id]["bidirectional"]:
             languages: List[str] = [
                 rooms_db[room_id]["source_langs"][0],
-                rooms_db[room_id["dest_lang"]],
+                rooms_db[room_id]["dest_lang"],
             ]
 
             if message_source_lang in languages:
