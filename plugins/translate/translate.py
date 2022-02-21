@@ -16,12 +16,11 @@ plugin = Plugin(
 
 def setup():
     # Change settings in translate.yaml if required
-    plugin.add_config("allowed_rooms", [], is_required=False)
-    plugin.add_config("min_power_level", 50, is_required=False)
+    plugin.add_config("allowed_rooms", [], is_required=True)
+    plugin.add_config("min_power_level", 50, is_required=True)
     plugin.add_config("default_source", ["any"], is_required=False)
     plugin.add_config("default_dest", "en", is_required=False)
     plugin.add_config("default_bidirectional", False, is_required=False)
-
     plugin.add_command(
         "translate",
         switch,
@@ -189,7 +188,7 @@ async def switch(command):
         await plugin.store_data("rooms_db", rooms_db)
         await plugin.respond_notice(command, "Translations disabled")
 
-    elif plugin.read_config("allowed_rooms") == [] or command.room.room_id in plugin.read_config("allowed_rooms"):
+    elif not plugin.read_config("allowed_rooms") or command.room.room_id in plugin.read_config("allowed_rooms"):
         if dest_lang in LANGUAGES.keys() and source_langs == ["any"] or all(elem in LANGUAGES.keys() for elem in source_langs):
             rooms_db[command.room.room_id] = {
                 "source_langs": source_langs,
