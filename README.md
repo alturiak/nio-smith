@@ -26,6 +26,7 @@ See [plugins/README.md](plugins/README.md) for further details on plugin capabil
 - ✔ autojoin channels on invite (can be restricted to specified accounts)
 - ✔ resilience against temporary homeserver-outages (e.g. during restarts)
 - ✔ resilience against exceptions caused by plugins
+- ✔ simple rate-limiting to avoid losing events to homeserver-side ratelimiting
 - ❌ cross-signing support
 - ❌ dynamic plugin-loading (at runtime)
 - ❌ user-management

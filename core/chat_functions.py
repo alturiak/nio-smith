@@ -1,23 +1,21 @@
+import datetime
 import logging
 import os
+from asyncio import sleep
 from io import StringIO
 from html.parser import HTMLParser
-from typing import Union
+from typing import Union, Optional
 
 import aiofiles.os
 from PIL import Image
 import uuid
 import blurhash
 
-from nio import (
-    SendRetryError,
-    RoomSendResponse,
-    Event,
-    RoomGetEventResponse,
-    RoomGetEventError,
-    UploadResponse,
-)
+from nio import SendRetryError, RoomSendResponse, Event, RoomGetEventResponse, RoomGetEventError, UploadResponse, AsyncClient
 from markdown import markdown
+
+time_of_last_event: datetime.datetime = datetime.datetime.now()
+events_since_cooldown: int = 0
 
 logger = logging.getLogger(__name__)
 
@@ -43,22 +41,45 @@ def strip_tags(html):
     return s.get_data()
 
 
-async def send_text_to_room(client, room_id, message, notice=True, markdown_convert=True) -> RoomSendResponse or None:
-    """Send text to a matrix room
-
-    Args:
-        client (nio.AsyncClient): The client to communicate to matrix with
-
-        room_id (str): The ID of the room to send the message to
-
-        message (str): The message content
-
-        notice (bool): Whether the message should be sent with an "m.notice" message type
-            (will not ping users)
-
-        markdown_convert (bool): Whether to convert the message content to markdown.
-            Defaults to true.
+async def room_send(client: AsyncClient, room_id: str, message_type: str, content: dict, tx_id: Optional[str] = None, ignore_unverified_devices: bool = False) -> RoomSendResponse:
     """
+    Small wrapper function for client.room_send that implements a simple rate-limit. If more than 8 events are being sent in less than two seconds,
+    all future events are being queued up and sent every two seconds until the queue has cooled down again (e.g. no events sent for more than two seconds)
+    :param client: (nio.AsyncClient) The client to communicate to matrix with
+    :param room_id: (str) The room id of the room where the message should be sent to.
+    :param message_type: (str) A string identifying the type of the message.
+    :param content: (dict) A dictionary containing the content of the message.
+    :param tx_id: (str) The transaction ID of this event used to uniquely identify this message.
+    :param ignore_unverified_devices: (bool) If the room is encrypted and contains unverified devices, the devices can be marked as ignored here. Ignored
+    devices will still receive encryption keys for messages but they won't be marked as verified.
+    :return: RoomSendResponse
+    """
+
+    global time_of_last_event, events_since_cooldown
+
+    if time_of_last_event + datetime.timedelta(seconds=2) > datetime.datetime.now():
+        events_since_cooldown += 1
+    else:
+        events_since_cooldown = 0
+
+    if events_since_cooldown > 8:
+        logger.info(f"Delaying message {content.get('body')} to {room_id}, {events_since_cooldown} events since last cooldown.")
+        await sleep(2)
+    time_of_last_event = datetime.datetime.now()
+    return await client.room_send(room_id, message_type, content, tx_id, ignore_unverified_devices)
+
+
+async def send_text_to_room(client: AsyncClient, room_id: str, message, notice=True, markdown_convert=True) -> RoomSendResponse or None:
+    """
+    Send text to a matrix room
+    :param client: (nio.AsyncClient) The client to communicate to matrix with
+    :param room_id: (str) The ID of the room to send the message to
+    :param message: (str) The message content
+    :param notice: (bool) Whether the message should be sent with an "m.notice" message type (will not ping users)
+    :param markdown_convert: (bool) Whether to convert the message content to markdown.
+                                    Defaults to true.
+    """
+
     # Determine whether to ping room members or not
     msgtype = "m.notice" if notice else "m.text"
 
@@ -74,12 +95,7 @@ async def send_text_to_room(client, room_id, message, notice=True, markdown_conv
     response: RoomSendResponse
 
     try:
-        response = await client.room_send(
-            room_id,
-            "m.room.message",
-            content,
-            ignore_unverified_devices=True,
-        )
+        response = await room_send(client, room_id, "m.room.message", content, ignore_unverified_devices=True)
         return response
     except SendRetryError:
         logger.exception(f"Unable to send message response to {room_id}")
@@ -104,7 +120,7 @@ async def send_reaction(client, room_id, event_id: str, reaction: str):
         }
     }
 
-    await client.room_send(room_id, "m.reaction", content, ignore_unverified_devices=True)
+    await room_send(client, room_id, "m.reaction", content, ignore_unverified_devices=True)
 
 
 async def send_replace(client, room_id: str, event_id: str, message: str, message_type: str = "m.text") -> str or None:
@@ -145,14 +161,14 @@ async def send_replace(client, room_id: str, event_id: str, message: str, messag
 
         # check if there are any differences in body or formatted_body before actually sending the m.replace-event
         if new_content["body"] != original_content["body"] or new_content["formatted_body"] != original_content["formatted_body"]:
-            return await client.room_send(room_id, "m.room.message", new_content, ignore_unverified_devices=True)
+            return await room_send(client, room_id, "m.room.message", new_content, ignore_unverified_devices=True)
         else:
             return None
     else:
         return None
 
 
-async def send_image(client, room_id: str, image: Image.Image) -> str or None:
+async def send_image(client: AsyncClient, room_id: str, image: Image.Image) -> str or None:
     """
     Uploads the given Image-Object to the matrix-server and sends a new message including the image.
     :param client:
@@ -203,7 +219,7 @@ async def send_image(client, room_id: str, image: Image.Image) -> str or None:
         }
 
         try:
-            return await client.room_send(room_id, message_type="m.room.message", content=content)
+            return await room_send(client, room_id, message_type="m.room.message", content=content)
         except Exception:
             return None
     else:

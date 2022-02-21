@@ -87,6 +87,7 @@ def setup():
         sample_link_users_per_server,
         "List all users in the room by their homeserver",
     )
+    plugin.add_command("sample_test_message_delay", sample_test_message_delay, "Sends messages in order to test message delay")
 
     """The following part demonstrates defining a configuration value to be expected in the plugin's configuration file and reading the value
 
@@ -496,6 +497,18 @@ async def sample_link_users_per_server(command: Command):
         message += "  \n"
 
     await plugin.respond_notice(command, message)
+
+
+async def sample_test_message_delay(command: Command):
+    """
+    Send notices in quick succession to test message delay
+    :param command:
+    :return:
+    """
+
+    i: int
+    for i in range(20):
+        await plugin.respond_notice(command, f"Message #{i+1}: {datetime.datetime.now()}")
 
 
 setup()
