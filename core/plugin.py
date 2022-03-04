@@ -179,15 +179,9 @@ class Plugin:
             # a hook doesn't already exist for the same event_type, method and room_id_list
 
             if event_type not in self.hooks.keys():
-                # no hooks for event_type, add a event_type and hook
+                # no hooks for event_type, add an event_type and hook
                 self.hooks[event_type] = [
-                    PluginHook(
-                        event_type,
-                        method,
-                        room_id_list=room_id_list,
-                        event_ids=event_ids,
-                        hook_type=hook_type,
-                    )
+                    PluginHook(event_type, method, room_id_list=copy.deepcopy(room_id_list), event_ids=copy.deepcopy(event_ids), hook_type=hook_type)
                 ]
 
             else:
@@ -1039,7 +1033,7 @@ class Plugin:
         """
 
         try:
-            return self.config_items[config_item]
+            return copy.deepcopy(self.config_items[config_item])
         except KeyError:
             return None
 
