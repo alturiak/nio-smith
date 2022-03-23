@@ -1,5 +1,5 @@
-import datetime
 import logging
+import math
 import os
 from asyncio import sleep
 from io import StringIO
@@ -11,11 +11,8 @@ from PIL import Image
 import uuid
 import blurhash
 
-from nio import SendRetryError, RoomSendResponse, Event, RoomGetEventResponse, RoomGetEventError, UploadResponse, AsyncClient
+from nio import SendRetryError, RoomSendResponse, Event, RoomGetEventResponse, RoomGetEventError, UploadResponse, AsyncClient, RoomSendError
 from markdown import markdown
-
-time_of_last_event: datetime.datetime = datetime.datetime.now()
-events_since_cooldown: int = 0
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +38,9 @@ def strip_tags(html):
     return s.get_data()
 
 
-async def room_send(client: AsyncClient, room_id: str, message_type: str, content: dict, tx_id: Optional[str] = None, ignore_unverified_devices: bool = False) -> RoomSendResponse:
+async def room_send(
+    client: AsyncClient, room_id: str, message_type: str, content: dict, tx_id: Optional[str] = None, ignore_unverified_devices: bool = False
+) -> RoomSendResponse:
     """
     Small wrapper function for client.room_send that implements a simple rate-limit. If more than 8 events are being sent in less than two seconds,
     all future events are being queued up and sent every two seconds until the queue has cooled down again (e.g. no events sent for more than two seconds)
@@ -55,18 +54,29 @@ async def room_send(client: AsyncClient, room_id: str, message_type: str, conten
     :return: RoomSendResponse
     """
 
-    global time_of_last_event, events_since_cooldown
+    send_retries: int = 0
+    max_retries: int = 3
+    send_response: RoomSendResponse or RoomSendError = await client.room_send(room_id, message_type, content, tx_id, ignore_unverified_devices)
+    while isinstance(send_response, RoomSendError) and send_retries <= max_retries:
+        if send_response.status_code == "M_LIMIT_EXCEEDED":
+            # we're being rate-limited, try again after the given time
+            send_retries += 1
+            logger.warning(f"Ratelimit hit with {message_type} to {room_id}! Server is asking us to wait {send_response.retry_after_ms}ms. "
+                           f"Sending again in {math.ceil(send_response.retry_after_ms/1000)}s (Retry: {send_retries}/{max_retries}).")
+            await sleep(math.ceil(send_response.retry_after_ms/1000))
+            send_response: RoomSendResponse or RoomSendError = await client.room_send(room_id, message_type, content, tx_id, ignore_unverified_devices)
 
-    if time_of_last_event + datetime.timedelta(seconds=2) > datetime.datetime.now():
-        events_since_cooldown += 1
-    else:
-        events_since_cooldown = 0
+        else:
+            # unknown error, just try again after three seconds
+            send_retries += 1
+            logger.warning(f"Unknown error sending {message_type} to {room_id}. Retrying in 3 sec ({send_retries}/{max_retries}).")
+            await sleep(3)
+            send_response: RoomSendResponse or RoomSendError = await client.room_send(room_id, message_type, content, tx_id, ignore_unverified_devices)
 
-    if events_since_cooldown > 8:
-        logger.info(f"Delaying message {content.get('body')} to {room_id}, {events_since_cooldown} events since last cooldown.")
-        await sleep(2)
-    time_of_last_event = datetime.datetime.now()
-    return await client.room_send(room_id, message_type, content, tx_id, ignore_unverified_devices)
+    if send_retries > max_retries:
+        # log message if it could not be sent
+        logger.warning(f"Could not send {message_type} to {room_id} after {send_retries} retries. Giving up. Message {content.get('body')} is lost!")
+    return send_response
 
 
 async def send_text_to_room(client: AsyncClient, room_id: str, message, notice=True, markdown_convert=True) -> RoomSendResponse or None:

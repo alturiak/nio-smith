@@ -87,7 +87,7 @@ def setup():
         sample_link_users_per_server,
         "List all users in the room by their homeserver",
     )
-    plugin.add_command("sample_test_message_delay", sample_test_message_delay, "Sends messages in order to test message delay")
+    plugin.add_command("sample_test_message_delay", sample_test_message_delay, "Sends multiple messages in order to test reaction to being ratelimited.")
 
     """The following part demonstrates defining a configuration value to be expected in the plugin's configuration file and reading the value
 
