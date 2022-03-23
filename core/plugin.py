@@ -63,6 +63,7 @@ class Plugin:
         self.plugin_data: Dict[str, Any] = {}
         self.config_items: Dict[str, Any] = {}
         self.configuration: Union[Dict[Hashable, Any], list, None] = self.__load_config()
+        logger.debug(f"{self.name}: Configuration loaded from file: {self.configuration}")
 
         self.add_config("doc_url", is_required=False)
         self.doc_url: str = self.read_config("doc_url")
@@ -1004,15 +1005,17 @@ class Plugin:
             return False
         else:
             # check for the value in configuration file and apply it if found
-            if self.configuration and self.configuration.get(config_item):
+            if self.configuration and config_item in self.configuration.keys():
+                logger.debug(f"{self.name}: add_config: Applying {config_item} from config-file. Value: {self.configuration.get(config_item)}")
                 self.config_items[config_item] = self.configuration.get(config_item)
-
-            # otherwise apply default
+            # otherwise, apply default
             elif default_value is not None:
+                logger.debug(f"{self.name}: add_config: {config_item} not found, setting to default-value {default_value}")
                 self.config_items[config_item] = default_value
 
             # if no value and no default, but item is not required, set it to None
             elif not is_required:
+                logger.debug(f"{self.name}: add_config: {config_item} not found, no default and not required, setting to None.")
                 self.config_items[config_item] = None
 
             # no value, no default, and item is required
