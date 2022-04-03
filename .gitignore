@@ -1,11 +1,15 @@
 # PyCharm
 .idea/
 
+# VSCode
+.vscode/
+
 # Python virtualenv environment folders
 env/
 env3/
 .env/
 venv/
+.venv/
 
 # Bot local files
 *.db
@@ -30,3 +34,4 @@ plugins/*/*.json
 
 # other stuff
 plugins/sabnzbdapi/sabnzbdapi.py
+poetry.lock
