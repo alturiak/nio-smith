@@ -1,7 +1,10 @@
 # Sample configuration of xkcd_comic-plugin. Rename to xkcd_comic.yaml to use.
 
-# Post url only, not the actual image
+# Post url only, not the actual image (default: False)
 # url_only: False
+
+# Post a notification about a newly released comic, instead of directly posting it  (default: True)
+# notification_only: True
 
 # List of room_ids to post notifications about new xkcd comics to
 # room_list: []

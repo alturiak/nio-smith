@@ -12,7 +12,10 @@ Post the most recent xkcd-comic. If id is given, post the specified one.
 
 ## Configuration
 `xkcd_comic.yaml`:
-- `url_only`: if true, do not post an actual image but the url instead (make use of clients' url-preview features)
+- `url_only`: if true, do not post an actual image but the url instead (make use of clients' url-preview features) 
+  (default: False)
+- `notification_only`: if true, posts a notification about a newly released comic, instead of directly posting it 
+  (default: True)
 - `room_list`: List of rooms to post a notification about a new xkcd-comic to
 
 ## External Requirements

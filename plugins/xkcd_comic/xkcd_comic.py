@@ -20,7 +20,8 @@ def setup():
     :return: -
     """
 
-    plugin.add_config("url_only", is_required=False, default_value=False)
+    plugin.add_config("url_only", is_required=True, default_value=False)
+    plugin.add_config("notification_only", is_required=True, default_value=True)
     plugin.add_config("room_list", is_required=False, default_value=[])
     plugin.add_command("xkcd", xkcd_command, "Post the most recent or a specific xkcd-comic")
     plugin.add_timer(xkcd_check, datetime.timedelta(hours=1))
@@ -142,27 +143,23 @@ async def xkcd_check(client):
         except:
             logger.warning(f"Unable to get latest xkcd-Comic.")
             return
-
         if comic.number > known_recent:
-            plugin.del_hook("m.reaction", xkcd_react)
-            message_ids: List[str] = []
-            for room_id in room_list:
-                message_id: str or None = await plugin.send_notice(
-                    client,
-                    room_id,
-                    f"New xkcd-Comic: [{comic.title} ({comic.number})]({comic.link}). " f"`!xkcd` or 👀 to display.",
-                )
-                await plugin.send_reaction(client, room_id, message_id, "👀")
-                message_ids.append(message_id)
+            if plugin.read_config("notification_only") == True:
+                # notification_only is set, only post a notification about a new comic
+                plugin.del_hook("m.reaction", xkcd_react)
+                message_ids: List[str] = []
+                for room_id in room_list:
+                    message_id: str or None = await plugin.send_notice(
+                        client, room_id, f"New xkcd-Comic: [{comic.title} ({comic.number})]({comic.link}). `!xkcd` or 👀 to display."
+                    )
+                    await plugin.send_reaction(client, room_id, message_id, "👀")
+                    message_ids.append(message_id)
+                if message_ids:
+                    plugin.add_hook("m.reaction", xkcd_react, room_list, message_ids, hook_type="dynamic")
 
-            if message_ids:
-                plugin.add_hook(
-                    "m.reaction",
-                    xkcd_react,
-                    room_list,
-                    message_ids,
-                    hook_type="dynamic",
-                )
+            else:
+                for room_id in room_list:
+                    await post_xkcd(client, room_id, comic)
             await plugin.store_data("known_recent", comic.number)
 
 
