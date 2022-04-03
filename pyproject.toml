@@ -28,6 +28,7 @@ freetranslate = "^0.2.2"
 wikipedia = "^1.4.0"
 uvloop = {version = "^0.16.0", markers = 'platform_system != "Windows"'}
 python-Levenshtein = "^0.12.2"
+pycoingecko = "^2.2.0"
 
 [tool.poetry.dev-dependencies]
 black = {version = "^22.3.0", allow-prereleases = true}
