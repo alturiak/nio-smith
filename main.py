@@ -26,6 +26,7 @@ from core.pluginloader import PluginLoader
 logger = logging.getLogger(__name__)
 try:
     import uvloop
+
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 except ModuleNotFoundError:
     logger.info("not using uvloop, falling back to asyncio event loop")
