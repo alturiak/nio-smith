@@ -21,6 +21,13 @@ def setup():
         plugin.read_config("manage_bot_rooms"),
         plugin.read_config("manage_bot_power_level"),
     )
+    plugin.add_command(
+        "bot_leave_room",
+        bot_leave_room,
+        "Make the bot leave a specific room",
+        plugin.read_config("manage_bot_rooms"),
+        plugin.read_config("manage_bot_power_level"),
+    )
 
 
 async def bot_rooms_list(command):
@@ -54,12 +61,36 @@ async def bot_rooms_cleanup(command):
     client: AsyncClient = command.client
     room: MatrixRoom
     message: str = ""
-    for room in client.rooms.values():
+    for room in client.joined_rooms.values():
         if room.member_count < 2:
             message += f"Leaving {room.display_name} ({room.room_id})  \n"
             await client.room_leave(room.room_id)
 
     await plugin.respond_message(command, message)
+
+
+async def bot_leave_room(command):
+    """
+    Make the bot leave a specific room
+    :param command:
+    :return:
+    """
+
+    client: AsyncClient = command.client
+    if len(command.args) == 1:
+        leave_room: MatrixRoom = command.args[0]
+        room: MatrixRoom
+        for room in client.rooms.values():
+            if room.room_id == leave_room:
+                await plugin.respond_notice(command, f"Left room {room.display_name} ({room.room_id})")
+                await client.room_leave(room.room_id)
+                await client.room_forget(room.room_id)
+                break
+        else:
+            await plugin.respond_notice(command, f"Error: I'm not in room {leave_room}")
+
+    else:
+        await plugin.respond_notice(command, f"Usage: `bot_leave_room <room_id>`")
 
 
 setup()

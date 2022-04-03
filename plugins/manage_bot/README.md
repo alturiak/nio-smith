@@ -14,6 +14,10 @@ Make the bot leave all rooms in which it is the only member.
 **Warning**: This might permanently render invite-only rooms inaccessible, as nobody is left within the room to invite 
 anyone.
 
+### bot_leave_room
+Usage: `bot_leave_room <room_id>`  
+Make the bot leave a specific room
+
 ## Configuration
 This plugin requires configuration in `manage_bot.yaml`:  
 - `manage_bot_rooms`: Mandatory list of room-ids the plugin will accept commands on (Default: none)
