@@ -61,9 +61,11 @@ async def room_send(
         if send_response.status_code == "M_LIMIT_EXCEEDED":
             # we're being rate-limited, try again after the given time
             send_retries += 1
-            logger.warning(f"Ratelimit hit with {message_type} to {room_id}! Server is asking us to wait {send_response.retry_after_ms}ms. "
-                           f"Sending again in {math.ceil(send_response.retry_after_ms/1000)}s (Retry: {send_retries}/{max_retries}).")
-            await sleep(math.ceil(send_response.retry_after_ms/1000))
+            logger.warning(
+                f"Ratelimit hit with {message_type} to {room_id}! Server is asking us to wait {send_response.retry_after_ms}ms. "
+                f"Sending again in {math.ceil(send_response.retry_after_ms/1000)}s (Retry: {send_retries}/{max_retries})."
+            )
+            await sleep(math.ceil(send_response.retry_after_ms / 1000))
             send_response: RoomSendResponse or RoomSendError = await client.room_send(room_id, message_type, content, tx_id, ignore_unverified_devices)
 
         else:

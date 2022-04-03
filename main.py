@@ -2,6 +2,14 @@
 
 import logging
 import asyncio
+
+try:
+    import uvloop
+
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+except ModuleNotFoundError:
+    logging.info("not using uvloop, falling back to asyncio event loop")
+
 import os
 import sys
 import traceback
@@ -160,4 +168,4 @@ async def main():
             await client.close()
 
 
-asyncio.get_event_loop().run_until_complete(main())
+asyncio.new_event_loop().run_until_complete(main())
