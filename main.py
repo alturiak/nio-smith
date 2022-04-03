@@ -160,4 +160,4 @@ async def main():
             await client.close()
 
 
-asyncio.get_event_loop().run_until_complete(main())
+asyncio.new_event_loop().run_until_complete(main())
