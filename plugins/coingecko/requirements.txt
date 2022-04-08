@@ -1,0 +1,1 @@
+pycoingecko>=2.2.0

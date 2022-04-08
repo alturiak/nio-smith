@@ -2,6 +2,7 @@
 ## Included Plugins
 Note: automatic loading of plugins can be configured by allow- and denylist in the bot's configuration.  
 - `cashup`: settle expenses among a group ([README.md](cashup/README.md)) (Contributed by [JimmyPesto](https://github.com/JimmyPesto/nio-smith))
+- `coingecko`: fetch market data for crypto currencies ([README.md](coingecko/README.md)) (Contributed by [Eulentier161](https://github.com/Eulentier161))
 - `dates`: stores dates and birthdays, posts reminders ([README.md](dates/README.md))
 - `echo`: echoes back text following the command. ([README.md](echo/README.md))
 - `federation_status`: Checks federation-status of all connected homeservers ([README.md](federation_status/README.md))
@@ -21,6 +22,8 @@ Note: automatic loading of plugins can be configured by allow- and denylist in t
 - `xkcd_comic`: Post an xkcd-comic as image or url. ([README.md](xkcd_comic/README.md))
 
 ## Included plugins' 3rd party requirements
+- `coingecko`:
+  - [pycoingecko](https://pypi.org/project/pycoingecko/)
 - `dates`:
   - [dateparser](https://pypi.org/project/dateparser/) to allow for almost arbitrary input format of dates
 - `sonarr`:

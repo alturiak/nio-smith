@@ -1,0 +1,6 @@
+# Sample configuration of coingecko-plugin. Rename to coingecko.yaml to use.
+
+# optional default versus currency if not specified in the command (default: "eur")
+# default_versus_currency: "eur"
+
+# doc_url: "https://github.com/alturiak/nio-smith/blob/master/plugins/coingecko/README.md"
