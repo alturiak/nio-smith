@@ -1,6 +1,6 @@
 import copy
 
-from nio import UnknownEvent, RoomMessageText
+from nio import UnknownEvent, RoomMessageText, AsyncClient
 
 from core.chat_functions import send_text_to_room
 from core.plugin import Plugin, PluginCommand, PluginHook
@@ -22,10 +22,11 @@ logger = logging.getLogger(__name__)
 
 
 class PluginLoader:
-    def __init__(self, config, plugins_dir: str = "plugins"):
+    def __init__(self, config: Config, client: AsyncClient, plugins_dir: str = "plugins"):
         """
         Handles importing and running plugins
         :param config (Config): Bot configuration parameters
+        :param client (AsyncClient): the bot's client instance
         :param plugins_dir: (str) Directory containing the plugins
         """
 
@@ -76,6 +77,9 @@ class PluginLoader:
                     self.__plugin_list[modules[key].plugin.name] = modules[key].plugin
 
         for plugin in self.__plugin_list.values():
+            """Set the bot's client instance"""
+            plugin._set_client(client)
+
             """Display details about the loaded plugins, this does nothing else"""
             logger.info(f"Loaded plugin {plugin.name}:")
             if plugin._get_commands() != {}:

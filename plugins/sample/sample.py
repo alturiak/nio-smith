@@ -101,6 +101,9 @@ def setup():
         "Reads the value `default_message` from the plugin configuration",
     )
 
+    """Get the bot's client instance from plugin.get_client instead of the command"""
+    plugin.add_command("sample_get_client", sample_get_client, "Post a message using the client instance of `plugin.get_client()`")
+
     """The following part demonstrates registering timers by fixed interval and timedelta"""
     if timers_enabled:
         plugin.add_timer(timer_daily, frequency="daily")
@@ -508,7 +511,17 @@ async def sample_test_message_delay(command: Command):
 
     i: int
     for i in range(20):
-        await plugin.respond_notice(command, f"Message #{i+1}: {datetime.datetime.now()}")
+        await plugin.respond_notice(command, f"Message #{i + 1}: {datetime.datetime.now()}")
+
+
+async def sample_get_client(command: Command):
+    """
+    Sends a message using the client from plugin.get_client() instead of the command's client
+    :param command:
+    :return:
+    """
+
+    await plugin.send_notice(await plugin.get_client(), command.room.room_id, "This message uses plugin.get_client()")
 
 
 setup()

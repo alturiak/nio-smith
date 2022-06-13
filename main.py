@@ -95,7 +95,7 @@ async def main():
     )
 
     # instantiate the pluginLoader
-    plugin_loader = PluginLoader(config, plugin_dir)
+    plugin_loader = PluginLoader(config, client, plugins_dir=plugin_dir)
     await plugin_loader.load_plugin_data()
     await plugin_loader.load_plugin_state()
 

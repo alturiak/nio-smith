@@ -47,7 +47,7 @@ class Plugin:
         self.hooks: Dict[str, List[PluginHook]] = {}
         self.timers: List[Timer] = []
         self.rooms: List[str] = []
-
+        self.client: AsyncClient or None = None
         if path.isdir(f"plugins/{self.name}"):
             self.is_directory_based: bool = True
             self.basepath: str = f"plugins/{self.name}/{self.name}"
@@ -1241,15 +1241,31 @@ class Plugin:
 
         return home_server_users
 
+    def _set_client(self, client) -> None:
+        """
+        Set the bot's client instance
+        :param client:
+        :return:
+        """
+        self.client = client
+
+    async def get_client(self) -> AsyncClient:
+        """
+        Get the bot's client instance
+        :return:
+        """
+
+        return self.client
+
 
 class PluginCommand:
     def __init__(
-        self,
-        command: str,
-        method: Callable,
-        help_text: str,
-        power_level,
-        room_id: List[str],
+            self,
+            command: str,
+            method: Callable,
+            help_text: str,
+            power_level,
+            room_id: List[str],
         command_type: str = "static",
     ):
         """
