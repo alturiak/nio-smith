@@ -7,7 +7,7 @@ def _parse_args(input: str) -> "list[str]":
     pattern1 = re.compile(r"([\"\'].+?[\"\'])")
     pattern2 = re.compile(r"[\"\']")
     args_list = []
-    for args in re.split(pattern1, input):
+    for args in re.split(pattern1, " ".join(input.split()[1:])):
         if re.match(pattern2, args):
             args_list.append(args.strip("\"'"))
         else:
