@@ -1,4 +1,18 @@
 from nio import RoomMessageText, AsyncClient, MatrixRoom
+import re
+
+
+def _parse_args(input: str) -> "list[str]":
+    """splits arguments at spaces but keeps the argument as one if its encapsulated by quotes"""
+    pattern1 = re.compile(r"([\"\'].+?[\"\'])")
+    pattern2 = re.compile(r"[\"\']")
+    args_list = []
+    for args in re.split(pattern1, input):
+        if re.match(pattern2, args):
+            args_list.append(args.strip("\"'"))
+        else:
+            args_list.extend(args.split())
+    return args_list[1:]
 
 
 class Command(object):
@@ -24,5 +38,5 @@ class Command(object):
         self.command = command
         self.room: MatrixRoom = room
         self.event: RoomMessageText = event
-        self.args = self.command.split()[1:]
+        self.args = _parse_args(self.command)
         self.plugin_loader = plugin_loader

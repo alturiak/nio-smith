@@ -104,6 +104,8 @@ def setup():
     """Get the bot's client instance from plugin.get_client instead of the command"""
     plugin.add_command("sample_get_client", sample_get_client, "Post a message using the client instance of `plugin.get_client()`")
 
+    plugin.add_command("sample_echo_arguments", sample_echo_arguments, "echos the python list of arguments the bot received.")
+
     """The following part demonstrates registering timers by fixed interval and timedelta"""
     if timers_enabled:
         plugin.add_timer(timer_daily, frequency="daily")
@@ -522,6 +524,16 @@ async def sample_get_client(command: Command):
     """
 
     await plugin.send_notice(await plugin.get_client(), command.room.room_id, "This message uses plugin.get_client()")
+
+
+async def sample_echo_arguments(command: Command):
+    """
+    Sends a message with all arguments the bot received formatted as a python list
+    :param command:
+    :return:
+    """
+
+    await plugin.respond_message(command, f"`{command.args}`")
 
 
 setup()
