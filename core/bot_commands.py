@@ -12,7 +12,7 @@ def _parse_args(input: str) -> "list[str]":
             args_list.append(args.strip("\"'"))
         else:
             args_list.extend(args.split())
-    return args_list[1:]
+    return args_list
 
 
 class Command(object):
