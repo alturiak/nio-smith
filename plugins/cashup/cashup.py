@@ -278,6 +278,12 @@ async def register(command):
         for arg in command.args:
             # remove all ; from arg element;
             arg = arg.replace(";", "")
+            # (just in case) remove all , from arg element;
+            arg = arg.replace(",", "")
+            # skip empty fields
+            # ("Name 0.1 ," -> "["Name", "0.1", ","] -> arg[2] "," -> replace "")
+            if len(arg) == 0:
+                continue
             # find any numbers in string (eg: 12; 12,1; 12.1)
             match_arg_nr = re.search("\d*[.,]?\d+", arg)
             # returns a match object
@@ -293,8 +299,13 @@ async def register(command):
                     return
             else:
                 new_names.append(arg)
-        if len(new_names) == len(new_percentages) and len(new_names) > 1:
+        if len(new_names) > 1 and len(new_names) == len(new_percentages):
             # every name got a percentage value
+            all_percentages_sum = sum(new_percentages)
+            if all_percentages_sum != 1:
+                await plugin.respond_notice(command, "The sum of all percentage values shall be exactly 1! Registration of group failed...")
+                await plugin.respond_notice(command, response_input_error)
+                return
             new_group_not_even = GroupPayments(splits_evenly=False)
             for idx, name in enumerate(new_names):
                 # create a new group member with split percentage
@@ -347,7 +358,7 @@ async def add_expense_for_user(command):
         # ignoring numbers part of optional expense comment
         # first element treated as expense value
         expense_idx = possible_expense_idxs[0]
-        expense_str = command.args[expense_idx]
+        expense_str = re.search("\d*[.,]?\d+", command.args[expense_idx]).group()
         if expense_idx == 0:
             # first command arg is <expense-value>[€/$/etc.]
             # user seems has not provided a <user-name>
