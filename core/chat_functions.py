@@ -95,14 +95,25 @@ async def send_text_to_room(client: AsyncClient, room_id: str, message, notice=T
     # Determine whether to ping room members or not
     msgtype = "m.notice" if notice else "m.text"
 
+    if markdown_convert:
+        formatted_message: str = markdown(message)
+    else:
+        formatted_message: str = message
+
     content = {
         "msgtype": msgtype,
-        "format": "org.matrix.custom.html",
-        "body": strip_tags(message),
-    }
 
-    if markdown_convert:
-        content["formatted_body"] = markdown(message)
+        # legacy format
+        "body": strip_tags(message),
+        "format": "org.matrix.custom.html",
+        "formatted_body": formatted_message,
+
+        # MSC1767
+        "m.message": [
+            {"mimetype": "text/plain", "body": strip_tags(message)},
+            {"mimetype": "text/html", "body": formatted_message}
+        ]
+    }
 
     response: RoomSendResponse
 
@@ -163,12 +174,20 @@ async def send_replace(client, room_id: str, event_id: str, message: str, messag
                 "format": "org.matrix.custom.html",
                 "body": strip_tags(message),
                 "formatted_body": markdown(message),
+                "m.message": [
+                    {"mimetype": "text/plain", "body": strip_tags(message)},
+                    {"mimetype": "text/html", "body": markdown(message)}
+                ]
             },
             "m.relates_to": {"rel_type": "m.replace", "event_id": event_id},
             "msgtype": "m.text",
             "format": "org.matrix.custom.html",
             "body": strip_tags(message),
             "formatted_body": markdown(message),
+            "m.message": [
+                {"mimetype": "text/plain", "body": strip_tags(message)},
+                {"mimetype": "text/html", "body": markdown(message)}
+            ]
         }
 
         # check if there are any differences in body or formatted_body before actually sending the m.replace-event
