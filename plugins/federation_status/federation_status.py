@@ -29,6 +29,7 @@ def setup():
     plugin.add_config("room_list", default_value=None, is_required=False)
     plugin.add_config("warn_cert_expiry", default_value=7, is_required=True)
     plugin.add_config("server_max_age", default_value=60, is_required=True)
+    plugin.add_config("server_ignore_list", default_value=None, is_required=True)
     plugin.add_config(
         "federation_tester_url",
         default_value="https://federationtester.matrix.org",
@@ -306,35 +307,38 @@ async def update_federation_status(client_or_command: AsyncClient or Command):
 
         for room_id in room_list:
             for server in new_dead_servers:
-                try:
-                    user_ids: List[str] = (await plugin.get_users_on_servers(client, [server], [room_id]))[server]
-                    message: str = f"Federation error: {server} offline.  \n"
-                    message += f"Isolated users: {', '.join([await plugin.link_user_by_id(client, room_id, user_id) for user_id in user_ids])}."
-                    await plugin.send_notice(client, room_id, message)
-                except KeyError:
-                    pass
+                if server not in plugin.read_config("server_ignore_list"):
+                    try:
+                        user_ids: List[str] = (await plugin.get_users_on_servers(client, [server], [room_id]))[server]
+                        message: str = f"Federation error: {server} offline.  \n"
+                        message += f"Isolated users: {', '.join([await plugin.link_user_by_id(client, room_id, user_id) for user_id in user_ids])}."
+                        await plugin.send_notice(client, room_id, message)
+                    except KeyError:
+                        pass
 
             for server in new_alive_servers:
-                try:
-                    user_ids: List[str] = (await plugin.get_users_on_servers(client, [server], [room_id]))[server]
-                    message: str = f"Federation recovery: {server} back online.  \n"
-                    message += f"Welcome back, {', '.join([await plugin.link_user_by_id(client, room_id, user_id) for user_id in user_ids])}."
-                    await plugin.send_notice(client, room_id, message)
-                except KeyError:
-                    pass
+                if server not in plugin.read_config("server_ignore_list"):
+                    try:
+                        user_ids: List[str] = (await plugin.get_users_on_servers(client, [server], [room_id]))[server]
+                        message: str = f"Federation recovery: {server} back online.  \n"
+                        message += f"Welcome back, {', '.join([await plugin.link_user_by_id(client, room_id, user_id) for user_id in user_ids])}."
+                        await plugin.send_notice(client, room_id, message)
+                    except KeyError:
+                        pass
 
             expire_date: datetime.datetime
             for server, expire_date in need_warning_servers:
-                try:
-                    user_ids: List[str] = (await plugin.get_users_on_servers(client, [server], [room_id]))[server]
-                    message: str = f"Federation warning: {server}'s certificate will expire on {expire_date} (in {expire_date - datetime.datetime.now()})  \n"
-                    message += (
-                        f"{', '.join([await plugin.link_user_by_id(client, room_id, user_id) for user_id in user_ids])} will be isolated until "
-                        f"the server's certificate has been renewed."
-                    )
-                    await plugin.send_message(client, room_id, message)
-                except KeyError:
-                    pass
+                if server not in plugin.read_config("server_ignore_list"):
+                    try:
+                        user_ids: List[str] = (await plugin.get_users_on_servers(client, [server], [room_id]))[server]
+                        message: str = f"Federation warning: {server}'s certificate will expire on {expire_date} (in {expire_date - datetime.datetime.now()})  \n"
+                        message += (
+                            f"{', '.join([await plugin.link_user_by_id(client, room_id, user_id) for user_id in user_ids])} will be isolated until "
+                            f"the server's certificate has been renewed."
+                        )
+                        await plugin.send_message(client, room_id, message)
+                    except KeyError:
+                        pass
 
         if data_changed:
             await plugin.store_data("server_list", server_list_new)
