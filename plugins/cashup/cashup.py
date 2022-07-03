@@ -336,41 +336,37 @@ async def print_room_state(command):
 async def add_expense_for_user(command):
     """Adds a new expense for the given username"""
     response_input_error = (
-        "You need to provide a previously registered user-name and expense value:  \n" "`cashup-add-expense <user-name> <expense-value>[€/$] [optional]`"
+        "You need to provide a previously registered user-name and expense value:  \n" "`cashup-add-expense <user-name> <expense-value>[€/$/etc.] [comment]` [optional]"
     )
-    match_expense_nr: Match
     user_name: str = ""
-    if len(command.args) == 1:
-        match_expense_nr = re.search("\d*[.,]?\d+", command.args[0])
-        if match_expense_nr:
-            # user seems to have a expense number defined
+    expense_str: str = ""
+
+    possible_expense_idxs = [i for i, item in enumerate(command.args) if re.search("\d*[.,]?\d+", item)]
+    if len(possible_expense_idxs) > 0:
+        # at least one number was found
+        # ignoring numbers part of optional expense comment
+        # first element treated as expense value
+        expense_idx = possible_expense_idxs[0]
+        expense_str = command.args[expense_idx]
+        if expense_idx == 0:
+            # first command arg is <expense-value>[€/$/etc.]
+            # user seems has not provided a <user-name>
             # maybe the user wants to increase for himself
-            # check if display_name of user is registered in the group
+            # use display_name of user as <user-name>
             mxid: str = command.event.sender
             user_name = command.room.user_name(mxid)
-            # user_link: str = await plugin.link_user(command.client, command.room.room_id, display_name)
-            # await plugin.respond_message(command, f"Command received from {display_name} ({mxid}). Userlink: {user_link}")
-    elif len(command.args) == 2:
-        # first command arg is <user-name>
-        user_name = command.args[0]
-        # second command arg is <expense-value>
-        # clean up expense-value from additional currency signs etc
-        # find any number in string (eg: 12; 12,1; 12.1)
-        match_expense_nr = re.search("\d*[.,]?\d+", command.args[1])
+        elif expense_idx == 1:
+            # first command arg is <user-name>
+            user_name = command.args[0]
 
-    else:
-        # command should only contain <user-name> and <expense-value>
-        await plugin.respond_notice(command, response_input_error)
-        return
-    if match_expense_nr:
-        # extract match, then replace "," of german numbers by a "." decimal point
-        expense_float = float(match_expense_nr.group().replace(",", "."))
+    if user_name and expense_str:
+        expense_float = float(expense_str.replace(",", "."))
         try:
             # Persistent_groups.load_group throws AttributeError when group not found
             loaded_group: GroupPayments = await pg.load_group(command.room.room_id)
             # Group.increase_expense throws IndexError when user_name not found
             loaded_group.increase_expense(user_name, expense_float)
-        except (AttributeError, IndexError) as e:
+        except (AttributeError, IndexError) as _:
             await plugin.respond_notice(command, response_input_error)
             return
         await pg.save_group(command.room.room_id, loaded_group)
