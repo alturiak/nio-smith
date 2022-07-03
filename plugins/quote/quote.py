@@ -72,6 +72,14 @@ def setup():
     )
 
     plugin.add_command(
+        "quote_del_annotations",
+        quote_del_annotations_command,
+        "Remove all annotations from a specific quote",
+        power_level=50,
+        room_id=plugin.read_config("manage_quote_rooms"),
+    )
+
+    plugin.add_command(
         "quote_links",
         quote_links_command,
         "Toggle automatic nickname linking",
@@ -302,6 +310,24 @@ class Quote:
         else:
             self.reactions[reaction] = 1
 
+    async def del_annotations(self):
+        """
+
+        :return:
+        """
+
+        i: int = 0
+        line: QuoteLine
+        remove_lines: List[int] = []
+        for line in self.lines:
+            if line.message_type == "annotation":
+                remove_lines.append(i)
+            i += 1
+
+        remove_line: int
+        for remove_line in remove_lines:
+            del self.lines[remove_line]
+
     def get_version(self) -> int:
         """
         Returns the current version of the quote
@@ -468,12 +494,8 @@ async def post_quote(command, quote_object: Quote, match_index: int = -1, total_
     else:
         event_id: str = await plugin.respond_notice(command, f"{await quote_object.display_text(command)}")
 
-    for reaction, count in quote_object.reactions.items():
-        if count == 1:
-            reaction_text: str = f"{reaction}"
-        else:
-            reaction_text: str = f"{reaction} {count}"
-        await plugin.send_reaction(command.client, command.room.room_id, event_id, reaction_text)
+    for reaction in quote_object.reactions.keys():
+        await plugin.send_reaction(command.client, command.room.room_id, event_id, reaction)
 
     """store the event id of the message to allow for tracking reactions to the last 100 posted quotes"""
     tracked_quotes: List[TrackedQuote]
@@ -707,6 +729,34 @@ async def quote_restore_command(command):
             await plugin.respond_notice(command, f"Quote {quote_id} not found")
     else:
         await plugin.respond_notice(command, f"Usage: quote_restore <id>")
+
+
+async def quote_del_annotations_command(command):
+    """
+
+    :param command:
+    :return:
+    """
+
+    quotes: Dict[str, Quote] = await plugin.read_data("quotes")
+    if not quotes:
+        quotes = {}
+
+    if not await plugin.backup_data():
+        await plugin.respond_notice(command, f"Error creating backup file, quote not edited.")
+        return
+
+    if len(command.args) == 1 and command.args[0].isdigit():
+        quote_id: str = str(command.args[0])
+        try:
+            old_quote_text: str = await (await plugin.read_data("quotes"))[quote_id].display_text(command)
+            await quotes[quote_id].del_annotations()
+            await plugin.respond_notice(command, f"{await quotes[quote_id].display_text(command)}",
+                                        expanded_message=f"**Old:**  \n{old_quote_text}  \n\n")
+        except KeyError:
+            await plugin.respond_notice(command, f"Quote {quote_id} not found")
+    else:
+        await plugin.respond_notice(command, f"Usage: quote_del_annotations <id>")
 
 
 async def quote_links_command(command):
