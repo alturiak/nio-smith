@@ -62,16 +62,27 @@ Usage: `sample_list_servers_on_room`
 List servers on current room
 
 ### sample_list_rooms_for_server
+
 Usage: `sample_count_rooms_for_server`  
 Post a count of rooms shared with users on a given server
 
 ### sample_link_users_per_server
+
 Usage: `sample_link_users_per_server`  
 List all users in the room by their homeserver
 
+### sample_get_client
+
+Usage: `sample_get_client`  
+Sends a message using plugin.get_client() instead of the command's client
+
 ## Configuration
-Configuration options in `sample.yaml`  
-- `default_message`: a string to read from the configuration when `read_configuration` command is used (default: "this is the default message")
+
+Configuration options in `sample.yaml`
+
+- `default_message`: a string to read from the configuration when `read_configuration` command is used (default: "this
+  is the default message")
 
 ## External Requirements
+
 - none

@@ -9,6 +9,9 @@
 # Optional maximum age of a server's data in minutes before checking again
 # server_max_age: 60
 
+# Optional list of servers to ignore, for example: ["server1.com", "server2.com"]
+# server_ignore_list: []
+
 # Optional url of federationtester-installation (https://github.com/matrix-org/matrix-federation-tester)
 # federation_tester_url: https://federationtester.matrix.org
 

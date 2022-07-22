@@ -89,18 +89,27 @@ Usage: `quote_replace_nick [-s] <old_nick> <new_nick>`
 (`-s` switch skips adding an annotation)
 
 Example:
+
 ```
 <user> !quote_replace_nick VooDoo-NA VooDoo
 <bot> 67 occurrences of VooDoo-NA replaced by VooDoo in 46 quotes.
 ```
 
+### quote_del_annotations (Power Level: 50)
+
+Remove all annotations from a specific quote - destructive, can not be reverted.  
+Only usable on configured rooms, if `manage_quote_rooms` is set.  
+This creates a backup of the plugin's data before removing the annotations.
 
 ### quote_upgrade (Power Level: 100)
-Upgrade all Quotes to the most recent version, only needed if there is a change in storing quotes. There will be a 
-warning on startup, should this be required in the future. Only usable on configured rooms, if `manage_quote_rooms` is set.  
+
+Upgrade all Quotes to the most recent version, only needed if there is a change in storing quotes. There will be a
+warning on startup, should this be required in the future. Only usable on configured rooms, if `manage_quote_rooms` is
+set.  
 Usage: `quote_upgrade`
 
 ### quote_stats
+
 Display various stats about the currently stored quotes  
 Usage: `quote_stats [full]`
 

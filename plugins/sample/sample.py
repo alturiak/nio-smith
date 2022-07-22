@@ -253,7 +253,7 @@ async def sample_replace(command):
     await sleep(3)
 
     # this should actually edit the message ...
-    await plugin.replace_message(
+    edited_message_id: str = await plugin.replace_message(
         command.client,
         command.room.room_id,
         message_id,
@@ -265,7 +265,7 @@ async def sample_replace(command):
     await plugin.replace_message(
         command.client,
         command.room.room_id,
-        message_id,
+        edited_message_id,
         f'<font color="green">This is an edited test message</font>',
     )
 

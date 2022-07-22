@@ -27,8 +27,9 @@ suppressed_series_attributes: List[str] = [
     "qualityProfileId",
     "images",
     "genres",
+    "totalEpisodeCount"
 ]
-suppressed_season_attributes: List[str] = ["percentOfEpisodes", "episodeFileCount"]
+suppressed_season_attributes: List[str] = ["percentOfEpisodes", "episodeFileCount", "totalEpisodeCount"]
 debug: bool = False
 
 
@@ -268,15 +269,12 @@ class Series:
             changed_attribute: str
             for changed_attribute in changed_attributes:
                 if changed_attribute == "seasons":
-                    if len(self.seasons) != len(new_series.seasons):
-                        change_message += await print_diff("Seasons", len(self.seasons), len(new_series.seasons))
-                    else:
-                        i: int = 0
-                        while i < len(self.seasons):
-                            season_change: str = await self.seasons[i].print_diff(new_series.seasons[i])
-                            if season_change:
-                                change_message += f"<li>Season {new_series.seasons[i]}:<ul>{season_change}</ul></li>"
-                            i += 1
+                    i: int = 0
+                    while i < len(self.seasons) and i < len(new_series.seasons):
+                        season_change: str = await self.seasons[i].print_diff(new_series.seasons[i])
+                        if season_change:
+                            change_message += f"<li>Season {new_series.seasons[i]}:<ul>{season_change}</ul></li>"
+                        i += 1
 
                 elif changed_attribute == "tags":
                     old_tags: List[str] = [x.label for x in self.tags]
