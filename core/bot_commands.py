@@ -1,15 +1,15 @@
-from nio import RoomMessageText, AsyncClient, MatrixRoom
 import re
+from typing import List
+
+from nio import AsyncClient, MatrixRoom, RoomMessageText
 
 
-def _parse_args(input: str) -> "list[str]":
+def _parse_args(input: str) -> List[str]:
     """splits arguments at spaces but keeps the argument as one if its encapsulated by quotes"""
-    pattern1 = re.compile(r"([\"\'].+?[\"\'])")
-    pattern2 = re.compile(r"[\"\']")
     args_list = []
-    for args in re.split(pattern1, " ".join(input.split()[1:])):
-        if re.match(pattern2, args):
-            args_list.append(args.strip("\"'"))
+    for args in re.split(r'(["].+?["])', " ".join(input.split()[1:])):
+        if re.match(r'["]', args):
+            args_list.append(args.strip('"'))
         else:
             args_list.extend(args.split())
     return args_list
