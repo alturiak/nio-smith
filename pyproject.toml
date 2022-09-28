@@ -10,7 +10,7 @@ license = "Apache-2.0"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-matrix-nio = {version = ">=0.19.0", extras = ["e2e"]}
+matrix-nio = { version = ">=0.20.0", extras = ["e2e"] }
 fuzzywuzzy = ">=0.18.0"
 Markdown = ">=3.3.6"
 PyYAML = ">=6.0"
