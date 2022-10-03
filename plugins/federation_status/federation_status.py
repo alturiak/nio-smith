@@ -185,7 +185,7 @@ class Server:
             for (host, port) in hosts:
                 try:
                     expire_date: datetime.datetime or None = ssl_expiry_datetime(host, port)
-                except ssl.SSLCertVerificationError:
+                except (ssl.SSLCertVerificationError, ConnectionRefusedError):
                     expire_date = None
                 if expire_date:
                     min_expire_date = min(expire_date, min_expire_date)
