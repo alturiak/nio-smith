@@ -172,7 +172,7 @@ class Series:
         if series_dict.get("previousAiring"):
             self.previousAiring = isoparse(series_dict.get("previousAiring"))
         self.network: str = series_dict["network"]
-        self.airTime: str = series_dict["airTime"]
+        self.airTime: str or None = series_dict.get("airTime")
         self.images: List[Dict] = series_dict["images"]
         self.year: datetime.date.year = series_dict["year"]
         self.path: str = series_dict["path"]
