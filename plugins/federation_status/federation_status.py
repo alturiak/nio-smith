@@ -29,7 +29,7 @@ def setup():
     plugin.add_config("room_list", default_value=None, is_required=False)
     plugin.add_config("warn_cert_expiry", default_value=7, is_required=True)
     plugin.add_config("server_max_age", default_value=60, is_required=True)
-    plugin.add_config("server_ignore_list", default_value=None, is_required=True)
+    plugin.add_config("server_ignore_list", default_value=None, is_required=False)
     plugin.add_config(
         "federation_tester_url",
         default_value="https://federationtester.matrix.org",
