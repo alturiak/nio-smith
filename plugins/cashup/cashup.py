@@ -348,7 +348,8 @@ async def print_room_state(command):
 async def add_expense_for_user(command):
     """Adds a new expense for the given username"""
     response_input_error = (
-        "You need to provide a previously registered user-name and expense value:  \n" "`cashup-add-expense <user-name> <expense-value>[€/$/etc.] [comment]` [optional]"
+        "You need to provide a previously registered user-name and expense value:  \n"
+        "`cashup-add-expense <user-name> <expense-value>[€/$/etc.] [comment]` [optional]"
     )
     user_name: str = ""
     expense_str: str = ""

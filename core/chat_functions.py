@@ -169,17 +169,17 @@ async def send_replace(client, room_id: str, event_id: str, message: str, messag
                 "msgtype": message_type,
                 "format": "org.matrix.custom.html",
                 "body": strip_tags(message),
-                "formatted_body": markdown(message),
+                "formatted_body": commonmark.commonmark(message),
                 "m.message": [{"mimetype": "text/plain", "body": strip_tags(message)},
-                              {"mimetype": "text/html", "body": markdown(message)}],
+                              {"mimetype": "text/html", "body": commonmark.commonmark(message)}],
             },
             "m.relates_to": {"rel_type": "m.replace", "event_id": event_id},
             "msgtype": "m.text",
             "format": "org.matrix.custom.html",
             "body": strip_tags(message),
-            "formatted_body": markdown(message),
+            "formatted_body": commonmark.commonmark(message),
             "m.message": [{"mimetype": "text/plain", "body": strip_tags(message)},
-                          {"mimetype": "text/html", "body": markdown(message)}],
+                          {"mimetype": "text/html", "body": commonmark.commonmark(message)}],
         }
 
         # check if there are any differences in body or formatted_body before actually sending the m.replace-event

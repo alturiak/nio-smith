@@ -27,7 +27,7 @@ from core.timer import Timer
 from fuzzywuzzy import fuzz
 import copy
 import jsonpickle
-import markdown
+import commonmark
 from PIL import Image
 
 logger = logging.getLogger(__name__)
@@ -580,8 +580,8 @@ class Plugin:
         :return: expandable message
         """
 
-        markdown_header: str = markdown.markdown(header)
-        markdown_body: str = markdown.markdown(body)
+        markdown_header: str = commonmark.commonmark(header)
+        markdown_body: str = commonmark.commonmark(body)
         return f"<details><summary>{markdown_header}</summary><br>{markdown_body}</details>"
 
     async def send_message(
@@ -1266,7 +1266,7 @@ class PluginCommand:
             help_text: str,
             power_level,
             room_id: List[str],
-        command_type: str = "static",
+            command_type: str = "static",
     ):
         """
         Initialise a PluginCommand

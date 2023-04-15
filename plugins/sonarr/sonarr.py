@@ -27,7 +27,7 @@ suppressed_series_attributes: List[str] = [
     "qualityProfileId",
     "images",
     "genres",
-    "totalEpisodeCount"
+    "totalEpisodeCount",
 ]
 suppressed_season_attributes: List[str] = ["percentOfEpisodes", "episodeFileCount", "totalEpisodeCount"]
 debug: bool = False
