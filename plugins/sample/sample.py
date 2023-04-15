@@ -102,7 +102,11 @@ def setup():
     )
 
     """Get the bot's client instance from plugin.get_client instead of the command"""
-    plugin.add_command("sample_get_client", sample_get_client, "Post a message using the client instance of `plugin.get_client()`")
+    plugin.add_command("sample_get_client", sample_get_client,
+                       "Post a message using the client instance of `plugin.get_client()`")
+
+    """Markdown sample"""
+    plugin.add_command("sample_markdown", sample_markdown, "Post a message containing a markdown code block.")
 
     """The following part demonstrates registering timers by fixed interval and timedelta"""
     if timers_enabled:
@@ -522,6 +526,20 @@ async def sample_get_client(command: Command):
     """
 
     await plugin.send_notice(await plugin.get_client(), command.room.room_id, "This message uses plugin.get_client()")
+
+
+async def sample_markdown(command: Command):
+    """
+    Post a message containing a markdown code block.
+    :param command:
+    :return:
+    """
+
+    await plugin.send_notice(
+        await plugin.get_client(),
+        command.room.room_id,
+        "This is a test message header\n\n" "```python\n" "import markdown\n" "```\n\n" "This is a test message footer",
+    )
 
 
 setup()

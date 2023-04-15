@@ -76,6 +76,11 @@ List all users in the room by their homeserver
 Usage: `sample_get_client`  
 Sends a message using plugin.get_client() instead of the command's client
 
+### sample_markdown
+
+Usage: `sample_markdown`  
+Post a message containing a markdown code block.
+
 ## Configuration
 
 Configuration options in `sample.yaml`
