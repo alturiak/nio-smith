@@ -1,5 +1,6 @@
 matrix-nio[e2e]>=0.20.2
 fuzzywuzzy>=0.18.0
+python-Levenshtein>=0.21.0
 PyYAML>=6.0
 jsonpickle>=3.0.1
 Pillow>=9.5.0
