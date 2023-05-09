@@ -751,6 +751,7 @@ async def quote_del_annotations_command(command):
         try:
             old_quote_text: str = await (await plugin.read_data("quotes"))[quote_id].display_text(command)
             await quotes[quote_id].del_annotations()
+            await plugin.store_data("quotes", quotes)
             await plugin.respond_notice(command, f"{await quotes[quote_id].display_text(command)}",
                                         expanded_message=f"**Old:**  \n{old_quote_text}  \n\n")
         except KeyError:
