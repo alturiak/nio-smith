@@ -619,12 +619,14 @@ async def compose_upcoming(start_date: str, end_date: str) -> str:
                 format_end: str = ""
 
                 if episode["hasFile"]:
-                    format_begin = '<font color="green">'
+                    format_begin = '<font color="green">✅ '
                     format_end = "</font>"
                 elif datetime.datetime.fromisoformat(episode["airDateUtc"].rstrip("Z")) < datetime.datetime.now():
                     # airdate is in the past, mark file missing
-                    format_begin = '<font color="red">'
+                    format_begin = '<font color="red">❌ '
                     format_end = "</font>"
+                else:
+                    format_begin = '⌛️'
 
                 message += (
                     f"{format_begin}{str(tracked_series.find_series_by_seriesId(episode['seriesId']))} "
