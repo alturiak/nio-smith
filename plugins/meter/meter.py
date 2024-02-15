@@ -18,6 +18,7 @@ def get_level_color(level: int, inactive: bool = False) -> str:
         8: ["#FF0000", "#8B0000"],
         9: ["#FF0000", "#8B0000"],
         10: ["#FF0000", "#8B0000"],
+        11: ["#FF0000", "#8B0000"],
     }
 
     return colors[level][inactive]
@@ -49,6 +50,8 @@ def build_gauge(level: int) -> str:
             # add inactive block
             gauge = gauge + build_block(get_level_color(i, True), True)
     gauge += right_frame
+    if level == 11:
+        gauge += build_block(get_level_color(i))
 
     return gauge
 
@@ -56,18 +59,19 @@ def build_gauge(level: int) -> str:
 def get_comment(level: int, nick: str, condition: str) -> str:
 
     comments: Dict[int, str] = {
-        0: f'<font color="red">never</font> {condition}',
-        1: f'just <font color ="red">barely</font> {condition}',
-        2: f'<font color ="red">kinda</font> {condition}',
-        3: f'a <font color="red">bit</font> {condition}',
-        4: f'<font color="red">sorta</font> {condition}',
-        5: f'<font color="red">basic average</font> {condition}',
-        6: condition,
-        7: f'<font color="red">fairly</font> {condition}',
-        8: f'<font color="red">pretty darn</font> {condition}',
-        9: f'<font color="red">extremely</font> {condition}',
-        10: f"the {condition}est of all! {nick} scores a <font color=\"red\">perfect</font> 10 on the {condition.replace(' ', '-')}-o-meter!! I bow to {nick}'s"
+        0: f'is <font color="red">never</font> {condition}',
+        1: f'is just <font color ="red">barely</font> {condition}',
+        2: f'is <font color ="red">kinda</font> {condition}',
+        3: f'is a <font color="red">bit</font> {condition}',
+        4: f'is <font color="red">sorta</font> {condition}',
+        5: f'is <font color="red">basic average</font> {condition}',
+        6: f'is {condition}',
+        7: f'is <font color="red">fairly</font> {condition}',
+        8: f'is <font color="red">pretty darn</font> {condition}',
+        9: f'is <font color="red">extremely</font> {condition}',
+        10: f"is the {condition}est of all! {nick} scores a <font color=\"red\">perfect</font> 10 on the {condition.replace(' ', '-')}-o-meter!! I bow to {nick}'s"
         f" {condition}ness...",
+        11: f'FUCKEN {condition}'
     }
 
     return comments[level]
@@ -91,8 +95,15 @@ async def meter(command):
         if not condition:
             raise IndexError
         else:
-            level: int = random.randint(0, 10)
-            text: str = f"{condition.replace(' ', '-')}-o-Meter {build_gauge(level)} {display_level(level)} {nick} is " f"{get_comment(level, nick, condition)}"
+            if nick == "it" and condition == "wimdy":
+                nick = nick.upper()
+                condition = condition.upper()
+                level: int = 11
+            elif random.randint(1, 1000) == 1000:
+                level: int = 11
+            else:
+                level: int = random.randint(0, 10)
+            text: str = f"{condition.replace(' ', '-')}-o-Meter {build_gauge(level)} {display_level(level)} {nick} " f"{get_comment(level, nick, condition)}"
             await plugin.respond_message(command, text, delay=200)
 
     except (ValueError, IndexError):
