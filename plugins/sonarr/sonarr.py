@@ -23,8 +23,7 @@ suppressed_series_attributes: List[str] = [
     "sizeOnDisk",
     "runtime",
     "tag_ids",
-    "profile_id",
-    "qualityProfileId",
+    "qualityprofile_id",
     "images",
     "genres",
     "totalEpisodeCount",
@@ -65,16 +64,16 @@ def setup():
     plugin.add_timer(check_series_changes, frequency="daily")
 
 
-class Profile:
-    def __init__(self, profile_id: int, name: str):
-        self.profile_id: int = profile_id
+class QualityProfile:
+    def __init__(self, qualityprofile_id: int, name: str):
+        self.qualityprofile_id: int = qualityprofile_id
         self.name: str = name
 
     def __str__(self):
         return self.name
 
-    def __ne__(self, other: Profile) -> bool:
-        return self.profile_id != other.profile_id
+    def __ne__(self, other: QualityProfile) -> bool:
+        return self.qualityprofile_id != other.qualityprofile_id
 
 
 class Tag:
@@ -157,15 +156,12 @@ class Season:
 
 
 class Series:
-    def __init__(self, series_dict: Dict, tags: Dict[int, Tag], profiles: Dict[int, Profile]):
+    def __init__(self, series_dict: Dict, tags: Dict[int, Tag], qualityprofiles: Dict[int, QualityProfile]):
         self.title: str = series_dict.get("title")
         self.alternateTitles: List[Dict] or None = series_dict.get("alternateTitles")
         self.sortTitle: str or None = series_dict.get("sortTitle")
         self.seasonCount: int or None = series_dict.get("seasonCount")
         self.totalEpisodeCount: int or None = series_dict.get("totalEpisodeCount")
-        self.episodeCount: int = series_dict["episodeCount"]
-        self.episodeFileCount: int = series_dict["episodeFileCount"]
-        self.sizeOnDisk: str = series_dict["sizeOnDisk"]
         self.status: str = series_dict["status"]
         self.overview: str = series_dict["overview"]
         self.previousAiring: datetime.datetime or None = None
@@ -176,8 +172,8 @@ class Series:
         self.images: List[Dict] = series_dict["images"]
         self.year: datetime.date.year = series_dict["year"]
         self.path: str = series_dict["path"]
-        self.profile_id = series_dict["profileId"]
-        self.profile: Profile = profiles[self.profile_id]
+        self.qualityprofile_id = series_dict["qualityProfileId"]
+        self.qualityProfile: QualityProfile = qualityprofiles[self.qualityprofile_id]
         self.languageProfileId: int = series_dict["languageProfileId"]
         self.seasonFolder: bool = series_dict["seasonFolder"]
         self.monitored: bool = series_dict["monitored"]
@@ -190,9 +186,6 @@ class Series:
         if series_dict.get("firstAired"):
             self.firstAired = isoparse(series_dict.get("firstAired"))
         self.lastInfoSync: datetime.datetime or None = None
-        if series_dict.get("lastInfoSync"):
-            self.lastInfoSync = isoparse(series_dict.get("lastInfoSync"))
-        self.lastInfoSync: datetime.datetime = isoparse(series_dict["lastInfoSync"])
         self.seriesType: str = series_dict["seriesType"]
         self.cleanTitle: str = series_dict["cleanTitle"]
         self.imdbId: str = series_dict.get("imdbId")
@@ -205,7 +198,6 @@ class Series:
             self.tags.append(tags[tag_id])
         self.added: datetime.datetime = isoparse(series_dict["added"])
         self.ratings: Dict[str, any] = series_dict["ratings"]
-        self.qualityProfileId: int = series_dict["qualityProfileId"]
         self.id: int = series_dict["id"]
 
         self.seasons: List[Season] = [Season(x) for x in series_dict["seasons"]]
@@ -296,7 +288,7 @@ class SeriesList:
         self,
         series_json: List[Dict[str, any]],
         tags_json: List[Dict[str, any]],
-        profiles_json: List[Dict[str, any]],
+            qualityprofiles_json: List[Dict[str, any]],
     ):
         """
 
@@ -309,14 +301,15 @@ class SeriesList:
         for tag_json in tags_json:
             tags[tag_json.get("id")] = Tag(tag_json.get("id"), tag_json.get("label"))
 
-        profiles: Dict[int, Profile] = {}
-        profile_json: Dict[str, any]
-        for profile_json in profiles_json:
-            profiles[profile_json.get("id")] = Profile(profile_json.get("id"), profile_json.get("name"))
+        qualityprofiles: Dict[int, QualityProfile] = {}
+        qualityprofile_json: Dict[str, any]
+        for qualityprofile_json in qualityprofiles_json:
+            qualityprofiles[qualityprofile_json.get("id")] = QualityProfile(qualityprofile_json.get("id"),
+                                                                            qualityprofile_json.get("name"))
 
         series: Series
         for show_json in series_json:
-            series = Series(show_json, tags, profiles)
+            series = Series(show_json, tags, qualityprofiles)
             self.series[series.titleSlug] = series
 
     def find_series_by_titleslug(self, titleSlug: str) -> Series or None:
@@ -329,6 +322,20 @@ class SeriesList:
         try:
             return self.series[titleSlug]
         except KeyError:
+            return None
+
+    def find_series_by_seriesId(self, seriesId: int) -> Series or None:
+        """
+
+        :param seriesId:
+        :return:
+        """
+
+        show: Series
+        for show in self.series.values():
+            if show.id == seriesId:
+                return show
+        else:
             return None
 
     async def list_diffs(self, new_series_list: SeriesList) -> Tuple[List[Series], List[Series], List[Series]] or None:
@@ -448,13 +455,13 @@ async def fetch_sonarr_data() -> Dict[str, List[Dict[str, any]]] or None:
 
     series_json: List[Dict[str, any]] = sorted(await fetch_sonarr_api("series"), key=lambda i: i["sortTitle"])
     tags_json: List[Dict[str, any]] = await fetch_sonarr_api("tag")
-    profiles_json: List[Dict[str, any]] = await fetch_sonarr_api("profile")
+    qualityprofiles_json: List[Dict[str, any]] = await fetch_sonarr_api("qualityprofile")
 
-    if series_json and tags_json and profiles_json:
+    if series_json and tags_json and qualityprofiles_json:
         return {
             "series_json": series_json,
             "tags_json": tags_json,
-            "profiles_json": profiles_json,
+            "qualityprofiles_json": qualityprofiles_json,
         }
     else:
         return None
@@ -469,21 +476,21 @@ async def check_series_changes(client):
 
     stored_series_json: List[Dict[str, any]] = await plugin.read_data("stored_shows")
     stored_tags_json: List[Dict[str, any]] = await plugin.read_data("stored_tags")
-    stored_profiles_json: List[Dict[str, any]] = await plugin.read_data("stored_profiles")
+    stored_qualityprofiles_json: List[Dict[str, any]] = await plugin.read_data("stored_qualityprofiles")
     tracked_data: Dict[str, List[Dict[str, any]]] = await fetch_sonarr_data()
 
-    if not stored_series_json or not stored_profiles_json:
+    if not stored_series_json or not stored_qualityprofiles_json:
         await plugin.store_data("stored_shows", tracked_data.get("series_json"))
         await plugin.store_data("stored_tags", tracked_data.get("tags_json"))
-        await plugin.store_data("stored_profiles", tracked_data.get("profiles_json"))
+        await plugin.store_data("stored_qualityprofiles", tracked_data.get("qualityprofiles_json"))
 
     elif tracked_data:
         tracked_series: SeriesList = SeriesList(
             tracked_data.get("series_json"),
             tracked_data.get("tags_json"),
-            tracked_data.get("profiles_json"),
+            tracked_data.get("qualityprofiles_json"),
         )
-        stored_series: SeriesList = SeriesList(stored_series_json, stored_tags_json, stored_profiles_json)
+        stored_series: SeriesList = SeriesList(stored_series_json, stored_tags_json, stored_qualityprofiles_json)
 
         if await stored_series.list_diffs(tracked_series):
             change_message: str = f"{await stored_series.print_diff(tracked_series)}"
@@ -494,7 +501,7 @@ async def check_series_changes(client):
 
             await plugin.store_data("stored_shows", tracked_data.get("series_json"))
             await plugin.store_data("stored_tags", tracked_data.get("tags_json"))
-            await plugin.store_data("stored_profiles", tracked_data.get("profiles_json"))
+            await plugin.store_data("stored_qualityprofiles", tracked_data.get("qualityprofiles_json"))
 
 
 async def print_series(command):
@@ -582,7 +589,13 @@ async def compose_upcoming(start_date: str, end_date: str) -> str:
 
     message: str = "#### Episodes expected this week  \n"
 
-    if episodes := await get_calendar_episodes(start_date, end_date):
+    tracked_data: Dict[str, List[Dict[str, any]]] = await fetch_sonarr_data()
+    if (episodes := await get_calendar_episodes(start_date, end_date)) and (tracked_data := await fetch_sonarr_data()):
+        tracked_series: SeriesList = SeriesList(
+            tracked_data.get("series_json"),
+            tracked_data.get("tags_json"),
+            tracked_data.get("qualityprofiles_json")
+        )
 
         episodes_by_day: Dict[str, List[any]] = {}
 
@@ -614,10 +627,12 @@ async def compose_upcoming(start_date: str, end_date: str) -> str:
                     format_end = "</font>"
 
                 message += (
-                    f"{format_begin}{str(episode['series']['title'])} "
+                    f"{format_begin}{str(tracked_series.find_series_by_seriesId(episode['seriesId']))} "
                     f"S{str(episode['seasonNumber']).zfill(2)}E{str(episode['episodeNumber']).zfill(2)} "
                     f"{str(episode['title'])}{format_end}  \n"
                 )
+    else:
+        message += f"such empty, much nothing.  \nvery sad."
     return message
 
 

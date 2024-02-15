@@ -3,8 +3,8 @@
 # mandatory room_id in which the plugin is active. Currently, only one room is supported.
 # room_id: ["!rdBDrHapAsYdvmgGMP:pack.rocks"]
 
-# mandatory url of sonarr's api
-# api_base: "http://localhost:8989/api"
+# mandatory url of sonarr's V3-api
+# api_base: "http://localhost:8989/api/v3"
 
 # mandatory api key to use for connecting to sonarr's api, as configured via Settings -> API Key
 # api_key: ""
