@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 plugin = Plugin("sonarr", "TV-Shows", "Provides commands to query sonarr's API")
 
 suppressed_series_attributes: List[str] = [
+    "lastAired",
     "lastInfoSync",
     "previousAiring",
     "episodeCount",
