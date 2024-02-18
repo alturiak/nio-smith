@@ -102,8 +102,7 @@ def setup():
     )
 
     """Get the bot's client instance from plugin.get_client instead of the command"""
-    plugin.add_command("sample_get_client", sample_get_client,
-                       "Post a message using the client instance of `plugin.get_client()`")
+    plugin.add_command("sample_get_client", sample_get_client, "Post a message using the client instance of `plugin.get_client()`")
 
     """Markdown sample"""
     plugin.add_command("sample_markdown", sample_markdown, "Post a message containing a markdown code block.")

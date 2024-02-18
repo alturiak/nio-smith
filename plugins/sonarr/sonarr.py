@@ -313,7 +313,7 @@ class SeriesList:
         self,
         series_json: List[Dict[str, any]],
         tags_json: List[Dict[str, any]],
-            qualityprofiles_json: List[Dict[str, any]],
+        qualityprofiles_json: List[Dict[str, any]],
     ):
         """
 
@@ -329,8 +329,7 @@ class SeriesList:
         qualityprofiles: Dict[int, QualityProfile] = {}
         qualityprofile_json: Dict[str, any]
         for qualityprofile_json in qualityprofiles_json:
-            qualityprofiles[qualityprofile_json.get("id")] = QualityProfile(qualityprofile_json.get("id"),
-                                                                            qualityprofile_json.get("name"))
+            qualityprofiles[qualityprofile_json.get("id")] = QualityProfile(qualityprofile_json.get("id"), qualityprofile_json.get("name"))
 
         series: Series
         for show_json in series_json:
@@ -620,8 +619,7 @@ async def compose_upcoming(start_date: str, end_date: str) -> str:
 
     tracked_data: Dict[str, List[Dict[str, any]]] = await fetch_sonarr_data()
     if (episodes := await get_calendar_episodes(start_date, end_date)) and (tracked_data := await fetch_sonarr_data()):
-        tracked_series: SeriesList = SeriesList(tracked_data.get("series_json"), tracked_data.get("tags_json"),
-                                                tracked_data.get("qualityprofiles_json"))
+        tracked_series: SeriesList = SeriesList(tracked_data.get("series_json"), tracked_data.get("tags_json"), tracked_data.get("qualityprofiles_json"))
 
         episodes_by_day: Dict[str, List[any]] = {}
 

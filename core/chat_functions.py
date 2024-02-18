@@ -107,8 +107,7 @@ async def send_text_to_room(client: AsyncClient, room_id: str, message, notice=T
         "format": "org.matrix.custom.html",
         "formatted_body": formatted_message,
         # MSC1767
-        "m.message": [{"mimetype": "text/plain", "body": strip_tags(message)},
-                      {"mimetype": "text/html", "body": formatted_message}],
+        "m.message": [{"mimetype": "text/plain", "body": strip_tags(message)}, {"mimetype": "text/html", "body": formatted_message}],
     }
 
     response: RoomSendResponse
@@ -170,16 +169,14 @@ async def send_replace(client, room_id: str, event_id: str, message: str, messag
                 "format": "org.matrix.custom.html",
                 "body": strip_tags(message),
                 "formatted_body": commonmark.commonmark(message),
-                "m.message": [{"mimetype": "text/plain", "body": strip_tags(message)},
-                              {"mimetype": "text/html", "body": commonmark.commonmark(message)}],
+                "m.message": [{"mimetype": "text/plain", "body": strip_tags(message)}, {"mimetype": "text/html", "body": commonmark.commonmark(message)}],
             },
             "m.relates_to": {"rel_type": "m.replace", "event_id": event_id},
             "msgtype": "m.text",
             "format": "org.matrix.custom.html",
             "body": strip_tags(message),
             "formatted_body": commonmark.commonmark(message),
-            "m.message": [{"mimetype": "text/plain", "body": strip_tags(message)},
-                          {"mimetype": "text/html", "body": commonmark.commonmark(message)}],
+            "m.message": [{"mimetype": "text/plain", "body": strip_tags(message)}, {"mimetype": "text/html", "body": commonmark.commonmark(message)}],
         }
 
         # check if there are any differences in body or formatted_body before actually sending the m.replace-event

@@ -1260,13 +1260,13 @@ class Plugin:
 
 class PluginCommand:
     def __init__(
-            self,
-            command: str,
-            method: Callable,
-            help_text: str,
-            power_level,
-            room_id: List[str],
-            command_type: str = "static",
+        self,
+        command: str,
+        method: Callable,
+        help_text: str,
+        power_level,
+        room_id: List[str],
+        command_type: str = "static",
     ):
         """
         Initialise a PluginCommand
