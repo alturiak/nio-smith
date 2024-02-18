@@ -90,14 +90,21 @@ class Tag:
 
 class Season:
     def __init__(self, season_dict: Dict):
-        self.seasonNumber: int = season_dict["seasonNumber"]
-        self.monitored: bool = season_dict["monitored"]
-        # self.previousAiring: datetime.datetime = datetime.datetime.fromisoformat(season_dict['statistics']['previousAiring'][:-1])
-        self.episodeFileCount: int = season_dict["statistics"]["episodeFileCount"]
-        self.episodeCount: int = season_dict["statistics"]["episodeCount"]
-        self.totalEpisodeCount: int = season_dict["statistics"]["totalEpisodeCount"]
-        self.sizeOnDisk: int = season_dict["statistics"]["sizeOnDisk"]
-        self.percentOfEpisodes: float = season_dict["statistics"]["percentOfEpisodes"]
+        self.seasonNumber: int = season_dict.get("seasonNumber")
+        self.monitored: bool = season_dict.get("monitored")
+        self.previousAiring: datetime.datetime or None = None
+        if season_dict.get("statistics").get("nextAiring"):
+            self.nextAiring = isoparse(season_dict.get("statistics").get("nextAiring"))
+        self.previousAiring: datetime.datetime or None = None
+        if season_dict.get("statistics").get("previousAiring"):
+            self.nextAiring = isoparse(season_dict.get("statistics").get("previousAiring"))
+        self.episodeFileCount: int = season_dict.get("statistics").get("episodeFileCount")
+        self.episodeCount: int = season_dict.get("statistics").get("episodeCount")
+        self.totalEpisodeCount: int = season_dict.get("statistics").get("totalEpisodeCount")
+        self.sizeOnDisk: int = season_dict.get("statistics").get("sizeOnDisk")
+        self.releaseGroups: List[str] = season_dict.get("statistics").get("releaseGroups")
+        self.percentOfEpisodes: float = season_dict.get("statistics").get("percentOfEpisodes")
+        self.images: List[str] = season_dict.get("images")
 
     def __str__(self):
         return f"{self.seasonNumber}"
@@ -157,50 +164,67 @@ class Season:
 
 class Series:
     def __init__(self, series_dict: Dict, tags: Dict[int, Tag], qualityprofiles: Dict[int, QualityProfile]):
+        self.id: int = series_dict.get("id")
         self.title: str = series_dict.get("title")
         self.alternateTitles: List[Dict] or None = series_dict.get("alternateTitles")
         self.sortTitle: str or None = series_dict.get("sortTitle")
-        self.seasonCount: int or None = series_dict.get("seasonCount")
-        self.totalEpisodeCount: int or None = series_dict.get("totalEpisodeCount")
-        self.status: str = series_dict["status"]
-        self.overview: str = series_dict["overview"]
+        self.status: str = series_dict.get("status")
+        self.ended: bool = series_dict.get("ended")
+        self.profileName: str = series_dict.get("profileName")
+        self.overview: str = series_dict.get("overview")
+        self.nextAiring: datetime.datetime or None
+        if series_dict.get("nextAiring"):
+            self.nextAiring = isoparse(series_dict.get("nextAiring"))
         self.previousAiring: datetime.datetime or None = None
         if series_dict.get("previousAiring"):
             self.previousAiring = isoparse(series_dict.get("previousAiring"))
-        self.network: str = series_dict["network"]
+        self.network: str = series_dict.get("network")
         self.airTime: str or None = series_dict.get("airTime")
-        self.images: List[Dict] = series_dict["images"]
-        self.year: datetime.date.year = series_dict["year"]
-        self.path: str = series_dict["path"]
-        self.qualityprofile_id = series_dict["qualityProfileId"]
+        self.images: List[Dict] = series_dict.get("images")
+        self.seasonCount: int or None = series_dict.get("seasonCount")
+        self.totalEpisodeCount: int or None = series_dict.get("totalEpisodeCount")
+        self.originalLanguage = series_dict.get("originalLanguage")
+        self.remotePoster = series_dict.get("remotePoster")
+        self.seasons: List[Season] = [Season(x) for x in series_dict["seasons"]]
+        self.year: datetime.date.year = series_dict.get("year")
+        self.path: str = series_dict.get("path")
+        self.qualityprofile_id = series_dict.get("qualityProfileId")
         self.qualityProfile: QualityProfile = qualityprofiles[self.qualityprofile_id]
-        self.languageProfileId: int = series_dict["languageProfileId"]
-        self.seasonFolder: bool = series_dict["seasonFolder"]
-        self.monitored: bool = series_dict["monitored"]
-        self.useSceneNumbering: bool = series_dict["useSceneNumbering"]
-        self.runtime: int = series_dict["runtime"]
-        self.tvdbId: int = series_dict["tvdbId"]
-        self.tvRageId: int = series_dict["tvRageId"]
-        self.tvMazeId: int = series_dict["tvMazeId"]
+        self.seasonFolder: bool = series_dict.get("seasonFolder")
+        self.monitored: bool = series_dict.get("monitored")
+        self.monitorNewItems: str = series_dict.get("monitorNewItems")
+        self.useSceneNumbering: bool = series_dict.get("useSceneNumbering")
+        self.runtime: int = series_dict.get("runtime")
+        self.tvdbId: int = series_dict.get("tvdbId")
+        self.tvRageId: int = series_dict.get("tvRageId")
+        self.tvMazeId: int = series_dict.get("tvMazeId")
         self.firstAired: datetime.datetime or None = None
         if series_dict.get("firstAired"):
             self.firstAired = isoparse(series_dict.get("firstAired"))
-        self.lastInfoSync: datetime.datetime or None = None
-        self.seriesType: str = series_dict["seriesType"]
-        self.cleanTitle: str = series_dict["cleanTitle"]
+        self.lastAired: datetime.datetime or None = None
+        if series_dict.get("lastAired"):
+            self.lastAired = isoparse(series_dict.get("lastAired"))
+        self.seriesType: str = series_dict.get("seriesType")
+        self.cleanTitle: str = series_dict.get("cleanTitle")
         self.imdbId: str = series_dict.get("imdbId")
-        self.titleSlug: str = series_dict["titleSlug"]
+        self.titleSlug: str = series_dict.get("titleSlug")
+        self.rootFolderPath: str = series_dict.get("rootFolderPath")
+        self.folder: str = series_dict.get("folder")
         self.certification: str or None = series_dict.get("certification")
-        self.genres: List[str] = series_dict["genres"]
+        self.genres: List[str] = series_dict.get("genres")
         self.tag_ids: List[int] = series_dict["tags"]
         self.tags: List[Tag] = []
         for tag_id in self.tag_ids:
             self.tags.append(tags[tag_id])
-        self.added: datetime.datetime = isoparse(series_dict["added"])
-        self.ratings: Dict[str, any] = series_dict["ratings"]
-        self.id: int = series_dict["id"]
-
-        self.seasons: List[Season] = [Season(x) for x in series_dict["seasons"]]
+        self.added: datetime.datetime = isoparse(series_dict.get("added"))
+        self.addOptions: List[any] or None = series_dict.get("addOptions")
+        self.ratings: Dict[str, any] = series_dict.get("ratings")
+        self.seasonCount: int = series_dict.get("statistics").get("seasonCount")
+        self.episodeFileCount: int = series_dict.get("statistics").get("episodeFileCount")
+        self.episodeCount: int = series_dict.get("statistics").get("episodeCount")
+        self.totalEpisodeCount: int = series_dict.get("statistics").get("totalEpisodeCount")
+        self.sizeOnDisk: int = series_dict.get("statistics").get("sizeOnDisk")
+        self.releaseGroups: List[str] = series_dict.get("statistics").get("releaseGroups")
 
     def __str__(self):
         return self.title
