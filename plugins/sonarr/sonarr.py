@@ -319,7 +319,7 @@ class SeriesList:
         :param series_json:
         """
 
-        self.series: Dict[str, Series] = {}
+        self.series: Dict[int, Series] = {}
         tags: Dict[int, Tag] = {}
         tag_json: Dict[str, any]
         for tag_json in tags_json:
@@ -334,7 +334,7 @@ class SeriesList:
         series: Series
         for show_json in series_json:
             series = Series(show_json, tags, qualityprofiles)
-            self.series[series.titleSlug] = series
+            self.series[series.id] = series
 
     def find_series_by_titleslug(self, titleSlug: str) -> Series or None:
         """
@@ -343,9 +343,11 @@ class SeriesList:
         :return:
         """
 
-        try:
-            return self.series[titleSlug]
-        except KeyError:
+        show: Series
+        for show in self.series.values():
+            if show.titleSlug == titleSlug:
+                return show
+        else:
             return None
 
     def find_series_by_seriesId(self, seriesId: int) -> Series or None:
@@ -355,11 +357,9 @@ class SeriesList:
         :return:
         """
 
-        show: Series
-        for show in self.series.values():
-            if show.id == seriesId:
-                return show
-        else:
+        try:
+            return self.series[seriesId]
+        except KeyError:
             return None
 
     async def list_diffs(self, new_series_list: SeriesList) -> Tuple[List[Series], List[Series], List[Series]] or None:
@@ -375,13 +375,13 @@ class SeriesList:
 
         series: Series
         for series in new_series_list.series.values():
-            if series.titleSlug not in self.series.keys():
+            if series.id not in self.series.keys():
                 added_series.append(series)
 
         for series in self.series.values():
-            if series.titleSlug not in new_series_list.series.keys():
+            if series.id not in new_series_list.series.keys():
                 removed_series.append(series)
-            elif await series.list_diffs(new_series_list.series.get(series.titleSlug)):
+            elif await series.list_diffs(new_series_list.series.get(series.id)):
                 changed_series.append(series)
 
         if added_series or removed_series or changed_series:
@@ -413,7 +413,7 @@ class SeriesList:
 
             for series in changed_series:
                 change_message += f'<li>Changed <a href="https://www.imdb.com/title/{series.imdbId}">{series.title}</a>:<ul>'
-                change_message += await series.print_diff(new_series_list.series.get(series.titleSlug))
+                change_message += await series.print_diff(new_series_list.series.get(series.id))
                 change_message += "</ul></li>"
             change_message = f"<ul>{change_message}</ul>"
 
@@ -424,6 +424,10 @@ class SeriesList:
 
         :return:
         """
+        pass
+
+    async def find_most_recently_aired_series(self) -> Series:
+
         pass
 
 
