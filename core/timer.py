@@ -11,7 +11,6 @@ class Timer:
         last_execution: datetime.datetime or None = None,
         timer_type: str = "static",
     ):
-
         """
         A class for storing timers that call a specific method in a specified interval
         :param name: the name of a timer, usually derived from the plugin that added it and the name of the method that is being called

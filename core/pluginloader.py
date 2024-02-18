@@ -122,7 +122,6 @@ class PluginLoader:
         return self.__plugin_list
 
     def get_plugin_by_name(self, name: str) -> Plugin or None:
-
         """Try to find a plugin by the name provided and return it"""
 
         try:

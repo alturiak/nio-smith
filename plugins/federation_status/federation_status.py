@@ -44,8 +44,7 @@ def setup():
         room_id=plugin.read_config("room_list"),
     )
     plugin.add_command("federation_update", update_federation_status, "Update all known server's data")
-    plugin.add_timer(update_federation_status,
-                     frequency=datetime.timedelta(minutes=plugin.read_config("check_frequency")))
+    plugin.add_timer(update_federation_status, frequency=datetime.timedelta(minutes=plugin.read_config("check_frequency")))
 
 
 class Server:
@@ -184,7 +183,7 @@ class Server:
                     hosts.append((host.rstrip("."), 8448))
 
             min_expire_date: datetime.datetime = datetime.datetime(year=2500, month=1, day=1)
-            for (host, port) in hosts:
+            for host, port in hosts:
                 try:
                     expire_date: datetime.datetime or None = ssl_expiry_datetime(host, port)
                 except (ssl.SSLCertVerificationError, ConnectionRefusedError):
@@ -312,8 +311,7 @@ async def update_federation_status(client_or_command: AsyncClient or Command):
                 for server in new_dead_servers:
                     if server not in plugin.read_config("server_ignore_list"):
                         try:
-                            user_ids: List[str] = (await plugin.get_users_on_servers(client, [server], [room_id]))[
-                                server]
+                            user_ids: List[str] = (await plugin.get_users_on_servers(client, [server], [room_id]))[server]
                             message: str = f"Federation error: {server} offline.  \n"
                             message += f"Isolated users: {', '.join([await plugin.link_user_by_id(client, room_id, user_id) for user_id in user_ids])}."
                             await plugin.send_notice(client, room_id, message)
@@ -323,8 +321,7 @@ async def update_federation_status(client_or_command: AsyncClient or Command):
                 for server in new_alive_servers:
                     if server not in plugin.read_config("server_ignore_list"):
                         try:
-                            user_ids: List[str] = (await plugin.get_users_on_servers(client, [server], [room_id]))[
-                                server]
+                            user_ids: List[str] = (await plugin.get_users_on_servers(client, [server], [room_id]))[server]
                             message: str = f"Federation recovery: {server} back online.  \n"
                             message += f"Welcome back, {', '.join([await plugin.link_user_by_id(client, room_id, user_id) for user_id in user_ids])}."
                             await plugin.send_notice(client, room_id, message)

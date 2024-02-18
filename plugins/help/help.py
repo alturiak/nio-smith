@@ -5,7 +5,6 @@ from typing import List, Tuple
 
 
 def build_sorted_text_output(headline: str, content: List[Tuple[str, str, int]]) -> str:
-
     """
     Takes a headline and a list of items and their respective descriptions,
     sorts it and returns a nicely readable output
@@ -13,7 +12,7 @@ def build_sorted_text_output(headline: str, content: List[Tuple[str, str, int]])
 
     content.sort()
     output: str = f"{headline}  \n\n"
-    for (item, description, power_level) in content:
+    for item, description, power_level in content:
         if power_level != 0:
             output = f"{output}`{item}`: {description} (PL: {power_level})  \n"
         else:
