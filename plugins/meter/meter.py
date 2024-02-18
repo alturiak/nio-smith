@@ -65,13 +65,13 @@ def get_comment(level: int, nick: str, condition: str) -> str:
         3: f'is a <font color="red">bit</font> {condition}',
         4: f'is <font color="red">sorta</font> {condition}',
         5: f'is <font color="red">basic average</font> {condition}',
-        6: f'is {condition}',
+        6: f"is {condition}",
         7: f'is <font color="red">fairly</font> {condition}',
         8: f'is <font color="red">pretty darn</font> {condition}',
         9: f'is <font color="red">extremely</font> {condition}',
         10: f"is the {condition}est of all! {nick} scores a <font color=\"red\">perfect</font> 10 on the {condition.replace(' ', '-')}-o-meter!! I bow to {nick}'s"
         f" {condition}ness...",
-        11: f'FUCKEN {condition}'
+        11: f"FUCKEN {condition}",
     }
 
     return comments[level]

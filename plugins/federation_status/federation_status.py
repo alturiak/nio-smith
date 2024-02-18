@@ -42,8 +42,8 @@ def setup():
         room_id=plugin.read_config("room_list"),
     )
     plugin.add_command("federation_update", update_federation_status, "Update all known server's data")
-
-    plugin.add_timer(update_federation_status, frequency=datetime.timedelta(minutes=5))
+    plugin.add_timer(update_federation_status,
+                     frequency=datetime.timedelta(minutes=plugin.read_config("check_frequency")))
 
 
 class Server:

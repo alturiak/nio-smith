@@ -620,11 +620,8 @@ async def compose_upcoming(start_date: str, end_date: str) -> str:
 
     tracked_data: Dict[str, List[Dict[str, any]]] = await fetch_sonarr_data()
     if (episodes := await get_calendar_episodes(start_date, end_date)) and (tracked_data := await fetch_sonarr_data()):
-        tracked_series: SeriesList = SeriesList(
-            tracked_data.get("series_json"),
-            tracked_data.get("tags_json"),
-            tracked_data.get("qualityprofiles_json")
-        )
+        tracked_series: SeriesList = SeriesList(tracked_data.get("series_json"), tracked_data.get("tags_json"),
+                                                tracked_data.get("qualityprofiles_json"))
 
         episodes_by_day: Dict[str, List[any]] = {}
 
@@ -655,7 +652,7 @@ async def compose_upcoming(start_date: str, end_date: str) -> str:
                     format_begin = '<font color="red">❌ '
                     format_end = "</font>"
                 else:
-                    format_begin = '⌛️'
+                    format_begin = "⌛️"
 
                 message += (
                     f"{format_begin}{str(tracked_series.find_series_by_seriesId(episode['seriesId']))} "
