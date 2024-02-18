@@ -14,9 +14,12 @@ the otional `global` parameter, displays information about all homeservers known
 This plugin allows configuration in `federation_status.yaml`:
 - `room_list`: Optional list of rooms to enable federation_status on. Active on all rooms by default.
 - `warn_cert_expiry`: (future use) Optional warn time in days before a federating server's cert expires (default: 7)
-- `server_max_age`: Optional maximum age of a server's data in minutes before checking it again (default: 60)
+- `server_max_age`: Optional maximum age in minutes of a server's data in minutes before checking it again (default: 60)
+- `check_frequency`: Optional frequency in minutes to check servers having reached server_max_age (default: 5)
 - `server_ignore_list`: Optional list of servers to ignore, for example: ["server1.com", "server2.com"]
 - `federation_tester_url`: Optional url of [federation-tester](https://github.com/matrix-org/matrix-federation-tester)
+- `report_connectivity_changes`: whether to post messages to rooms when servers go offline / come back online (default:
+  False)
 
 ## External Requirements
 - pytz
