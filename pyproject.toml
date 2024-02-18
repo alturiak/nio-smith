@@ -3,7 +3,7 @@ line-length = 160
 
 [tool.poetry]
 name = "nio-smith"
-version = "0.0.8"
+version = "0.0.9"
 description = "A plugin-based bot for @matrix-org"
 authors = ["alturiak"]
 license = "Apache-2.0"
