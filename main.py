@@ -118,12 +118,15 @@ async def main():
                 )
 
                 # Check if login failed
+                sleep_timer: int = 60
+                retries: int = 5
                 if type(login_response) == LoginError:
-                    logger.error(f"Failed to login: {login_response.message}, retrying in 15s... ({error_retries})")
+                    logger.error(
+                        f"Failed to login: {login_response.message}, retrying in {sleep_timer}s... ({error_retries})")
                     # try logging in a few times to work around temporary login errors during homeserver restarts
-                    if error_retries < 3:
+                    if error_retries < retries:
                         error_retries += 1
-                        await sleep(15)
+                        await sleep(sleep_timer)
                         continue
                     else:
                         return False
