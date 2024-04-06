@@ -316,17 +316,8 @@ class Quote:
         :return:
         """
 
-        i: int = 0
         line: QuoteLine
-        remove_lines: List[int] = []
-        for line in self.lines:
-            if line.message_type == "annotation":
-                remove_lines.append(i)
-            i += 1
-
-        remove_line: int
-        for remove_line in remove_lines:
-            del self.lines[remove_line]
+        self.lines = [line for line in self.lines if line.message_type != "annotation"]
 
     def get_version(self) -> int:
         """
