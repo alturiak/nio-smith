@@ -1,6 +1,18 @@
-from typing import Dict, List
+from typing import Dict, List, Tuple
 from core.plugin import Plugin
 import random
+
+plugin = Plugin("meter", "General", "Plugin to provide a simple, randomized !meter")
+special_items: List[Tuple[str, ...]] = []
+
+
+def setup():
+    plugin.add_command("meter", meter, "accurately measure someones somethingness")
+    plugin.add_config("room_list", default_value=None, is_required=False)
+    plugin.add_config("special_items", default_value=[], is_required=False)
+    special_items_temp: List[List[str]] = plugin.read_config("special_items")
+    for items in special_items_temp:
+        special_items.append(tuple(items))
 
 
 def get_level_color(level: int, inactive: bool = False) -> str:
@@ -21,6 +33,7 @@ def get_level_color(level: int, inactive: bool = False) -> str:
         11: ["#FF0000", "#8B0000"],
     }
 
+    # return first value if inactive == false, second value if inactive == true
     return colors[level][inactive]
 
 
@@ -51,7 +64,7 @@ def build_gauge(level: int) -> str:
             gauge = gauge + build_block(get_level_color(i, True), True)
     gauge += right_frame
     if level == 11:
-        gauge += build_block(get_level_color(i))
+        gauge += build_block(get_level_color(level))
 
     return gauge
 
@@ -95,11 +108,9 @@ async def meter(command):
         if not condition:
             raise IndexError
         else:
-            if nick == "it" and condition == "wimdy":
+            if (nick, condition) in special_items or random.randint(1, 1000) == 1000:
                 nick = nick.upper()
                 condition = condition.upper()
-                level: int = 11
-            elif random.randint(1, 1000) == 1000:
                 level: int = 11
             else:
                 level: int = random.randint(0, 10)
@@ -111,5 +122,4 @@ async def meter(command):
         await plugin.respond_notice(command, "Usage: `meter <target> <condition>`")
 
 
-plugin = Plugin("meter", "General", "Plugin to provide a simple, randomized !meter")
-plugin.add_command("meter", meter, "accurately measure someones somethingness")
+setup()

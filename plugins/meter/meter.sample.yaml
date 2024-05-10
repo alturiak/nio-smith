@@ -1,0 +1,11 @@
+# Sample configuration of meter-plugin. Rename to meter.yaml to use.
+
+# Optional list of rooms to enable meter on. Active on all rooms by default.
+# room_list: []
+
+# Optional list of special targets that trigger level 11
+special_items:
+  - [ "it", "wimdy" ]
+
+# Optional documentation url
+# doc_url: "https://github.com/alturiak/nio-smith/blob/master/plugins/meter/README.md"

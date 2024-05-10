@@ -12,7 +12,12 @@ Example: measure alturiak's competence
 `meter alturiak competent`
 
 ## Configuration
-- none
+
+This plugin allows configuration in `meter.yaml`:
+
+- `room_list`: Optional list of rooms to enable meter on. Active on all rooms by default.
+- `special_targets`: Optional list of targets that trigger level 11.
+- `special_conditions`: Optiona list of conditions that trigger level 11.
 
 ## External Requirements
 - none
