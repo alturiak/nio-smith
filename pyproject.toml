@@ -9,7 +9,7 @@ authors = ["alturiak"]
 license = "Apache-2.0"
 
 [tool.poetry.dependencies]
-python = "~=3.8,<4.0.0"
+python = "~=3.11,<4.0.0"
 matrix-nio = { version = "~=0.24.0", extras = ["e2e"] }
 fuzzywuzzy = "~=0.18.0"
 PyYAML = "~=6.0.1"
