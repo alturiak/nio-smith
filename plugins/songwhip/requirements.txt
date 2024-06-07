@@ -1,0 +1,2 @@
+urlextract>=1.9.0
+yarl>=1.7.2

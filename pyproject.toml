@@ -28,6 +28,8 @@ wikipedia = "~=1.4.0"
 uvloop = { version = "~=0.17.0", markers = 'platform_system != "Windows"' }
 python-Levenshtein = "~=0.25.0"
 pycoingecko = "~=3.1.0"
+urlextract = "~=1.9.0"
+yarl = "~=1.7.2"
 
 [tool.poetry.dev-dependencies]
 black = { version = "~=23.3.0", allow-prereleases = true }
