@@ -250,7 +250,7 @@ class Quote:
                         nick: str = line.nick.replace("`", "&#96;").replace("_", "\\_")
 
                     if line.message_type == "action":
-                        quote_text += f"\* {nick} {message}  \n"
+                        quote_text += f"\\* {nick} {message}  \n"
                     else:
                         if len(nick) > 0 and nick[0] == "<":
                             # nick linking successful
