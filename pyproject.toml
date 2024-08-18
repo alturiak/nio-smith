@@ -10,7 +10,7 @@ license = "Apache-2.0"
 
 [tool.poetry.dependencies]
 python = "~=3.11,<4.0.0"
-matrix-nio = { version = "~=0.24.0", extras = ["e2e"] }
+matrix-nio = { version = "~=0.25.0", extras = ["e2e"] }
 fuzzywuzzy = "~=0.18.0"
 PyYAML = "~=6.0.1"
 jsonpickle = "~=3.0.2"
@@ -25,11 +25,11 @@ humanize = "~=4.9.0"
 pytz = "~=2024.1"
 freetranslate = "~=0.2.2"
 wikipedia = "~=1.4.0"
-uvloop = { version = "~=0.17.0", markers = 'platform_system != "Windows"' }
+uvloop = { version = "~=0.20.0", markers = 'platform_system != "Windows"' }
 python-Levenshtein = "~=0.25.0"
 pycoingecko = "~=3.1.0"
 urlextract = "~=1.9.0"
-yarl = "~=1.7.2"
+yarl = "~=1.9.4"
 
 [tool.poetry.dev-dependencies]
 black = { version = "~=23.3.0", allow-prereleases = true }

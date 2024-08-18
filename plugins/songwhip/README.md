@@ -23,5 +23,3 @@ This plugin requires configuration in `songwhip.yaml` (copy `songwhip.sample.yam
 - [yarl](https://pypi.org/project/yarl/) for the `URL`-object
 - [urlextract](https://pypi.org/project/urlextract/) for extracting valid URLs from messages
 - [requests](https://pypi.org/project/requests/) to query songwhip's API
-
-allowed_domains and patterns "borrowed" from: https://github.com/maubot/songwhip
