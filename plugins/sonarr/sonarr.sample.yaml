@@ -12,5 +12,8 @@
 # Enable tracking changes to monitored series
 # series_tracking: True
 
+# Verify TLS-Certificates when connecting to the API
+# tls_verify: True
+
 # Optional documentation url
 # doc_url: "https://github.com/alturiak/nio-smith/blob/master/plugins/sonarr/README.md"

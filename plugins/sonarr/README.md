@@ -22,6 +22,8 @@ This plugin requires configuration in `sonarr.yaml`:
 - `api_base`: mandatory url of sonarr's API, e.g. `http://localhost:8989/api/v3`
 - `api_key`: mandatory api key to use for connecting to sonarr's api, as configured via Settings -> API Key 
 - `series_tracking`: optional setting to enable/disable tracking changes to series tracked by sonarr  
+- `tls_verify`: Verify TLS-Certificates when connecting to the API (you might want to run the bot
+  with `PYTHONWARNINGS="ignore:Unverified HTTPS request"` to suppress the warnings)
 
 ## External Requirements
   - [requests](https://pypi.org/project/requests/) to query sonarr's API

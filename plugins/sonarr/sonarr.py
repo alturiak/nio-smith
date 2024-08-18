@@ -4,7 +4,6 @@ import datetime
 from dateutil.parser import isoparse
 import logging
 from typing import Dict, List, Tuple
-
 import requests
 from humanize import naturalsize
 from nio import AsyncClient
@@ -19,6 +18,7 @@ suppressed_series_attributes: List[str] = [
     "lastAired",
     "lastInfoSync",
     "previousAiring",
+    "nextAiring",
     "episodeCount",
     "episodeFileCount",
     "sizeOnDisk",
@@ -28,8 +28,11 @@ suppressed_series_attributes: List[str] = [
     "images",
     "genres",
     "totalEpisodeCount",
+    "releaseGroups",
+    "certification",
+    "ratings",
 ]
-suppressed_season_attributes: List[str] = ["percentOfEpisodes", "episodeFileCount", "totalEpisodeCount"]
+suppressed_season_attributes: List[str] = ["percentOfEpisodes", "episodeFileCount", "totalEpisodeCount", "nextAiring", "releaseGroups"]
 debug: bool = False
 
 
@@ -43,6 +46,7 @@ def setup():
     plugin.add_config("api_key", is_required=True)
     plugin.add_config("room_id", is_required=True)
     plugin.add_config("series_tracking", is_required=False, default_value=True)
+    plugin.add_config("tls_verify", is_required=False, default_value=True)
 
     plugin.add_command(
         "series",
@@ -464,7 +468,9 @@ async def fetch_sonarr_api(api_path: str) -> List[str] or None:
     api_parameters = {"apikey": plugin.read_config("api_key")}
 
     try:
-        response: requests.Response = requests.get(plugin.read_config("api_base") + f"/{api_path}", params=api_parameters)
+        response: requests.Response = requests.get(
+            plugin.read_config("api_base") + f"/{api_path}", params=api_parameters, verify=plugin.read_config("tls_verify")
+        )
     except requests.exceptions.ConnectionError as err:
         logger.warning(f"Connection to sonarr failed: {err}")
         return None
@@ -596,7 +602,7 @@ async def get_calendar_episodes(start_date: str, end_date: str) -> list or None:
         "end": end_date,
     }
     try:
-        response: requests.Response = requests.get(plugin.read_config("api_base") + api_path, params=api_parameters)
+        response: requests.Response = requests.get(plugin.read_config("api_base") + api_path, params=api_parameters, verify=plugin.read_config("tls_verify"))
     except requests.exceptions.ConnectionError as err:
         logger.warning(f"Connection to sonarr failed: {err}")
         return None
