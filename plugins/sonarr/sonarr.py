@@ -186,8 +186,6 @@ class Series:
         self.network: str = series_dict.get("network")
         self.airTime: str or None = series_dict.get("airTime")
         self.images: List[Dict] = series_dict.get("images")
-        self.seasonCount: int or None = series_dict.get("seasonCount")
-        self.totalEpisodeCount: int or None = series_dict.get("totalEpisodeCount")
         self.originalLanguage = series_dict.get("originalLanguage")
         self.remotePoster = series_dict.get("remotePoster")
         self.seasons: List[Season] = [Season(x) for x in series_dict["seasons"]]
@@ -224,12 +222,15 @@ class Series:
         self.added: datetime.datetime = isoparse(series_dict.get("added"))
         self.addOptions: List[any] or None = series_dict.get("addOptions")
         self.ratings: Dict[str, any] = series_dict.get("ratings")
-        self.seasonCount: int = series_dict.get("statistics").get("seasonCount")
-        self.episodeFileCount: int = series_dict.get("statistics").get("episodeFileCount")
-        self.episodeCount: int = series_dict.get("statistics").get("episodeCount")
-        self.totalEpisodeCount: int = series_dict.get("statistics").get("totalEpisodeCount")
-        self.sizeOnDisk: int = series_dict.get("statistics").get("sizeOnDisk")
-        self.releaseGroups: List[str] = series_dict.get("statistics").get("releaseGroups")
+        try:
+            self.seasonCount: int = series_dict.get("statistics").get("seasonCount")
+            self.episodeFileCount: int = series_dict.get("statistics").get("episodeFileCount")
+            self.episodeCount: int = series_dict.get("statistics").get("episodeCount")
+            self.totalEpisodeCount: int = series_dict.get("statistics").get("totalEpisodeCount")
+            self.sizeOnDisk: int = series_dict.get("statistics").get("sizeOnDisk")
+            self.releaseGroups: List[str] = series_dict.get("statistics").get("releaseGroups")
+        except AttributeError:
+            pass
 
     def __str__(self):
         return self.title
