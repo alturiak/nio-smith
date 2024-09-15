@@ -1,0 +1,13 @@
+# Sample configuration of youtube-plugin. Rename to youtube.yaml to use.
+
+# API-Key (required) - see https://developers.google.com/youtube/v3/getting-started
+# api_key:
+
+# enable dislikes (queries an additional API from https://returnyoutubedislike.com/)
+# enable_dislikes: True
+
+# List of room-id the plugin is allowed to work in (if empty, all rooms are allowed)
+# allowed_rooms: []
+
+# Optional documentation url
+# doc_url: "https://github.com/alturiak/nio-smith/blob/master/plugins/youtube/README.md"
