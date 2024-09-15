@@ -10,7 +10,7 @@ license = "Apache-2.0"
 
 [tool.poetry.dependencies]
 python = "~=3.11,<4.0.0"
-matrix-nio = { version = "~=0.25.0", extras = ["e2e"] }
+matrix-nio = { version = "~=0.25.1", extras = ["e2e"] }
 fuzzywuzzy = "~=0.18.0"
 PyYAML = "~=6.0.1"
 jsonpickle = "~=3.0.2"

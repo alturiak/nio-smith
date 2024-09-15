@@ -1,4 +1,4 @@
-matrix-nio[e2e]~=0.25.0
+matrix-nio[e2e]~=0.25.1
 fuzzywuzzy~=0.18.0
 python-Levenshtein~=0.25.0
 PyYAML~=6.0.1
