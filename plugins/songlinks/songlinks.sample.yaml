@@ -7,6 +7,7 @@ allowed_domains:
   itun.es: 'anything'
   deezer.com: 'deezer'
   youtube.com: 'youtube'
+  music.youtube.com: 'youtube'
   youtu.be: 'anything'
   tidal.com: 'tidal'
   listen.tidal.com: 'tidal'
@@ -20,10 +21,10 @@ patterns:
   apple: '/(?:[a-z]{2}/)?(?:album|artist)/.+?/(?:id)?(?:\d+)'
   tidal: '/(?:browse/)?(?:artist|album|track)/(?:\d+)'
   yandex: '/(?:artist|album)/(?:\d+/track/)?(\d+[^/?#]+)'
-  amazon: '/albums/.+")'
-  deezer: '/(?:\w{2}/)?(?:album|artist|track)/(?:.+)")'
-  youtube: '/watch")'
-  soundcloud: '/\w+?/.+")'
+  amazon: '/albums/.+'
+  deezer: '/(?:\w{2}/)?(?:album|artist|track)/(?:.+)'
+  youtube: '/watch'
+  soundcloud: '/\w+?/.+'
   anything: '.+'
 
 # List of room-id the plugin is allowed to work in (if empty, all rooms are allowed)
