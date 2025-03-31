@@ -1,5 +1,11 @@
 Nio Smith
 ===
+
+# This repository has been archived and moved to codeberg
+Development may or may not continue at [codeberg](https://codeberg.org/alturiak/nio-smith)
+
+---
+
 [![Built with matrix-nio](https://img.shields.io/badge/built%20with-matrix--nio-brightgreen)](https://github.com/poljar/matrix-nio)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Documentation Status](https://readthedocs.org/projects/nio-smith/badge/?version=latest)](https://nio-smith.readthedocs.io/en/latest/?badge=latest)
